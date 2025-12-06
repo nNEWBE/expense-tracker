@@ -73,31 +73,47 @@ public class AdminService {
     // ==================== USER MANAGEMENT ====================
 
     public LiveData<List<User>> getAllUsers() {
+        Log.d(TAG, "getAllUsers: Fetching all users from Firestore...");
+
+        // Fetch all users without orderBy (createdAt may not exist in all documents)
         db.collection("users")
-                .orderBy("createdAt", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
-                        Log.e(TAG, "Error fetching users", error);
+                        Log.e(TAG, "Error fetching users: " + error.getMessage(), error);
+                        allUsers.setValue(new ArrayList<>());
                         return;
                     }
 
                     List<User> users = new ArrayList<>();
                     if (value != null) {
-                        value.getDocuments().forEach(doc -> {
-                            User user = new User();
-                            user.setId(doc.getId());
-                            user.setEmail(doc.getString("email"));
-                            user.setDisplayName(doc.getString("displayName"));
-                            user.setPhotoUrl(doc.getString("photoUrl"));
-                            user.setBlocked(Boolean.TRUE.equals(doc.getBoolean("isBlocked")));
-                            user.setAdmin(Boolean.TRUE.equals(doc.getBoolean("isAdmin")));
-                            user.setCreatedAt(doc.getLong("createdAt") != null ? doc.getLong("createdAt") : 0);
-                            user.setLastLoginAt(doc.getLong("lastLoginAt") != null ? doc.getLong("lastLoginAt") : 0);
-                            users.add(user);
-                        });
+                        Log.d(TAG, "getAllUsers: Found " + value.size() + " documents");
+                        for (var doc : value.getDocuments()) {
+                            try {
+                                User user = new User();
+                                user.setId(doc.getId());
+                                user.setEmail(doc.getString("email"));
+                                user.setDisplayName(doc.getString("displayName"));
+                                user.setPhotoUrl(doc.getString("photoUrl"));
+                                user.setBlocked(Boolean.TRUE.equals(doc.getBoolean("isBlocked")));
+                                user.setAdmin(Boolean.TRUE.equals(doc.getBoolean("isAdmin")));
+
+                                Long createdAt = doc.getLong("createdAt");
+                                user.setCreatedAt(createdAt != null ? createdAt : 0);
+
+                                Long lastLoginAt = doc.getLong("lastLoginAt");
+                                user.setLastLoginAt(lastLoginAt != null ? lastLoginAt : 0);
+
+                                users.add(user);
+                                Log.d(TAG, "getAllUsers: Added user " + user.getEmail());
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error parsing user document: " + doc.getId(), e);
+                            }
+                        }
+                    } else {
+                        Log.w(TAG, "getAllUsers: value is null");
                     }
                     allUsers.setValue(users);
-                    Log.d(TAG, "Fetched " + users.size() + " users");
+                    Log.d(TAG, "getAllUsers: Total users fetched: " + users.size());
                 });
 
         return allUsers;
