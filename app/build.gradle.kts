@@ -60,6 +60,7 @@ dependencies {
     
     // WorkManager
     implementation(libs.work.runtime)
+    implementation(libs.guava)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
