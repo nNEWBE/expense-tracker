@@ -17,6 +17,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -81,21 +82,60 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     showLoading(false);
                     if (task.isSuccessful()) {
-                        preferenceManager.setGuestMode(false);
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            // Check if email is verified
+                            if (user.isEmailVerified()) {
+                                preferenceManager.setGuestMode(false);
 
-                        // Create/update user document in Firestore
-                        saveUserToFirestore();
+                                // Create/update user document in Firestore
+                                saveUserToFirestore();
 
-                        // Check if user had data in guest mode
-                        if (wasGuestMode) {
-                            showSyncDataDialog();
-                        } else {
-                            navigateToMain();
+                                // Check if user had data in guest mode
+                                if (wasGuestMode) {
+                                    showSyncDataDialog();
+                                } else {
+                                    navigateToMain();
+                                }
+                            } else {
+                                // Email not verified
+                                showEmailNotVerifiedDialog(user);
+                            }
                         }
                     } else {
                         String error = task.getException() != null ? task.getException().getMessage()
                                 : "Authentication failed";
                         Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void showEmailNotVerifiedDialog(FirebaseUser user) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Email Not Verified")
+                .setMessage(
+                        "Please verify your email address before logging in.\n\nCheck your inbox for the verification link.")
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("Resend Email", (dialog, which) -> {
+                    resendVerificationEmail(user);
+                })
+                .setNegativeButton("OK", (dialog, which) -> {
+                    mAuth.signOut();
+                })
+                .setCancelable(false)
+                .show();
+    }
+
+    private void resendVerificationEmail(FirebaseUser user) {
+        showLoading(true);
+        user.sendEmailVerification()
+                .addOnCompleteListener(task -> {
+                    showLoading(false);
+                    mAuth.signOut();
+                    if (task.isSuccessful()) {
+                        Toast.makeText(this, "Verification email sent!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Failed to send verification email", Toast.LENGTH_SHORT).show();
                     }
                 });
     }

@@ -28,7 +28,7 @@ public class PreferenceManager {
     }
 
     public String getCurrency() {
-        return sharedPreferences.getString(KEY_CURRENCY, "USD");
+        return sharedPreferences.getString(KEY_CURRENCY, "BDT");
     }
 
     public String getCurrencySymbol() {

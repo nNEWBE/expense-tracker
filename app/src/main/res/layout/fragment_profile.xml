@@ -11,41 +11,57 @@
     <View
         android:id="@+id/headerBg"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="220dp"
         android:background="@drawable/profile_header_curve" />
 
-    <!-- Back Button -->
-    <ImageView
-        android:id="@+id/btnBack"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="12dp"
-        android:src="@drawable/ic_arrow_back"
-        android:visibility="gone"
-        app:tint="@android:color/white" />
-
-    <!-- User Name in Header -->
-    <TextView
-        android:id="@+id/tvHeaderName"
+    <!-- Header Content -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:gravity="center"
-        android:text="User Name"
-        android:textColor="@android:color/white"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingTop="40dp"
+        android:paddingBottom="16dp">
+
+        <!-- User Name in Header -->
+        <TextView
+            android:id="@+id/tvHeaderName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="User Name"
+            android:textColor="@android:color/white"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <!-- Profile Avatar Card - Below name in header -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="10dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:cardCornerRadius="50dp"
+            app:cardElevation="8dp"
+            app:strokeColor="#E0E0E0"
+            app:strokeWidth="2dp">
+
+            <ImageView
+                android:id="@+id/ivProfile"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_person"
+                app:tint="#9C27B0" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
 
     <!-- Content ScrollView -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="200dp"
         android:clipToPadding="false"
         android:fillViewport="true">
 
@@ -54,28 +70,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingBottom="24dp">
-
-            <!-- Profile Avatar Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="20dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="50dp"
-                app:cardElevation="8dp"
-                app:strokeColor="#E0E0E0"
-                app:strokeWidth="2dp">
-
-                <ImageView
-                    android:id="@+id/ivProfile"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_person"
-                    app:tint="#9C27B0" />
-
-            </com.google.android.material.card.MaterialCardView>
 
             <!-- Profile Items Card -->
             <com.google.android.material.card.MaterialCardView
@@ -100,8 +94,6 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true"
                         android:gravity="center_vertical"
                         android:padding="16dp">
 
@@ -125,8 +117,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="60dp"
-                        android:background="#F0F0F0" />
+                        android:background="#E0E0E0" />
 
                     <!-- Email -->
                     <LinearLayout
@@ -156,8 +147,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="60dp"
-                        android:background="#F0F0F0" />
+                        android:background="#E0E0E0" />
 
                     <!-- Currency -->
                     <LinearLayout
@@ -189,7 +179,7 @@
                             android:id="@+id/tvCurrency"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="USD ($)"
+                            android:text="BDT (৳)"
                             android:textColor="#9E9E9E"
                             android:textSize="14sp" />
 
@@ -204,8 +194,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="60dp"
-                        android:background="#F0F0F0" />
+                        android:background="#E0E0E0" />
 
                     <!-- Budget -->
                     <LinearLayout
@@ -237,7 +226,7 @@
                             android:id="@+id/tvBudget"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="$0.00"
+                            android:text="৳0.00"
                             android:textColor="#9E9E9E"
                             android:textSize="14sp" />
 
@@ -252,8 +241,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="60dp"
-                        android:background="#F0F0F0" />
+                        android:background="#E0E0E0" />
 
                     <!-- Theme -->
                     <LinearLayout
@@ -300,8 +288,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="60dp"
-                        android:background="#F0F0F0" />
+                        android:background="#E0E0E0" />
 
                     <!-- Export -->
                     <LinearLayout
@@ -341,8 +328,7 @@
                         android:id="@+id/dividerAdmin"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginStart="60dp"
-                        android:background="#F0F0F0"
+                        android:background="#E0E0E0"
                         android:visibility="gone" />
 
                     <LinearLayout
