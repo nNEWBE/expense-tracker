@@ -10,12 +10,12 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
+import com.example.trackexpense.data.ExpenseRepository;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class LoginActivity extends AppCompatActivity {
@@ -26,6 +26,7 @@ public class LoginActivity extends AppCompatActivity {
     private CircularProgressIndicator progressBar;
     private FirebaseAuth mAuth;
     private PreferenceManager preferenceManager;
+    private boolean wasGuestMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +35,9 @@ public class LoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         preferenceManager = new PreferenceManager(this);
+
+        // Check if user was in guest mode before
+        wasGuestMode = preferenceManager.isGuestMode();
 
         initViews();
         setupClickListeners();
@@ -78,14 +82,46 @@ public class LoginActivity extends AppCompatActivity {
                     showLoading(false);
                     if (task.isSuccessful()) {
                         preferenceManager.setGuestMode(false);
-                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                        finish();
+
+                        // Check if user had data in guest mode
+                        if (wasGuestMode) {
+                            showSyncDataDialog();
+                        } else {
+                            navigateToMain();
+                        }
                     } else {
                         String error = task.getException() != null ? task.getException().getMessage()
                                 : "Authentication failed";
                         Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    private void showSyncDataDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Sync Local Data")
+                .setMessage(
+                        "You have local expense data from Guest Mode. Would you like to sync it to your cloud account?")
+                .setPositiveButton("Yes, Sync", (dialog, which) -> {
+                    syncLocalDataToCloud();
+                    navigateToMain();
+                })
+                .setNegativeButton("No, Skip", (dialog, which) -> {
+                    navigateToMain();
+                })
+                .setCancelable(false)
+                .show();
+    }
+
+    private void syncLocalDataToCloud() {
+        ExpenseRepository repository = new ExpenseRepository(getApplication());
+        repository.syncLocalToCloud();
+        Toast.makeText(this, "Syncing data to cloud...", Toast.LENGTH_SHORT).show();
+    }
+
+    private void navigateToMain() {
+        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+        finish();
     }
 
     private void continueAsGuest() {
