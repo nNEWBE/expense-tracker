@@ -83,6 +83,9 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         preferenceManager.setGuestMode(false);
 
+                        // Create/update user document in Firestore
+                        saveUserToFirestore();
+
                         // Check if user had data in guest mode
                         if (wasGuestMode) {
                             showSyncDataDialog();
@@ -95,6 +98,25 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    private void saveUserToFirestore() {
+        if (mAuth.getCurrentUser() == null)
+            return;
+
+        String userId = mAuth.getCurrentUser().getUid();
+        String email = mAuth.getCurrentUser().getEmail();
+        String displayName = mAuth.getCurrentUser().getDisplayName();
+
+        java.util.Map<String, Object> userData = new java.util.HashMap<>();
+        userData.put("email", email);
+        userData.put("displayName", displayName != null ? displayName : "User");
+        userData.put("lastLoginAt", System.currentTimeMillis());
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId)
+                .set(userData, com.google.firebase.firestore.SetOptions.merge());
     }
 
     private void showSyncDataDialog() {

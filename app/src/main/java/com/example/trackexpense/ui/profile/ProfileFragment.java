@@ -11,12 +11,13 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.trackexpense.R;
+import com.example.trackexpense.data.remote.AdminService;
+import com.example.trackexpense.ui.admin.AdminActivity;
 import com.example.trackexpense.ui.auth.LoginActivity;
 import com.example.trackexpense.utils.ExportUtils;
 import com.example.trackexpense.utils.PreferenceManager;
@@ -34,8 +35,11 @@ public class ProfileFragment extends Fragment {
 
     private PreferenceManager preferenceManager;
     private ExpenseViewModel expenseViewModel;
+    private AdminService adminService;
+
     private TextView tvName, tvEmail, tvCurrency, tvBudget, tvTheme;
     private Chip chipGuestMode;
+    private LinearLayout layoutAdmin;
 
     @Nullable
     @Override
@@ -50,10 +54,12 @@ public class ProfileFragment extends Fragment {
 
         preferenceManager = new PreferenceManager(requireContext());
         expenseViewModel = new ViewModelProvider(this).get(ExpenseViewModel.class);
+        adminService = AdminService.getInstance();
 
         initViews(view);
         loadUserData();
         setupClickListeners(view);
+        checkAdminAccess();
     }
 
     private void initViews(View view) {
@@ -63,6 +69,7 @@ public class ProfileFragment extends Fragment {
         tvBudget = view.findViewById(R.id.tvBudget);
         tvTheme = view.findViewById(R.id.tvTheme);
         chipGuestMode = view.findViewById(R.id.chipGuestMode);
+        layoutAdmin = view.findViewById(R.id.layoutAdmin);
     }
 
     private void loadUserData() {
@@ -89,11 +96,31 @@ public class ProfileFragment extends Fragment {
         tvTheme.setText(getThemeName(themeMode));
     }
 
+    private void checkAdminAccess() {
+        if (layoutAdmin != null) {
+            layoutAdmin.setVisibility(View.GONE);
+
+            adminService.checkAdminStatus(isAdmin -> {
+                if (isAdmin && getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        layoutAdmin.setVisibility(View.VISIBLE);
+                    });
+                }
+            });
+        }
+    }
+
     private void setupClickListeners(View view) {
         view.findViewById(R.id.layoutCurrency).setOnClickListener(v -> showCurrencyDialog());
         view.findViewById(R.id.layoutBudget).setOnClickListener(v -> showBudgetDialog());
         view.findViewById(R.id.layoutTheme).setOnClickListener(v -> showThemeDialog());
         view.findViewById(R.id.layoutExport).setOnClickListener(v -> exportData());
+
+        if (layoutAdmin != null) {
+            layoutAdmin.setOnClickListener(v -> {
+                startActivity(new Intent(requireContext(), AdminActivity.class));
+            });
+        }
 
         MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
         btnLogout.setOnClickListener(v -> logout());
@@ -114,9 +141,6 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showBudgetDialog() {
-        View dialogView = LayoutInflater.from(requireContext())
-                .inflate(android.R.layout.simple_list_item_1, null);
-
         TextInputEditText input = new TextInputEditText(requireContext());
         input.setHint("Enter monthly budget");
         input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
