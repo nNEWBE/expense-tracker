@@ -229,6 +229,25 @@ public class AdminService {
                 .addOnFailureListener(listener::onFailure);
     }
 
+    public void addTransaction(String userId, double amount, String category, String notes,
+            String type, OnCompleteListener listener) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("amount", amount);
+        data.put("category", category);
+        data.put("notes", notes);
+        data.put("type", type);
+        data.put("date", System.currentTimeMillis());
+        data.put("createdAt", System.currentTimeMillis());
+
+        db.collection("users").document(userId).collection("expenses")
+                .add(data)
+                .addOnSuccessListener(docRef -> {
+                    Log.d(TAG, "Transaction added: " + docRef.getId());
+                    listener.onSuccess();
+                })
+                .addOnFailureListener(listener::onFailure);
+    }
+
     // ==================== CATEGORY MANAGEMENT ====================
 
     public LiveData<List<CategoryModel>> getAllCategories() {
