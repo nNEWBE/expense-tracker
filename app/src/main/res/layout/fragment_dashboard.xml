@@ -113,7 +113,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         app:srcCompat="@drawable/ic_launcher_foreground"
-                        app:tint="?attr/onSurfaceVariant"/>
+                        app:tint="?attr/colorOnSurfaceVariant"/>
                         
                     <TextView
                         android:layout_width="wrap_content"
