@@ -20,18 +20,18 @@ import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.viewmodel.ExpenseViewModel;
-import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -44,11 +44,9 @@ public class DashboardFragment extends Fragment {
     private ExpenseViewModel expenseViewModel;
     private PreferenceManager preferenceManager;
 
-    private TextView tvTotalBalance, tvTotalIncome, tvTotalExpense;
-    private TextView tvBudgetStatus, tvRemainingBudget, tvTodaySpend, tvSeeAll;
-    private LinearProgressIndicator progressBudget;
+    private TextView tvTotalBalance, tvTotalIncome, tvTotalExpense, tvSeeAll;
     private PieChart pieChart;
-    private LineChart lineChart;
+    private BarChart barChart;
     private RecyclerView rvRecentTransactions;
     private ExpenseAdapter expenseAdapter;
 
@@ -76,18 +74,15 @@ public class DashboardFragment extends Fragment {
         tvTotalBalance = view.findViewById(R.id.tvTotalBalance);
         tvTotalIncome = view.findViewById(R.id.tvTotalIncome);
         tvTotalExpense = view.findViewById(R.id.tvTotalExpense);
-        tvBudgetStatus = view.findViewById(R.id.tvBudgetStatus);
-        tvRemainingBudget = view.findViewById(R.id.tvRemainingBudget);
-        tvTodaySpend = view.findViewById(R.id.tvTodaySpend);
         tvSeeAll = view.findViewById(R.id.tvSeeAll);
-        progressBudget = view.findViewById(R.id.progressBudget);
         pieChart = view.findViewById(R.id.pieChart);
-        lineChart = view.findViewById(R.id.lineChart);
+        barChart = view.findViewById(R.id.barChart);
         rvRecentTransactions = view.findViewById(R.id.rvRecentTransactions);
     }
 
     private void setupRecyclerView() {
         expenseAdapter = new ExpenseAdapter();
+        expenseAdapter.setCurrencySymbol(preferenceManager.getCurrencySymbol());
         rvRecentTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvRecentTransactions.setAdapter(expenseAdapter);
     }
@@ -114,60 +109,24 @@ public class DashboardFragment extends Fragment {
         String symbol = preferenceManager.getCurrencySymbol();
         double totalIncome = 0;
         double totalExpense = 0;
-        double todaySpend = 0;
-
-        Calendar today = Calendar.getInstance();
-        today.set(Calendar.HOUR_OF_DAY, 0);
-        today.set(Calendar.MINUTE, 0);
-        today.set(Calendar.SECOND, 0);
-        long startOfDay = today.getTimeInMillis();
 
         for (Expense e : expenses) {
             if ("INCOME".equals(e.getType())) {
                 totalIncome += e.getAmount();
             } else {
                 totalExpense += e.getAmount();
-                if (e.getDate() >= startOfDay) {
-                    todaySpend += e.getAmount();
-                }
             }
         }
 
         double balance = totalIncome - totalExpense;
-        tvTotalBalance.setText(String.format("%s%.2f", symbol, balance));
-        tvTotalIncome.setText(String.format("%s%.2f", symbol, totalIncome));
-        tvTotalExpense.setText(String.format("%s%.2f", symbol, totalExpense));
-        tvTodaySpend.setText(String.format("%s%.2f", symbol, todaySpend));
-
-        // Budget progress
-        double budget = preferenceManager.getMonthlyBudget();
-        if (budget > 0) {
-            double remaining = budget - totalExpense;
-            int progress = (int) ((totalExpense / budget) * 100);
-            progress = Math.min(progress, 100);
-
-            tvBudgetStatus.setText(String.format("%s%.0f / %s%.0f", symbol, totalExpense, symbol, budget));
-            tvRemainingBudget.setText(String.format("%s%.2f remaining", symbol, Math.max(0, remaining)));
-            progressBudget.setProgress(progress);
-
-            // Color based on usage
-            if (progress > 90) {
-                progressBudget.setIndicatorColor(ContextCompat.getColor(requireContext(), R.color.budget_danger));
-            } else if (progress > 70) {
-                progressBudget.setIndicatorColor(ContextCompat.getColor(requireContext(), R.color.budget_warning));
-            } else {
-                progressBudget.setIndicatorColor(ContextCompat.getColor(requireContext(), R.color.budget_safe));
-            }
-        } else {
-            tvBudgetStatus.setText("No budget set");
-            tvRemainingBudget.setText("Tap to set budget");
-            progressBudget.setProgress(0);
-        }
+        tvTotalBalance.setText(String.format("%s%,.2f", symbol, balance));
+        tvTotalIncome.setText(String.format("%s%,.2f", symbol, totalIncome));
+        tvTotalExpense.setText(String.format("%s%,.2f", symbol, totalExpense));
     }
 
     private void updateCharts(List<Expense> expenses) {
         updatePieChart(expenses);
-        updateLineChart(expenses);
+        updateBarChart(expenses);
     }
 
     private void updatePieChart(List<Expense> expenses) {
@@ -186,41 +145,52 @@ public class DashboardFragment extends Fragment {
         }
 
         if (pieEntries.isEmpty()) {
-            pieChart.setNoDataText("No expense data");
+            pieChart.setNoDataText("No expense data yet");
+            pieChart.setNoDataTextColor(Color.GRAY);
             pieChart.invalidate();
             return;
         }
 
+        int[] colors = {
+                ContextCompat.getColor(requireContext(), R.color.category_food),
+                ContextCompat.getColor(requireContext(), R.color.category_transport),
+                ContextCompat.getColor(requireContext(), R.color.category_shopping),
+                ContextCompat.getColor(requireContext(), R.color.category_entertainment),
+                ContextCompat.getColor(requireContext(), R.color.category_health),
+                ContextCompat.getColor(requireContext(), R.color.category_bills),
+                ContextCompat.getColor(requireContext(), R.color.category_education),
+                ContextCompat.getColor(requireContext(), R.color.category_travel)
+        };
+
         PieDataSet dataSet = new PieDataSet(pieEntries, "");
-        dataSet.setColors(new int[] {
-                ContextCompat.getColor(requireContext(), R.color.chart_1),
-                ContextCompat.getColor(requireContext(), R.color.chart_2),
-                ContextCompat.getColor(requireContext(), R.color.chart_3),
-                ContextCompat.getColor(requireContext(), R.color.chart_4),
-                ContextCompat.getColor(requireContext(), R.color.chart_5),
-                ContextCompat.getColor(requireContext(), R.color.chart_6)
-        });
+        dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(12f);
-        dataSet.setSliceSpace(2f);
+        dataSet.setSliceSpace(3f);
+        dataSet.setValueFormatter(new PercentFormatter(pieChart));
 
         PieData pieData = new PieData(dataSet);
         pieChart.setData(pieData);
+        pieChart.setUsePercentValues(true);
         pieChart.getDescription().setEnabled(false);
-        pieChart.setHoleRadius(50f);
-        pieChart.setTransparentCircleRadius(55f);
-        pieChart.setCenterText("Categories");
-        pieChart.setCenterTextSize(14f);
+        pieChart.setHoleRadius(55f);
+        pieChart.setTransparentCircleRadius(60f);
+        pieChart.setCenterText("Expenses");
+        pieChart.setCenterTextSize(16f);
+        pieChart.setCenterTextColor(Color.DKGRAY);
         pieChart.setEntryLabelColor(Color.WHITE);
+        pieChart.setEntryLabelTextSize(11f);
+        pieChart.getLegend().setEnabled(false);
         pieChart.animateY(1000);
         pieChart.invalidate();
     }
 
-    private void updateLineChart(List<Expense> expenses) {
+    private void updateBarChart(List<Expense> expenses) {
         // Get last 7 days data
         Calendar cal = Calendar.getInstance();
         String[] days = new String[7];
-        float[] amounts = new float[7];
+        float[] incomeAmounts = new float[7];
+        float[] expenseAmounts = new float[7];
 
         for (int i = 6; i >= 0; i--) {
             Calendar dayCal = (Calendar) cal.clone();
@@ -235,42 +205,51 @@ public class DashboardFragment extends Fragment {
             long dayEnd = dayCal.getTimeInMillis();
 
             for (Expense e : expenses) {
-                if ("EXPENSE".equals(e.getType()) && e.getDate() >= dayStart && e.getDate() < dayEnd) {
-                    amounts[6 - i] += e.getAmount();
+                if (e.getDate() >= dayStart && e.getDate() < dayEnd) {
+                    if ("INCOME".equals(e.getType())) {
+                        incomeAmounts[6 - i] += e.getAmount();
+                    } else {
+                        expenseAmounts[6 - i] += e.getAmount();
+                    }
                 }
             }
         }
 
-        List<Entry> entries = new ArrayList<>();
+        List<BarEntry> incomeEntries = new ArrayList<>();
+        List<BarEntry> expenseEntries = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            entries.add(new Entry(i, amounts[i]));
+            incomeEntries.add(new BarEntry(i, incomeAmounts[i]));
+            expenseEntries.add(new BarEntry(i, expenseAmounts[i]));
         }
 
-        LineDataSet dataSet = new LineDataSet(entries, "Daily Spending");
-        dataSet.setColor(ContextCompat.getColor(requireContext(), R.color.primary));
-        dataSet.setLineWidth(2f);
-        dataSet.setCircleColor(ContextCompat.getColor(requireContext(), R.color.primary));
-        dataSet.setCircleRadius(4f);
-        dataSet.setDrawFilled(true);
-        dataSet.setFillColor(ContextCompat.getColor(requireContext(), R.color.primary));
-        dataSet.setFillAlpha(50);
-        dataSet.setValueTextSize(10f);
-        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        BarDataSet incomeDataSet = new BarDataSet(incomeEntries, "Income");
+        incomeDataSet.setColor(ContextCompat.getColor(requireContext(), R.color.income_green));
 
-        LineData lineData = new LineData(dataSet);
-        lineChart.setData(lineData);
-        lineChart.getDescription().setEnabled(false);
-        lineChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
-        lineChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(days));
-        lineChart.getXAxis().setGranularity(1f);
-        lineChart.getAxisRight().setEnabled(false);
-        lineChart.getLegend().setEnabled(false);
-        lineChart.animateX(1000);
-        lineChart.invalidate();
+        BarDataSet expenseDataSet = new BarDataSet(expenseEntries, "Expenses");
+        expenseDataSet.setColor(ContextCompat.getColor(requireContext(), R.color.expense_red));
+
+        float groupSpace = 0.2f;
+        float barSpace = 0.05f;
+        float barWidth = 0.35f;
+
+        BarData barData = new BarData(incomeDataSet, expenseDataSet);
+        barData.setBarWidth(barWidth);
+
+        barChart.setData(barData);
+        barChart.groupBars(-0.5f, groupSpace, barSpace);
+        barChart.getDescription().setEnabled(false);
+        barChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
+        barChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(days));
+        barChart.getXAxis().setGranularity(1f);
+        barChart.getXAxis().setCenterAxisLabels(true);
+        barChart.getAxisRight().setEnabled(false);
+        barChart.getLegend().setEnabled(true);
+        barChart.setFitBars(true);
+        barChart.animateY(1000);
+        barChart.invalidate();
     }
 
     private void updateRecentTransactions(List<Expense> expenses) {
-        // Show only last 5 transactions
         int count = Math.min(expenses.size(), 5);
         List<Expense> recent = expenses.subList(0, count);
         expenseAdapter.setExpenses(recent);

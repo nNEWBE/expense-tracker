@@ -1,33 +1,32 @@
 package com.example.trackexpense.ui.expense;
 
 import android.app.DatePickerDialog;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
-import com.example.trackexpense.utils.CategoryDetector;
+import com.example.trackexpense.utils.CategoryHelper;
 import com.example.trackexpense.utils.NotificationHelper;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.viewmodel.ExpenseViewModel;
-import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -40,14 +39,16 @@ public class AddExpenseFragment extends Fragment {
     private NotificationHelper notificationHelper;
     private Calendar selectedDate = Calendar.getInstance();
     private String selectedType = "EXPENSE";
+    private String selectedCategory = null;
 
     private EditText etAmount;
-    private AutoCompleteTextView etCategory;
     private TextInputEditText etDate, etNotes;
-    private MaterialButtonToggleGroup toggleGroup;
     private MaterialButton btnSave;
-    private TextView tvSuggestedCategory;
-    private MaterialToolbar toolbar;
+    private MaterialCardView cardIncome, cardExpense;
+    private View incomeIndicator, expenseIndicator;
+    private RecyclerView rvCategories;
+    private CategoryAdapter categoryAdapter;
+    private ImageView btnBack;
 
     @Nullable
     @Override
@@ -64,27 +65,79 @@ public class AddExpenseFragment extends Fragment {
         notificationHelper = new NotificationHelper(requireContext());
 
         initViews(view);
-        setupToolbar();
+        setupTypeToggle();
+        setupCategoryGrid();
         setupDatePicker();
-        setupCategoryDropdown();
-        setupToggle();
-        setupSmartCategoryDetection();
         setupSaveButton();
     }
 
     private void initViews(View view) {
-        toolbar = view.findViewById(R.id.toolbar);
+        btnBack = view.findViewById(R.id.btnBack);
         etAmount = view.findViewById(R.id.etAmount);
-        etCategory = view.findViewById(R.id.etCategory);
         etDate = view.findViewById(R.id.etDate);
         etNotes = view.findViewById(R.id.etNotes);
-        toggleGroup = view.findViewById(R.id.toggleButton);
         btnSave = view.findViewById(R.id.btnSave);
-        tvSuggestedCategory = view.findViewById(R.id.tvSuggestedCategory);
+        cardIncome = view.findViewById(R.id.cardIncome);
+        cardExpense = view.findViewById(R.id.cardExpense);
+        incomeIndicator = view.findViewById(R.id.incomeIndicator);
+        expenseIndicator = view.findViewById(R.id.expenseIndicator);
+        rvCategories = view.findViewById(R.id.rvCategories);
+
+        btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).popBackStack());
+
+        // Set indicator colors
+        setIndicatorColor(incomeIndicator, R.color.income_green);
+        setIndicatorColor(expenseIndicator, R.color.expense_red);
     }
 
-    private void setupToolbar() {
-        toolbar.setNavigationOnClickListener(v -> NavHostFragment.findNavController(this).popBackStack());
+    private void setIndicatorColor(View indicator, int colorRes) {
+        GradientDrawable shape = new GradientDrawable();
+        shape.setShape(GradientDrawable.OVAL);
+        shape.setColor(ContextCompat.getColor(requireContext(), colorRes));
+        indicator.setBackground(shape);
+    }
+
+    private void setupTypeToggle() {
+        updateTypeSelection();
+
+        cardIncome.setOnClickListener(v -> {
+            selectedType = "INCOME";
+            updateTypeSelection();
+            updateCategoriesForType();
+        });
+
+        cardExpense.setOnClickListener(v -> {
+            selectedType = "EXPENSE";
+            updateTypeSelection();
+            updateCategoriesForType();
+        });
+    }
+
+    private void updateTypeSelection() {
+        if ("INCOME".equals(selectedType)) {
+            cardIncome.setStrokeWidth(4);
+            cardIncome.setStrokeColor(ContextCompat.getColor(requireContext(), R.color.income_green));
+            cardExpense.setStrokeWidth(0);
+        } else {
+            cardExpense.setStrokeWidth(4);
+            cardExpense.setStrokeColor(ContextCompat.getColor(requireContext(), R.color.expense_red));
+            cardIncome.setStrokeWidth(0);
+        }
+    }
+
+    private void setupCategoryGrid() {
+        rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 4));
+        updateCategoriesForType();
+    }
+
+    private void updateCategoriesForType() {
+        String[] categories = "INCOME".equals(selectedType)
+                ? CategoryHelper.INCOME_CATEGORIES
+                : CategoryHelper.EXPENSE_CATEGORIES;
+
+        categoryAdapter = new CategoryAdapter(categories);
+        categoryAdapter.setOnCategorySelectedListener(category -> selectedCategory = category);
+        rvCategories.setAdapter(categoryAdapter);
     }
 
     private void setupDatePicker() {
@@ -106,53 +159,6 @@ public class AddExpenseFragment extends Fragment {
         etDate.setText(DateFormat.format("MMM dd, yyyy", selectedDate));
     }
 
-    private void setupCategoryDropdown() {
-        String[] categories = new String[] { "Food", "Transport", "Shopping", "Entertainment",
-                "Health", "Bills", "Education", "Salary", "Freelance", "Investment", "Other" };
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_dropdown_item_1line, categories);
-        etCategory.setAdapter(adapter);
-    }
-
-    private void setupToggle() {
-        toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (isChecked) {
-                if (checkedId == R.id.btnExpense) {
-                    selectedType = "EXPENSE";
-                } else if (checkedId == R.id.btnIncome) {
-                    selectedType = "INCOME";
-                }
-            }
-        });
-    }
-
-    private void setupSmartCategoryDetection() {
-        etNotes.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String detected = CategoryDetector.detectCategory(s.toString());
-                if (!"Other".equals(detected)) {
-                    tvSuggestedCategory.setText("Suggested: " + detected);
-                    tvSuggestedCategory.setVisibility(View.VISIBLE);
-                    tvSuggestedCategory.setOnClickListener(v -> {
-                        etCategory.setText(detected, false);
-                        tvSuggestedCategory.setVisibility(View.GONE);
-                    });
-                } else {
-                    tvSuggestedCategory.setVisibility(View.GONE);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
-    }
-
     private void setupSaveButton() {
         btnSave.setOnClickListener(v -> {
             String amountStr = etAmount.getText().toString();
@@ -162,26 +168,26 @@ public class AddExpenseFragment extends Fragment {
                 return;
             }
 
-            String category = etCategory.getText().toString();
-            if (category.isEmpty()) {
+            if (selectedCategory == null) {
                 Snackbar.make(v, "Please select a category", Snackbar.LENGTH_SHORT).show();
                 return;
             }
 
             double amount = Double.parseDouble(amountStr);
-            String notes = etNotes.getText().toString();
+            String notes = etNotes.getText() != null ? etNotes.getText().toString() : "";
 
-            Expense expense = new Expense(amount, category, selectedDate.getTimeInMillis(), notes, selectedType);
+            Expense expense = new Expense(amount, selectedCategory, selectedDate.getTimeInMillis(), notes,
+                    selectedType);
             viewModel.insert(expense);
 
             // Show notification
             String symbol = preferenceManager.getCurrencySymbol();
-            notificationHelper.showTransactionAddedNotification(selectedType, amount, category, symbol);
+            notificationHelper.showTransactionAddedNotification(selectedType, amount, selectedCategory, symbol);
 
             // Check budget warning
             checkBudgetStatus(amount);
 
-            Snackbar.make(v, "Transaction saved successfully!", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(v, "Transaction saved!", Snackbar.LENGTH_SHORT).show();
             NavHostFragment.findNavController(this).popBackStack();
         });
     }
@@ -190,7 +196,6 @@ public class AddExpenseFragment extends Fragment {
         if ("EXPENSE".equals(selectedType)) {
             double budget = preferenceManager.getMonthlyBudget();
             if (budget > 0) {
-                // Get total expenses and check if budget exceeded
                 viewModel.getTotalExpense().observe(getViewLifecycleOwner(), totalExpense -> {
                     if (totalExpense != null) {
                         double total = totalExpense + newAmount;

@@ -1,5 +1,6 @@
 package com.example.trackexpense.ui.dashboard;
 
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
+import com.example.trackexpense.utils.CategoryHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -77,16 +79,17 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
     }
 
     class ExpenseViewHolder extends RecyclerView.ViewHolder {
-        private TextView tvCategory, tvDate, tvAmount, tvNotes;
+        private View iconBg;
         private ImageView ivIcon;
+        private TextView tvCategory, tvDate, tvAmount;
 
         public ExpenseViewHolder(@NonNull View itemView) {
             super(itemView);
+            iconBg = itemView.findViewById(R.id.iconBg);
+            ivIcon = itemView.findViewById(R.id.ivIcon);
             tvCategory = itemView.findViewById(R.id.tvCategory);
             tvDate = itemView.findViewById(R.id.tvDate);
             tvAmount = itemView.findViewById(R.id.tvAmount);
-            tvNotes = itemView.findViewById(R.id.tvNotes);
-            ivIcon = itemView.findViewById(R.id.ivIcon);
 
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
@@ -108,24 +111,29 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
         public void bind(Expense expense) {
             tvCategory.setText(expense.getCategory());
 
-            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault());
+            // Format date
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault());
             tvDate.setText(sdf.format(new Date(expense.getDate())));
 
-            // Show notes if available
-            if (tvNotes != null) {
-                if (expense.getNotes() != null && !expense.getNotes().isEmpty()) {
-                    tvNotes.setText(expense.getNotes());
-                    tvNotes.setVisibility(View.VISIBLE);
-                } else {
-                    tvNotes.setVisibility(View.GONE);
-                }
-            }
+            // Get category info for icon and colors
+            CategoryHelper.CategoryInfo categoryInfo = CategoryHelper.getCategoryInfo(expense.getCategory());
 
+            // Set icon
+            ivIcon.setImageResource(categoryInfo.iconRes);
+            ivIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), android.R.color.white));
+
+            // Set icon background color
+            GradientDrawable bgShape = new GradientDrawable();
+            bgShape.setShape(GradientDrawable.OVAL);
+            bgShape.setColor(ContextCompat.getColor(itemView.getContext(), categoryInfo.colorRes));
+            iconBg.setBackground(bgShape);
+
+            // Set amount with color based on type
             if ("INCOME".equals(expense.getType())) {
-                tvAmount.setText(String.format("+ %s%.2f", currencySymbol, expense.getAmount()));
+                tvAmount.setText(String.format("+%s%.2f", currencySymbol, expense.getAmount()));
                 tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.income_green));
             } else {
-                tvAmount.setText(String.format("- %s%.2f", currencySymbol, expense.getAmount()));
+                tvAmount.setText(String.format("-%s%.2f", currencySymbol, expense.getAmount()));
                 tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.expense_red));
             }
         }

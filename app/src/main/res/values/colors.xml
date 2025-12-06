@@ -1,44 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary Colors - Modern Teal -->
-    <color name="primary">#00897B</color>
-    <color name="primary_variant">#00695C</color>
+    <!-- Primary Theme - Purple Gradient -->
+    <color name="primary">#7B61FF</color>
+    <color name="primary_variant">#5B42E8</color>
+    <color name="primary_dark">#4A35C9</color>
     <color name="on_primary">#FFFFFF</color>
     
-    <!-- Secondary Colors - Amber Accent -->
-    <color name="secondary">#FFB300</color>
-    <color name="secondary_variant">#FF8F00</color>
-    <color name="on_secondary">#000000</color>
+    <!-- Gradient Colors -->
+    <color name="gradient_start">#9C7BFF</color>
+    <color name="gradient_end">#7B61FF</color>
+    <color name="gradient_card_start">#8B5CF6</color>
+    <color name="gradient_card_end">#6366F1</color>
+    
+    <!-- Secondary Colors -->
+    <color name="secondary">#F97316</color>
+    <color name="secondary_variant">#EA580C</color>
+    <color name="on_secondary">#FFFFFF</color>
     
     <!-- Background Colors -->
-    <color name="background_light">#FAFAFA</color>
+    <color name="background_light">#F8F7FC</color>
     <color name="surface_light">#FFFFFF</color>
-    <color name="on_background_light">#1C1B1F</color>
-    <color name="on_surface_light">#1C1B1F</color>
+    <color name="on_background_light">#1E1B4B</color>
+    <color name="on_surface_light">#1E1B4B</color>
     
-    <color name="background_dark">#121212</color>
-    <color name="surface_dark">#1E1E1E</color>
-    <color name="on_background_dark">#E6E1E5</color>
-    <color name="on_surface_dark">#E6E1E5</color>
+    <color name="background_dark">#0F0D1A</color>
+    <color name="surface_dark">#1A1625</color>
+    <color name="on_background_dark">#E8E7F0</color>
+    <color name="on_surface_dark">#E8E7F0</color>
+    
+    <!-- Category Colors -->
+    <color name="category_food">#F97316</color>
+    <color name="category_transport">#3B82F6</color>
+    <color name="category_shopping">#EC4899</color>
+    <color name="category_entertainment">#8B5CF6</color>
+    <color name="category_health">#10B981</color>
+    <color name="category_bills">#EAB308</color>
+    <color name="category_education">#06B6D4</color>
+    <color name="category_travel">#F43F5E</color>
+    <color name="category_groceries">#22C55E</color>
+    <color name="category_subscription">#A855F7</color>
+    <color name="category_salary">#14B8A6</color>
+    <color name="category_freelance">#F59E0B</color>
+    <color name="category_investment">#6366F1</color>
+    <color name="category_gift">#DB2777</color>
+    <color name="category_other">#64748B</color>
+    
+    <!-- Category Background Colors (Lighter) -->
+    <color name="category_food_bg">#FFF7ED</color>
+    <color name="category_transport_bg">#EFF6FF</color>
+    <color name="category_shopping_bg">#FDF2F8</color>
+    <color name="category_entertainment_bg">#F5F3FF</color>
+    <color name="category_health_bg">#ECFDF5</color>
+    <color name="category_bills_bg">#FEFCE8</color>
+    <color name="category_education_bg">#ECFEFF</color>
+    <color name="category_travel_bg">#FFF1F2</color>
+    <color name="category_groceries_bg">#F0FDF4</color>
+    <color name="category_subscription_bg">#FAF5FF</color>
+    <color name="category_salary_bg">#F0FDFA</color>
+    <color name="category_freelance_bg">#FFFBEB</color>
+    <color name="category_investment_bg">#EEF2FF</color>
+    <color name="category_gift_bg">#FDF2F8</color>
+    <color name="category_other_bg">#F8FAFC</color>
     
     <!-- Status Colors -->
-    <color name="income_green">#4CAF50</color>
-    <color name="expense_red">#F44336</color>
-    <color name="warning_yellow">#FFC107</color>
-    <color name="info_blue">#2196F3</color>
+    <color name="income_green">#10B981</color>
+    <color name="expense_red">#EF4444</color>
+    <color name="warning_yellow">#F59E0B</color>
+    <color name="info_blue">#3B82F6</color>
     
     <!-- Budget Indicators -->
-    <color name="budget_safe">#4CAF50</color>
-    <color name="budget_warning">#FF9800</color>
-    <color name="budget_danger">#F44336</color>
+    <color name="budget_safe">#10B981</color>
+    <color name="budget_warning">#F59E0B</color>
+    <color name="budget_danger">#EF4444</color>
     
     <!-- Chart Colors -->
-    <color name="chart_1">#00897B</color>
-    <color name="chart_2">#FFB300</color>
-    <color name="chart_3">#7E57C2</color>
-    <color name="chart_4">#EC407A</color>
-    <color name="chart_5">#42A5F5</color>
-    <color name="chart_6">#66BB6A</color>
+    <color name="chart_1">#7B61FF</color>
+    <color name="chart_2">#F97316</color>
+    <color name="chart_3">#EC4899</color>
+    <color name="chart_4">#10B981</color>
+    <color name="chart_5">#3B82F6</color>
+    <color name="chart_6">#EAB308</color>
     
     <!-- Legacy -->
     <color name="black">#FF000000</color>

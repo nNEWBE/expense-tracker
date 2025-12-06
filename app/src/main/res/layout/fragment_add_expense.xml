@@ -4,114 +4,179 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface"
+    android:background="@color/background_light"
     android:fillViewport="true"
     tools:context=".ui.expense.AddExpenseFragment">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:orientation="vertical"
+        android:padding="20dp">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
+        <!-- Header -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="parent"
-            app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
-            app:title="Add Transaction"
-            app:titleCentered="true" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/toggleButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:checkedButton="@id/btnExpense"
-            app:layout_constraintTop_toBottomOf="@id/toolbar"
-            app:selectionRequired="true"
-            app:singleSelection="true">
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="@color/on_background_light" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnExpense"
-                style="?attr/materialButtonOutlinedStyle"
+            <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Expense"
-                android:textAllCaps="false"
-                app:icon="@android:drawable/arrow_up_float" />
+                android:gravity="center"
+                android:text="Add"
+                android:textColor="@color/on_background_light"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnIncome"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Income"
-                android:textAllCaps="false"
-                app:icon="@android:drawable/arrow_down_float" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
+            <View
+                android:layout_width="40dp"
+                android:layout_height="40dp" />
+        </LinearLayout>
 
-        <!-- Amount Input -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardAmount"
+        <!-- Type Toggle -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            app:cardCornerRadius="16dp"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardIncome"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/income_green"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <View
+                        android:id="@+id/incomeIndicator"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/circle_background" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Add Income"
+                        android:textColor="@color/on_background_light"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardExpense"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/expense_red"
+                app:strokeWidth="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <View
+                        android:id="@+id/expenseIndicator"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/circle_background" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Add Expense"
+                        android:textColor="@color/on_background_light"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <!-- Amount Input -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
-            app:layout_constraintTop_toBottomOf="@id/toggleButton"
-            app:strokeColor="?attr/colorOutline"
-            app:strokeWidth="1dp">
+            app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="24dp">
+                android:padding="32dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Enter Amount"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
+                    android:textColor="#9CA3AF"
+                    android:textSize="14sp" />
 
                 <EditText
                     android:id="@+id/etAmount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="12dp"
                     android:background="@android:color/transparent"
                     android:gravity="center"
                     android:hint="0.00"
                     android:inputType="numberDecimal"
-                    android:minWidth="150dp"
-                    android:textColor="?attr/colorOnSurface"
+                    android:minWidth="200dp"
+                    android:textColor="@color/on_background_light"
                     android:textSize="48sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilCategory"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        <!-- Category Grid -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Categories"
+            android:textColor="@color/on_background_light"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvCategories"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="Category"
-            app:layout_constraintTop_toBottomOf="@id/cardAmount"
-            app:startIconDrawable="@android:drawable/ic_menu_sort_by_size">
+            android:layout_marginTop="12dp" />
 
-            <AutoCompleteTextView
-                android:id="@+id/etCategory"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
-
+        <!-- Date Picker -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilDate"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
@@ -119,10 +184,12 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:hint="Date"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
             app:endIconDrawable="@android:drawable/ic_menu_my_calendar"
-            app:endIconMode="custom"
-            app:layout_constraintTop_toBottomOf="@id/tilCategory"
-            app:startIconDrawable="@android:drawable/ic_menu_day">
+            app:endIconMode="custom">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etDate"
@@ -132,6 +199,7 @@
                 android:focusable="false" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Notes Input -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilNotes"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
@@ -139,9 +207,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:hint="Notes (optional)"
-            app:helperText="Describe your transaction"
-            app:layout_constraintTop_toBottomOf="@id/tilDate"
-            app:startIconDrawable="@android:drawable/ic_menu_edit">
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNotes"
@@ -151,26 +220,17 @@
                 android:lines="2" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <TextView
-            android:id="@+id/tvSuggestedCategory"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text=""
-            android:textColor="?attr/colorPrimary"
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tilNotes" />
-
+        <!-- Save Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="32dp"
+            android:backgroundTint="@color/primary"
             android:text="Save Transaction"
             android:textAllCaps="false"
-            app:cornerRadius="12dp"
-            app:layout_constraintTop_toBottomOf="@id/tvSuggestedCategory" />
+            android:textSize="16sp"
+            app:cornerRadius="16dp" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 </ScrollView>
