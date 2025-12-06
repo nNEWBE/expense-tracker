@@ -83,11 +83,23 @@ public class AddExpenseFragment extends Fragment {
         expenseIndicator = view.findViewById(R.id.expenseIndicator);
         rvCategories = view.findViewById(R.id.rvCategories);
 
-        btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).popBackStack());
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                try {
+                    NavHostFragment.findNavController(this).popBackStack();
+                } catch (Exception e) {
+                    // Ignore navigation errors
+                }
+            });
+        }
 
         // Set indicator colors
-        setIndicatorColor(incomeIndicator, R.color.income_green);
-        setIndicatorColor(expenseIndicator, R.color.expense_red);
+        if (incomeIndicator != null) {
+            setIndicatorColor(incomeIndicator, R.color.income_green);
+        }
+        if (expenseIndicator != null) {
+            setIndicatorColor(expenseIndicator, R.color.expense_red);
+        }
     }
 
     private void setIndicatorColor(View indicator, int colorRes) {
@@ -100,20 +112,27 @@ public class AddExpenseFragment extends Fragment {
     private void setupTypeToggle() {
         updateTypeSelection();
 
-        cardIncome.setOnClickListener(v -> {
-            selectedType = "INCOME";
-            updateTypeSelection();
-            updateCategoriesForType();
-        });
+        if (cardIncome != null) {
+            cardIncome.setOnClickListener(v -> {
+                selectedType = "INCOME";
+                updateTypeSelection();
+                updateCategoriesForType();
+            });
+        }
 
-        cardExpense.setOnClickListener(v -> {
-            selectedType = "EXPENSE";
-            updateTypeSelection();
-            updateCategoriesForType();
-        });
+        if (cardExpense != null) {
+            cardExpense.setOnClickListener(v -> {
+                selectedType = "EXPENSE";
+                updateTypeSelection();
+                updateCategoriesForType();
+            });
+        }
     }
 
     private void updateTypeSelection() {
+        if (cardIncome == null || cardExpense == null)
+            return;
+
         if ("INCOME".equals(selectedType)) {
             cardIncome.setStrokeWidth(4);
             cardIncome.setStrokeColor(ContextCompat.getColor(requireContext(), R.color.income_green));
@@ -126,11 +145,16 @@ public class AddExpenseFragment extends Fragment {
     }
 
     private void setupCategoryGrid() {
-        rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 4));
-        updateCategoriesForType();
+        if (rvCategories != null) {
+            rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 4));
+            updateCategoriesForType();
+        }
     }
 
     private void updateCategoriesForType() {
+        if (rvCategories == null)
+            return;
+
         String[] categories = "INCOME".equals(selectedType)
                 ? CategoryHelper.INCOME_CATEGORIES
                 : CategoryHelper.EXPENSE_CATEGORIES;
@@ -142,68 +166,82 @@ public class AddExpenseFragment extends Fragment {
 
     private void setupDatePicker() {
         updateDateDisplay();
-        etDate.setOnClickListener(v -> {
-            DatePickerDialog datePickerDialog = new DatePickerDialog(requireContext(),
-                    (view, year, month, dayOfMonth) -> {
-                        selectedDate.set(Calendar.YEAR, year);
-                        selectedDate.set(Calendar.MONTH, month);
-                        selectedDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                        updateDateDisplay();
-                    }, selectedDate.get(Calendar.YEAR), selectedDate.get(Calendar.MONTH),
-                    selectedDate.get(Calendar.DAY_OF_MONTH));
-            datePickerDialog.show();
-        });
+        if (etDate != null) {
+            etDate.setOnClickListener(v -> {
+                DatePickerDialog datePickerDialog = new DatePickerDialog(requireContext(),
+                        (view, year, month, dayOfMonth) -> {
+                            selectedDate.set(Calendar.YEAR, year);
+                            selectedDate.set(Calendar.MONTH, month);
+                            selectedDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                            updateDateDisplay();
+                        }, selectedDate.get(Calendar.YEAR), selectedDate.get(Calendar.MONTH),
+                        selectedDate.get(Calendar.DAY_OF_MONTH));
+                datePickerDialog.show();
+            });
+        }
     }
 
     private void updateDateDisplay() {
-        etDate.setText(DateFormat.format("MMM dd, yyyy", selectedDate));
+        if (etDate != null) {
+            etDate.setText(DateFormat.format("MMM dd, yyyy", selectedDate));
+        }
     }
 
     private void setupSaveButton() {
+        if (btnSave == null)
+            return;
+
         btnSave.setOnClickListener(v -> {
-            String amountStr = etAmount.getText().toString();
-            if (amountStr.isEmpty()) {
-                Snackbar.make(v, "Please enter an amount", Snackbar.LENGTH_SHORT).show();
-                etAmount.requestFocus();
-                return;
+            try {
+                String amountStr = etAmount != null ? etAmount.getText().toString() : "";
+                if (amountStr.isEmpty()) {
+                    Snackbar.make(v, "Please enter an amount", Snackbar.LENGTH_SHORT).show();
+                    if (etAmount != null)
+                        etAmount.requestFocus();
+                    return;
+                }
+
+                if (selectedCategory == null) {
+                    Snackbar.make(v, "Please select a category", Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
+
+                double amount;
+                try {
+                    amount = Double.parseDouble(amountStr);
+                } catch (NumberFormatException e) {
+                    Snackbar.make(v, "Invalid amount", Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
+
+                String notes = etNotes != null && etNotes.getText() != null
+                        ? etNotes.getText().toString()
+                        : "";
+
+                Expense expense = new Expense(amount, selectedCategory, selectedDate.getTimeInMillis(), notes,
+                        selectedType);
+                viewModel.insert(expense);
+
+                // Show notification (wrapped in try-catch)
+                try {
+                    String symbol = preferenceManager.getCurrencySymbol();
+                    notificationHelper.showTransactionAddedNotification(selectedType, amount, selectedCategory, symbol);
+                } catch (Exception e) {
+                    // Ignore notification errors
+                }
+
+                Snackbar.make(v, "Transaction saved!", Snackbar.LENGTH_SHORT).show();
+
+                // Navigate back
+                try {
+                    NavHostFragment.findNavController(this).popBackStack();
+                } catch (Exception e) {
+                    // Fragment might be detached
+                }
+
+            } catch (Exception e) {
+                Snackbar.make(v, "Error saving transaction", Snackbar.LENGTH_SHORT).show();
             }
-
-            if (selectedCategory == null) {
-                Snackbar.make(v, "Please select a category", Snackbar.LENGTH_SHORT).show();
-                return;
-            }
-
-            double amount = Double.parseDouble(amountStr);
-            String notes = etNotes.getText() != null ? etNotes.getText().toString() : "";
-
-            Expense expense = new Expense(amount, selectedCategory, selectedDate.getTimeInMillis(), notes,
-                    selectedType);
-            viewModel.insert(expense);
-
-            // Show notification
-            String symbol = preferenceManager.getCurrencySymbol();
-            notificationHelper.showTransactionAddedNotification(selectedType, amount, selectedCategory, symbol);
-
-            // Check budget warning
-            checkBudgetStatus(amount);
-
-            Snackbar.make(v, "Transaction saved!", Snackbar.LENGTH_SHORT).show();
-            NavHostFragment.findNavController(this).popBackStack();
         });
-    }
-
-    private void checkBudgetStatus(double newAmount) {
-        if ("EXPENSE".equals(selectedType)) {
-            double budget = preferenceManager.getMonthlyBudget();
-            if (budget > 0) {
-                viewModel.getTotalExpense().observe(getViewLifecycleOwner(), totalExpense -> {
-                    if (totalExpense != null) {
-                        double total = totalExpense + newAmount;
-                        String symbol = preferenceManager.getCurrencySymbol();
-                        notificationHelper.showBudgetWarningNotification(total, budget, symbol);
-                    }
-                });
-            }
-        }
     }
 }
