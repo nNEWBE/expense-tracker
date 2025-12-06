@@ -32,7 +32,7 @@
             <FrameLayout
                 android:layout_width="200dp"
                 android:layout_height="200dp"
-                android:layout_marginTop="32dp">
+                android:layout_marginTop="24dp">
 
                 <!-- Dashed Circle -->
                 <View
@@ -41,7 +41,7 @@
                     android:layout_gravity="center"
                     android:background="@drawable/dashed_circle" />
 
-                <!-- Phone with Check Icon -->
+                <!-- Phone Icon -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -49,12 +49,12 @@
                     android:gravity="center"
                     android:orientation="vertical">
 
-                    <!-- Email Icon Container -->
+                    <!-- Phone Card -->
                     <com.google.android.material.card.MaterialCardView
-                        android:layout_width="100dp"
-                        android:layout_height="120dp"
+                        android:layout_width="90dp"
+                        android:layout_height="130dp"
                         app:cardBackgroundColor="#4F46E5"
-                        app:cardCornerRadius="12dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="8dp">
 
                         <LinearLayout
@@ -62,13 +62,22 @@
                             android:layout_height="match_parent"
                             android:gravity="center"
                             android:orientation="vertical"
-                            android:padding="16dp">
+                            android:padding="12dp">
 
                             <ImageView
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:src="@drawable/ic_email"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:src="@drawable/ic_phone"
                                 app:tint="@android:color/white" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="OTP"
+                                android:textColor="@android:color/white"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
 
                         </LinearLayout>
 
@@ -100,8 +109,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:text="Email Verification"
+                android:layout_marginTop="24dp"
+                android:text="OTP Verification"
                 android:textColor="#1F2937"
                 android:textSize="28sp"
                 android:textStyle="bold" />
@@ -113,38 +122,107 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:paddingHorizontal="24dp"
-                android:text="We've sent a verification link to"
+                android:text="Enter the OTP sent to"
                 android:textColor="#6B7280"
                 android:textSize="15sp" />
 
-            <!-- Email Display -->
+            <!-- Phone Display -->
             <TextView
-                android:id="@+id/tvEmail"
+                android:id="@+id/tvPhone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="user@email.com"
+                android:layout_marginTop="4dp"
+                android:text="+880 1XX XXX XXXX"
                 android:textColor="#4F46E5"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <!-- Info Text -->
-            <TextView
+            <!-- OTP Input Boxes -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="32dp"
                 android:gravity="center"
-                android:paddingHorizontal="32dp"
-                android:text="Click the link in the email to verify your account, then come back and tap the button below."
-                android:textColor="#9CA3AF"
-                android:textSize="14sp" />
+                android:orientation="horizontal">
 
-            <!-- Spacer -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
+                <EditText
+                    android:id="@+id/etOtp1"
+                    android:layout_width="56dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/otp_box_background"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="#1F2937"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etOtp2"
+                    android:layout_width="56dp"
+                    android:layout_height="64dp"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/otp_box_background"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="#1F2937"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etOtp3"
+                    android:layout_width="56dp"
+                    android:layout_height="64dp"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/otp_box_background"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="#1F2937"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etOtp4"
+                    android:layout_width="56dp"
+                    android:layout_height="64dp"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/otp_box_background"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="#1F2937"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etOtp5"
+                    android:layout_width="56dp"
+                    android:layout_height="64dp"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/otp_box_background"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="#1F2937"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etOtp6"
+                    android:layout_width="56dp"
+                    android:layout_height="64dp"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/otp_box_background"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="#1F2937"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
 
             <!-- Resend Link -->
             <LinearLayout
@@ -157,7 +235,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Didn't receive the email? "
+                    android:text="Didn't receive the OTP? "
                     android:textColor="#6B7280"
                     android:textSize="14sp" />
 
@@ -165,7 +243,7 @@
                     android:id="@+id/tvResend"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Resend"
+                    android:text="Resend OTP"
                     android:textColor="#4F46E5"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -181,7 +259,13 @@
                 android:text="Resend available in 60s"
                 android:textColor="#9CA3AF"
                 android:textSize="12sp"
-                android:visibility="gone" />
+                android:visibility="visible" />
+
+            <!-- Spacer -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
 
             <!-- Verify Button -->
             <com.google.android.material.button.MaterialButton
@@ -190,7 +274,7 @@
                 android:layout_height="56dp"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="16dp"
-                android:text="I've Verified My Email"
+                android:text="Verify"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"
