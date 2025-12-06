@@ -36,7 +36,7 @@ public class ProfileFragment extends Fragment {
     private PreferenceManager preferenceManager;
     private ExpenseViewModel expenseViewModel;
     private AdminService adminService;
-    
+
     private TextView tvHeaderName, tvName, tvEmail, tvCurrency, tvBudget, tvTheme;
     private Chip chipGuestMode;
     private LinearLayout layoutAdmin;
@@ -106,7 +106,7 @@ public class ProfileFragment extends Fragment {
         if (layoutAdmin != null && dividerAdmin != null) {
             layoutAdmin.setVisibility(View.GONE);
             dividerAdmin.setVisibility(View.GONE);
-            
+
             adminService.checkAdminStatus(isAdmin -> {
                 if (isAdmin && getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
@@ -132,6 +132,9 @@ public class ProfileFragment extends Fragment {
 
         MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
         btnLogout.setOnClickListener(v -> logout());
+
+        MaterialButton btnDeleteAccount = view.findViewById(R.id.btnDeleteAccount);
+        btnDeleteAccount.setOnClickListener(v -> showDeleteAccountDialog());
     }
 
     private void showCurrencyDialog() {
@@ -218,6 +221,77 @@ public class ProfileFragment extends Fragment {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void showDeleteAccountDialog() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(requireContext(), "No account to delete", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Delete Account")
+                .setMessage("⚠️ WARNING: This action is PERMANENT and cannot be undone!\n\n" +
+                        "Deleting your account will:\n" +
+                        "• Remove all your transaction data\n" +
+                        "• Delete your profile information\n" +
+                        "• Sign you out immediately\n\n" +
+                        "Are you absolutely sure?")
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("Delete Forever", (dialog, which) -> {
+                    showFinalDeleteConfirmation(user);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showFinalDeleteConfirmation(FirebaseUser user) {
+        TextInputEditText input = new TextInputEditText(requireContext());
+        input.setHint("Type DELETE to confirm");
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Final Confirmation")
+                .setMessage("Type DELETE to permanently delete your account.")
+                .setView(input)
+                .setPositiveButton("Confirm", (dialog, which) -> {
+                    String confirmation = input.getText() != null ? input.getText().toString().trim() : "";
+                    if ("DELETE".equals(confirmation)) {
+                        deleteAccount(user);
+                    } else {
+                        Toast.makeText(requireContext(), "Incorrect confirmation text", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteAccount(FirebaseUser user) {
+        String userId = user.getUid();
+
+        // Delete user data from Firestore first
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId)
+                .delete()
+                .addOnCompleteListener(task -> {
+                    // Then delete the Firebase Auth account
+                    user.delete()
+                            .addOnCompleteListener(deleteTask -> {
+                                if (deleteTask.isSuccessful()) {
+                                    Toast.makeText(requireContext(), "Account deleted successfully", 
+                                            Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(requireContext(), LoginActivity.class);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    startActivity(intent);
+                                } else {
+                                    // User may need to re-authenticate
+                                    Toast.makeText(requireContext(), 
+                                            "Failed to delete account. Please re-login and try again.", 
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            });
+                });
     }
 
     private String getThemeName(int mode) {

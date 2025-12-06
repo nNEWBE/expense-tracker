@@ -41,7 +41,7 @@
                     android:layout_gravity="center"
                     android:background="@drawable/dashed_circle" />
 
-                <!-- Phone Icon -->
+                <!-- Email Icon -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -49,10 +49,10 @@
                     android:gravity="center"
                     android:orientation="vertical">
 
-                    <!-- Phone Card -->
+                    <!-- Email Card -->
                     <com.google.android.material.card.MaterialCardView
-                        android:layout_width="90dp"
-                        android:layout_height="130dp"
+                        android:layout_width="100dp"
+                        android:layout_height="120dp"
                         app:cardBackgroundColor="#4F46E5"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="8dp">
@@ -65,18 +65,18 @@
                             android:padding="12dp">
 
                             <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:src="@drawable/ic_phone"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:src="@drawable/ic_email"
                                 app:tint="@android:color/white" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
-                                android:text="OTP"
+                                android:text="Verify"
                                 android:textColor="@android:color/white"
-                                android:textSize="16sp"
+                                android:textSize="14sp"
                                 android:textStyle="bold" />
 
                         </LinearLayout>
@@ -110,7 +110,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="OTP Verification"
+                android:text="Email Verification"
                 android:textColor="#1F2937"
                 android:textSize="28sp"
                 android:textStyle="bold" />
@@ -122,107 +122,57 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:text="Enter the OTP sent to"
+                android:text="We've sent a verification link to"
                 android:textColor="#6B7280"
                 android:textSize="15sp" />
 
-            <!-- Phone Display -->
+            <!-- Email Display -->
             <TextView
-                android:id="@+id/tvPhone"
+                android:id="@+id/tvEmail"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="+880 1XX XXX XXXX"
+                android:text="user@email.com"
                 android:textColor="#4F46E5"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <!-- OTP Input Boxes -->
-            <LinearLayout
-                android:layout_width="wrap_content"
+            <!-- Instructions Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:gravity="center"
-                android:orientation="horizontal">
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="#F0F9FF"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#BFDBFE"
+                app:strokeWidth="1dp">
 
-                <EditText
-                    android:id="@+id/etOtp1"
-                    android:layout_width="56dp"
-                    android:layout_height="64dp"
-                    android:background="@drawable/otp_box_background"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:textColor="#1F2937"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                <EditText
-                    android:id="@+id/etOtp2"
-                    android:layout_width="56dp"
-                    android:layout_height="64dp"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/otp_box_background"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:textColor="#1F2937"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📧 How to verify:"
+                        android:textColor="#1E40AF"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
-                <EditText
-                    android:id="@+id/etOtp3"
-                    android:layout_width="56dp"
-                    android:layout_height="64dp"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/otp_box_background"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:textColor="#1F2937"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="1. Open your email inbox\n2. Find the email from us\n3. Click the verification link\n4. Come back here and tap 'I've Verified'"
+                        android:textColor="#3B82F6"
+                        android:textSize="13sp" />
 
-                <EditText
-                    android:id="@+id/etOtp4"
-                    android:layout_width="56dp"
-                    android:layout_height="64dp"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/otp_box_background"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:textColor="#1F2937"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                </LinearLayout>
 
-                <EditText
-                    android:id="@+id/etOtp5"
-                    android:layout_width="56dp"
-                    android:layout_height="64dp"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/otp_box_background"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:textColor="#1F2937"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/etOtp6"
-                    android:layout_width="56dp"
-                    android:layout_height="64dp"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/otp_box_background"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:textColor="#1F2937"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Resend Link -->
             <LinearLayout
@@ -235,7 +185,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Didn't receive the OTP? "
+                    android:text="Didn't receive the email? "
                     android:textColor="#6B7280"
                     android:textSize="14sp" />
 
@@ -243,7 +193,7 @@
                     android:id="@+id/tvResend"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Resend OTP"
+                    android:text="Resend"
                     android:textColor="#4F46E5"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -274,7 +224,7 @@
                 android:layout_height="56dp"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="16dp"
-                android:text="Verify"
+                android:text="I've Verified My Email"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"

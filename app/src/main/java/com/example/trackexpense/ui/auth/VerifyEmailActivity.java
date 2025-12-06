@@ -3,11 +3,7 @@ package com.example.trackexpense.ui.auth;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.KeyEvent;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,13 +22,10 @@ public class VerifyEmailActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
 
-    private TextView tvPhone, tvResend, tvTimer;
+    private TextView tvEmail, tvResend, tvTimer;
     private MaterialButton btnVerify;
     private CircularProgressIndicator progressBar;
     private ImageView btnBack;
-
-    private EditText etOtp1, etOtp2, etOtp3, etOtp4, etOtp5, etOtp6;
-    private EditText[] otpFields;
 
     private CountDownTimer resendTimer;
     private boolean canResend = false;
@@ -46,7 +39,6 @@ public class VerifyEmailActivity extends AppCompatActivity {
         currentUser = mAuth.getCurrentUser();
 
         initViews();
-        setupOtpInputs();
         setupListeners();
         displayUserEmail();
         startResendTimer();
@@ -54,67 +46,11 @@ public class VerifyEmailActivity extends AppCompatActivity {
 
     private void initViews() {
         btnBack = findViewById(R.id.btnBack);
-        tvPhone = findViewById(R.id.tvPhone);
+        tvEmail = findViewById(R.id.tvEmail);
         tvResend = findViewById(R.id.tvResend);
         tvTimer = findViewById(R.id.tvTimer);
         btnVerify = findViewById(R.id.btnVerify);
         progressBar = findViewById(R.id.progressBar);
-
-        etOtp1 = findViewById(R.id.etOtp1);
-        etOtp2 = findViewById(R.id.etOtp2);
-        etOtp3 = findViewById(R.id.etOtp3);
-        etOtp4 = findViewById(R.id.etOtp4);
-        etOtp5 = findViewById(R.id.etOtp5);
-        etOtp6 = findViewById(R.id.etOtp6);
-
-        otpFields = new EditText[] { etOtp1, etOtp2, etOtp3, etOtp4, etOtp5, etOtp6 };
-    }
-
-    private void setupOtpInputs() {
-        for (int i = 0; i < otpFields.length; i++) {
-            final int index = i;
-
-            otpFields[i].addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    if (s.length() == 1 && index < otpFields.length - 1) {
-                        // Move to next field
-                        otpFields[index + 1].requestFocus();
-                    } else if (s.length() == 0 && index > 0) {
-                        // Move to previous field on delete
-                        otpFields[index - 1].requestFocus();
-                    }
-
-                    // Auto verify when all fields are filled
-                    if (isOtpComplete()) {
-                        verifyOtp();
-                    }
-                }
-            });
-
-            // Handle backspace on empty field
-            otpFields[i].setOnKeyListener((v, keyCode, event) -> {
-                if (keyCode == KeyEvent.KEYCODE_DEL && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (otpFields[index].getText().toString().isEmpty() && index > 0) {
-                        otpFields[index - 1].requestFocus();
-                        otpFields[index - 1].setText("");
-                        return true;
-                    }
-                }
-                return false;
-            });
-        }
-
-        // Focus first field
-        etOtp1.requestFocus();
     }
 
     private void setupListeners() {
@@ -129,51 +65,18 @@ public class VerifyEmailActivity extends AppCompatActivity {
             }
         });
 
-        btnVerify.setOnClickListener(v -> verifyOtp());
+        btnVerify.setOnClickListener(v -> checkVerificationStatus());
     }
 
     private void displayUserEmail() {
         if (currentUser != null && currentUser.getEmail() != null) {
-            // Mask the email for display
-            String email = currentUser.getEmail();
-            tvPhone.setText(email);
+            tvEmail.setText(currentUser.getEmail());
         }
     }
 
-    private boolean isOtpComplete() {
-        for (EditText field : otpFields) {
-            if (field.getText().toString().isEmpty()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private String getOtpCode() {
-        StringBuilder otp = new StringBuilder();
-        for (EditText field : otpFields) {
-            otp.append(field.getText().toString());
-        }
-        return otp.toString();
-    }
-
-    private void clearOtp() {
-        for (EditText field : otpFields) {
-            field.setText("");
-        }
-        etOtp1.requestFocus();
-    }
-
-    private void verifyOtp() {
-        if (!isOtpComplete()) {
-            Toast.makeText(this, "Please enter the complete OTP", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+    private void checkVerificationStatus() {
         showLoading(true);
 
-        // Since Firebase email auth uses links not OTP codes,
-        // we'll check if the user has verified their email via the link
         if (currentUser == null) {
             showLoading(false);
             Toast.makeText(this, "Session expired. Please login again.", Toast.LENGTH_SHORT).show();
@@ -190,17 +93,16 @@ public class VerifyEmailActivity extends AppCompatActivity {
                         if (currentUser != null && currentUser.isEmailVerified()) {
                             // Email verified! Save to Firestore and proceed
                             saveUserToFirestore();
-                            Toast.makeText(this, "Verification successful!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "Email verified successfully!", Toast.LENGTH_SHORT).show();
                             navigateToMain();
                         } else {
-                            Toast.makeText(this, "Please verify your email first by clicking the link we sent.",
+                            Toast.makeText(this,
+                                    "Email not verified yet. Please check your inbox and click the verification link.",
                                     Toast.LENGTH_LONG).show();
-                            clearOtp();
                         }
                     } else {
-                        Toast.makeText(this, "Verification failed. Please try again.",
+                        Toast.makeText(this, "Failed to check verification status. Please try again.",
                                 Toast.LENGTH_SHORT).show();
-                        clearOtp();
                     }
                 });
     }
@@ -214,7 +116,7 @@ public class VerifyEmailActivity extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     showLoading(false);
                     if (task.isSuccessful()) {
-                        Toast.makeText(this, "Verification email sent!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Verification email sent! Check your inbox.", Toast.LENGTH_SHORT).show();
                         startResendTimer();
                     } else {
                         Toast.makeText(this, "Failed to send email. Try again later.",
