@@ -1,6 +1,7 @@
 package com.example.trackexpense.data.local;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "expenses")
@@ -15,6 +16,7 @@ public class Expense {
     private String type; // "INCOME" or "EXPENSE"
 
     // Constructor
+    @Ignore
     public Expense(double amount, String category, long date, String notes, String type) {
         this.amount = amount;
         this.category = category;
