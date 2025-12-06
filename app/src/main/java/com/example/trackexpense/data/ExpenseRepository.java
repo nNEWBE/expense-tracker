@@ -71,26 +71,36 @@ public class ExpenseRepository {
 
         // Always save to local Room database first
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            long id = expenseDao.insertAndGetId(expense);
-            expense.setId((int) id);
-            Log.d(TAG, "insert: Saved to Room with ID: " + id);
+            try {
+                long id = expenseDao.insertAndGetId(expense);
+                expense.setId((int) id);
+                Log.d(TAG, "insert: Saved to Room with ID: " + id);
 
-            // If user is logged in, also save to Firestore
-            if (firestoreService.isUserLoggedIn()) {
-                firestoreService.saveExpense(expense, new FirestoreService.OnExpenseSavedListener() {
-                    @Override
-                    public void onSuccess(String firestoreId) {
-                        // Update local expense with Firestore ID
-                        expense.setFirestoreId(firestoreId);
-                        expenseDao.update(expense);
-                        Log.d(TAG, "insert: Updated Room with firestoreId: " + firestoreId);
-                    }
+                // If user is logged in, also save to Firestore
+                if (firestoreService.isUserLoggedIn()) {
+                    firestoreService.saveExpense(expense, new FirestoreService.OnExpenseSavedListener() {
+                        @Override
+                        public void onSuccess(String firestoreId) {
+                            // Update local expense with Firestore ID - must run on executor
+                            AppDatabase.databaseWriteExecutor.execute(() -> {
+                                try {
+                                    expense.setFirestoreId(firestoreId);
+                                    expenseDao.update(expense);
+                                    Log.d(TAG, "insert: Updated Room with firestoreId: " + firestoreId);
+                                } catch (Exception e) {
+                                    Log.e(TAG, "insert: Failed to update Room with firestoreId", e);
+                                }
+                            });
+                        }
 
-                    @Override
-                    public void onFailure(Exception e) {
-                        Log.e(TAG, "insert: Failed to save to Firestore", e);
-                    }
-                });
+                        @Override
+                        public void onFailure(Exception e) {
+                            Log.e(TAG, "insert: Failed to save to Firestore", e);
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "insert: Failed to save to Room", e);
             }
         });
     }
@@ -99,12 +109,20 @@ public class ExpenseRepository {
         Log.d(TAG, "delete: " + expense.getCategory() + ", firestoreId: " + expense.getFirestoreId());
 
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            expenseDao.delete(expense);
+            try {
+                expenseDao.delete(expense);
+            } catch (Exception e) {
+                Log.e(TAG, "delete: Failed to delete from Room", e);
+            }
         });
 
         // Delete from Firestore if user is logged in
         if (firestoreService.isUserLoggedIn()) {
-            firestoreService.deleteExpense(expense);
+            try {
+                firestoreService.deleteExpense(expense);
+            } catch (Exception e) {
+                Log.e(TAG, "delete: Failed to delete from Firestore", e);
+            }
         }
     }
 
@@ -112,12 +130,20 @@ public class ExpenseRepository {
         Log.d(TAG, "update: " + expense.getCategory() + ", firestoreId: " + expense.getFirestoreId());
 
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            expenseDao.update(expense);
+            try {
+                expenseDao.update(expense);
+            } catch (Exception e) {
+                Log.e(TAG, "update: Failed to update Room", e);
+            }
         });
 
         // Update Firestore if user is logged in
         if (firestoreService.isUserLoggedIn()) {
-            firestoreService.updateExpense(expense);
+            try {
+                firestoreService.updateExpense(expense);
+            } catch (Exception e) {
+                Log.e(TAG, "update: Failed to update Firestore", e);
+            }
         }
     }
 
