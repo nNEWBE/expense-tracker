@@ -26,6 +26,12 @@ public class FirestoreService {
     private final FirebaseAuth auth;
     private final MutableLiveData<List<Expense>> remoteExpenses = new MutableLiveData<>();
 
+    public interface OnExpenseSavedListener {
+        void onSuccess(String firestoreId);
+
+        void onFailure(Exception e);
+    }
+
     private FirestoreService() {
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
@@ -42,7 +48,7 @@ public class FirestoreService {
     public boolean isUserLoggedIn() {
         FirebaseUser user = auth.getCurrentUser();
         boolean isLoggedIn = user != null;
-        Log.d(TAG, "isUserLoggedIn: " + isLoggedIn + ", userId: " + (user != null ? user.getUid() : "null"));
+        Log.d(TAG, "isUserLoggedIn: " + isLoggedIn);
         return isLoggedIn;
     }
 
@@ -54,26 +60,24 @@ public class FirestoreService {
     private CollectionReference getExpensesCollection() {
         String userId = getUserId();
         if (userId == null) {
-            Log.w(TAG, "getExpensesCollection: userId is null, user not logged in");
+            Log.w(TAG, "getExpensesCollection: userId is null");
             return null;
         }
-        Log.d(TAG, "getExpensesCollection: userId = " + userId);
         return db.collection("users").document(userId).collection("expenses");
     }
 
-    public void saveExpense(Expense expense) {
-        Log.d(TAG, "saveExpense called for: " + expense.getCategory() + ", amount: " + expense.getAmount());
+    public void saveExpense(Expense expense, OnExpenseSavedListener listener) {
+        Log.d(TAG, "saveExpense: " + expense.getCategory() + ", amount: " + expense.getAmount());
 
-        // Check if user is logged in
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser == null) {
-            Log.w(TAG, "saveExpense: User not logged in, skipping Firestore save");
+            Log.w(TAG, "saveExpense: User not logged in");
+            if (listener != null)
+                listener.onFailure(new Exception("User not logged in"));
             return;
         }
 
         String userId = currentUser.getUid();
-        Log.d(TAG, "saveExpense: Saving for userId = " + userId);
-
         Map<String, Object> expenseData = new HashMap<>();
         expenseData.put("amount", expense.getAmount());
         expenseData.put("category", expense.getCategory());
@@ -81,20 +85,32 @@ public class FirestoreService {
         expenseData.put("notes", expense.getNotes() != null ? expense.getNotes() : "");
         expenseData.put("type", expense.getType());
         expenseData.put("createdAt", System.currentTimeMillis());
+        expenseData.put("localId", expense.getId());
 
         db.collection("users")
                 .document(userId)
                 .collection("expenses")
                 .add(expenseData)
                 .addOnSuccessListener(documentReference -> {
-                    Log.d(TAG, "SUCCESS: Expense saved to Firestore with ID: " + documentReference.getId());
+                    String firestoreId = documentReference.getId();
+                    Log.d(TAG, "SUCCESS: Saved with ID: " + firestoreId);
+                    if (listener != null)
+                        listener.onSuccess(firestoreId);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "FAILURE: Error saving expense to Firestore: " + e.getMessage(), e);
+                    Log.e(TAG, "FAILURE: " + e.getMessage(), e);
+                    if (listener != null)
+                        listener.onFailure(e);
                 });
     }
 
-    public void updateExpense(String firestoreId, Expense expense) {
+    public void updateExpense(Expense expense) {
+        String firestoreId = expense.getFirestoreId();
+        if (firestoreId == null || firestoreId.isEmpty()) {
+            Log.w(TAG, "updateExpense: No firestoreId, cannot update");
+            return;
+        }
+
         CollectionReference expensesRef = getExpensesCollection();
         if (expensesRef == null)
             return;
@@ -103,27 +119,40 @@ public class FirestoreService {
         expenseData.put("amount", expense.getAmount());
         expenseData.put("category", expense.getCategory());
         expenseData.put("date", expense.getDate());
-        expenseData.put("notes", expense.getNotes());
+        expenseData.put("notes", expense.getNotes() != null ? expense.getNotes() : "");
         expenseData.put("type", expense.getType());
+        expenseData.put("updatedAt", System.currentTimeMillis());
 
         expensesRef.document(firestoreId)
                 .update(expenseData)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Expense updated in Firestore"))
-                .addOnFailureListener(e -> Log.e(TAG, "Error updating expense", e));
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "updateExpense: SUCCESS"))
+                .addOnFailureListener(e -> Log.e(TAG, "updateExpense: FAILURE", e));
     }
 
-    public void deleteExpense(String firestoreId) {
+    public void deleteExpense(Expense expense) {
+        String firestoreId = expense.getFirestoreId();
+        if (firestoreId == null || firestoreId.isEmpty()) {
+            Log.w(TAG, "deleteExpense: No firestoreId, cannot delete from Firestore");
+            return;
+        }
+
         CollectionReference expensesRef = getExpensesCollection();
         if (expensesRef == null)
             return;
 
         expensesRef.document(firestoreId)
                 .delete()
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Expense deleted from Firestore"))
-                .addOnFailureListener(e -> Log.e(TAG, "Error deleting expense", e));
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "deleteExpense: SUCCESS"))
+                .addOnFailureListener(e -> Log.e(TAG, "deleteExpense: FAILURE", e));
     }
 
     public LiveData<List<Expense>> getExpenses() {
+        if (!isUserLoggedIn()) {
+            Log.w(TAG, "getExpenses: User not logged in");
+            remoteExpenses.setValue(new ArrayList<>());
+            return remoteExpenses;
+        }
+
         CollectionReference expensesRef = getExpensesCollection();
         if (expensesRef == null) {
             remoteExpenses.setValue(new ArrayList<>());
@@ -141,11 +170,19 @@ public class FirestoreService {
                     if (value != null) {
                         value.getDocuments().forEach(doc -> {
                             Expense expense = new Expense();
+                            expense.setFirestoreId(doc.getId()); // Store Firestore ID
                             expense.setAmount(doc.getDouble("amount") != null ? doc.getDouble("amount") : 0);
                             expense.setCategory(doc.getString("category"));
                             expense.setDate(doc.getLong("date") != null ? doc.getLong("date") : 0);
                             expense.setNotes(doc.getString("notes"));
                             expense.setType(doc.getString("type"));
+
+                            // Get local ID if exists
+                            Long localId = doc.getLong("localId");
+                            if (localId != null) {
+                                expense.setId(localId.intValue());
+                            }
+
                             expenses.add(expense);
                         });
                     }
@@ -164,7 +201,7 @@ public class FirestoreService {
 
         Log.d(TAG, "syncLocalToFirestore: Syncing " + localExpenses.size() + " expenses");
         for (Expense expense : localExpenses) {
-            saveExpense(expense);
+            saveExpense(expense, null);
         }
     }
 }

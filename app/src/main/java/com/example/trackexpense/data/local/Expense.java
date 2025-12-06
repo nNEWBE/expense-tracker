@@ -14,6 +14,7 @@ public class Expense {
     private long date; // Timestamp
     private String notes;
     private String type; // "INCOME" or "EXPENSE"
+    private String firestoreId; // Firestore document ID for sync
 
     // Constructor
     @Ignore
@@ -75,5 +76,13 @@ public class Expense {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getFirestoreId() {
+        return firestoreId;
+    }
+
+    public void setFirestoreId(String firestoreId) {
+        this.firestoreId = firestoreId;
     }
 }

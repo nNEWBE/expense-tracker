@@ -33,14 +33,12 @@ public class ExpenseRepository {
     }
 
     private void setupMergedExpenses() {
-        // Add Room data as source
         mergedExpenses.addSource(allExpenses, localExpenses -> {
             if (!firestoreService.isUserLoggedIn()) {
                 mergedExpenses.setValue(localExpenses);
             }
         });
 
-        // If user is logged in, also listen to Firestore
         if (firestoreService.isUserLoggedIn()) {
             mergedExpenses.addSource(firestoreService.getExpenses(), remoteExpenses -> {
                 if (remoteExpenses != null) {
@@ -69,37 +67,58 @@ public class ExpenseRepository {
     }
 
     public void insert(Expense expense) {
-        Log.d(TAG, "insert: Adding expense - Category: " + expense.getCategory() +
-                ", Amount: " + expense.getAmount() + ", Type: " + expense.getType());
+        Log.d(TAG, "insert: " + expense.getCategory() + ", Amount: " + expense.getAmount());
 
         // Always save to local Room database first
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            expenseDao.insert(expense);
-            Log.d(TAG, "insert: Saved to Room database");
+            long id = expenseDao.insertAndGetId(expense);
+            expense.setId((int) id);
+            Log.d(TAG, "insert: Saved to Room with ID: " + id);
+
+            // If user is logged in, also save to Firestore
+            if (firestoreService.isUserLoggedIn()) {
+                firestoreService.saveExpense(expense, new FirestoreService.OnExpenseSavedListener() {
+                    @Override
+                    public void onSuccess(String firestoreId) {
+                        // Update local expense with Firestore ID
+                        expense.setFirestoreId(firestoreId);
+                        expenseDao.update(expense);
+                        Log.d(TAG, "insert: Updated Room with firestoreId: " + firestoreId);
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        Log.e(TAG, "insert: Failed to save to Firestore", e);
+                    }
+                });
+            }
         });
-
-        // If user is logged in, also save to Firestore
-        boolean isLoggedIn = firestoreService.isUserLoggedIn();
-        Log.d(TAG, "insert: User logged in = " + isLoggedIn);
-
-        if (isLoggedIn) {
-            Log.d(TAG, "insert: Calling firestoreService.saveExpense()");
-            firestoreService.saveExpense(expense);
-        } else {
-            Log.d(TAG, "insert: Skipping Firestore (user not logged in)");
-        }
     }
 
     public void delete(Expense expense) {
+        Log.d(TAG, "delete: " + expense.getCategory() + ", firestoreId: " + expense.getFirestoreId());
+
         AppDatabase.databaseWriteExecutor.execute(() -> {
             expenseDao.delete(expense);
         });
+
+        // Delete from Firestore if user is logged in
+        if (firestoreService.isUserLoggedIn()) {
+            firestoreService.deleteExpense(expense);
+        }
     }
 
     public void update(Expense expense) {
+        Log.d(TAG, "update: " + expense.getCategory() + ", firestoreId: " + expense.getFirestoreId());
+
         AppDatabase.databaseWriteExecutor.execute(() -> {
             expenseDao.update(expense);
         });
+
+        // Update Firestore if user is logged in
+        if (firestoreService.isUserLoggedIn()) {
+            firestoreService.updateExpense(expense);
+        }
     }
 
     public void syncLocalToCloud() {
