@@ -13,7 +13,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.trackexpense.R;
 import com.example.trackexpense.ui.auth.LoginActivity;
-import com.example.trackexpense.ui.auth.SplashActivity;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
