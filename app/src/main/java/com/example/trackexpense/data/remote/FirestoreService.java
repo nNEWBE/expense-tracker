@@ -9,7 +9,6 @@ import com.example.trackexpense.data.local.Expense;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
@@ -30,6 +29,7 @@ public class FirestoreService {
     private FirestoreService() {
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
+        Log.d(TAG, "FirestoreService initialized");
     }
 
     public static synchronized FirestoreService getInstance() {
@@ -40,7 +40,10 @@ public class FirestoreService {
     }
 
     public boolean isUserLoggedIn() {
-        return auth.getCurrentUser() != null;
+        FirebaseUser user = auth.getCurrentUser();
+        boolean isLoggedIn = user != null;
+        Log.d(TAG, "isUserLoggedIn: " + isLoggedIn + ", userId: " + (user != null ? user.getUid() : "null"));
+        return isLoggedIn;
     }
 
     public String getUserId() {
@@ -50,32 +53,44 @@ public class FirestoreService {
 
     private CollectionReference getExpensesCollection() {
         String userId = getUserId();
-        if (userId == null)
+        if (userId == null) {
+            Log.w(TAG, "getExpensesCollection: userId is null, user not logged in");
             return null;
+        }
+        Log.d(TAG, "getExpensesCollection: userId = " + userId);
         return db.collection("users").document(userId).collection("expenses");
     }
 
     public void saveExpense(Expense expense) {
-        CollectionReference expensesRef = getExpensesCollection();
-        if (expensesRef == null) {
-            Log.w(TAG, "User not logged in, skipping Firestore save");
+        Log.d(TAG, "saveExpense called for: " + expense.getCategory() + ", amount: " + expense.getAmount());
+
+        // Check if user is logged in
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser == null) {
+            Log.w(TAG, "saveExpense: User not logged in, skipping Firestore save");
             return;
         }
+
+        String userId = currentUser.getUid();
+        Log.d(TAG, "saveExpense: Saving for userId = " + userId);
 
         Map<String, Object> expenseData = new HashMap<>();
         expenseData.put("amount", expense.getAmount());
         expenseData.put("category", expense.getCategory());
         expenseData.put("date", expense.getDate());
-        expenseData.put("notes", expense.getNotes());
+        expenseData.put("notes", expense.getNotes() != null ? expense.getNotes() : "");
         expenseData.put("type", expense.getType());
-        expenseData.put("localId", expense.getId());
+        expenseData.put("createdAt", System.currentTimeMillis());
 
-        expensesRef.add(expenseData)
+        db.collection("users")
+                .document(userId)
+                .collection("expenses")
+                .add(expenseData)
                 .addOnSuccessListener(documentReference -> {
-                    Log.d(TAG, "Expense saved to Firestore: " + documentReference.getId());
+                    Log.d(TAG, "SUCCESS: Expense saved to Firestore with ID: " + documentReference.getId());
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error saving expense to Firestore", e);
+                    Log.e(TAG, "FAILURE: Error saving expense to Firestore: " + e.getMessage(), e);
                 });
     }
 
@@ -142,13 +157,14 @@ public class FirestoreService {
     }
 
     public void syncLocalToFirestore(List<Expense> localExpenses) {
-        CollectionReference expensesRef = getExpensesCollection();
-        if (expensesRef == null)
+        if (!isUserLoggedIn()) {
+            Log.w(TAG, "syncLocalToFirestore: User not logged in");
             return;
+        }
 
+        Log.d(TAG, "syncLocalToFirestore: Syncing " + localExpenses.size() + " expenses");
         for (Expense expense : localExpenses) {
             saveExpense(expense);
         }
-        Log.d(TAG, "Synced " + localExpenses.size() + " local expenses to Firestore");
     }
 }

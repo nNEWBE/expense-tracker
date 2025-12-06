@@ -1,6 +1,7 @@
 package com.example.trackexpense.data;
 
 import android.app.Application;
+import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
@@ -14,6 +15,8 @@ import java.util.List;
 
 public class ExpenseRepository {
 
+    private static final String TAG = "ExpenseRepository";
+
     private final ExpenseDao expenseDao;
     private final FirestoreService firestoreService;
     private final LiveData<List<Expense>> allExpenses;
@@ -25,6 +28,7 @@ public class ExpenseRepository {
         firestoreService = FirestoreService.getInstance();
         allExpenses = expenseDao.getAllExpenses();
 
+        Log.d(TAG, "ExpenseRepository initialized, user logged in: " + firestoreService.isUserLoggedIn());
         setupMergedExpenses();
     }
 
@@ -32,7 +36,6 @@ public class ExpenseRepository {
         // Add Room data as source
         mergedExpenses.addSource(allExpenses, localExpenses -> {
             if (!firestoreService.isUserLoggedIn()) {
-                // Guest mode - use only local data
                 mergedExpenses.setValue(localExpenses);
             }
         });
@@ -48,8 +51,10 @@ public class ExpenseRepository {
     }
 
     public LiveData<List<Expense>> getAllExpenses() {
-        if (firestoreService.isUserLoggedIn()) {
-            // For logged-in users, prefer Firestore data
+        boolean loggedIn = firestoreService.isUserLoggedIn();
+        Log.d(TAG, "getAllExpenses: user logged in = " + loggedIn);
+
+        if (loggedIn) {
             return firestoreService.getExpenses();
         }
         return allExpenses;
@@ -64,14 +69,24 @@ public class ExpenseRepository {
     }
 
     public void insert(Expense expense) {
+        Log.d(TAG, "insert: Adding expense - Category: " + expense.getCategory() +
+                ", Amount: " + expense.getAmount() + ", Type: " + expense.getType());
+
         // Always save to local Room database first
         AppDatabase.databaseWriteExecutor.execute(() -> {
             expenseDao.insert(expense);
+            Log.d(TAG, "insert: Saved to Room database");
         });
 
         // If user is logged in, also save to Firestore
-        if (firestoreService.isUserLoggedIn()) {
+        boolean isLoggedIn = firestoreService.isUserLoggedIn();
+        Log.d(TAG, "insert: User logged in = " + isLoggedIn);
+
+        if (isLoggedIn) {
+            Log.d(TAG, "insert: Calling firestoreService.saveExpense()");
             firestoreService.saveExpense(expense);
+        } else {
+            Log.d(TAG, "insert: Skipping Firestore (user not logged in)");
         }
     }
 
@@ -79,23 +94,16 @@ public class ExpenseRepository {
         AppDatabase.databaseWriteExecutor.execute(() -> {
             expenseDao.delete(expense);
         });
-
-        // Note: For Firestore deletion, we would need the Firestore document ID
-        // This is a simplified implementation
     }
 
     public void update(Expense expense) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
             expenseDao.update(expense);
         });
-
-        // Note: For Firestore update, we would need the Firestore document ID
-        // This is a simplified implementation
     }
 
     public void syncLocalToCloud() {
         if (firestoreService.isUserLoggedIn()) {
-            // Get all local expenses and sync to Firestore
             List<Expense> localExpenses = allExpenses.getValue();
             if (localExpenses != null && !localExpenses.isEmpty()) {
                 firestoreService.syncLocalToFirestore(localExpenses);
