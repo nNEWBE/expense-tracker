@@ -111,33 +111,10 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void showEmailNotVerifiedDialog(FirebaseUser user) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Email Not Verified")
-                .setMessage(
-                        "Please verify your email address before logging in.\n\nCheck your inbox for the verification link.")
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setPositiveButton("Resend Email", (dialog, which) -> {
-                    resendVerificationEmail(user);
-                })
-                .setNegativeButton("OK", (dialog, which) -> {
-                    mAuth.signOut();
-                })
-                .setCancelable(false)
-                .show();
-    }
-
-    private void resendVerificationEmail(FirebaseUser user) {
-        showLoading(true);
-        user.sendEmailVerification()
-                .addOnCompleteListener(task -> {
-                    showLoading(false);
-                    mAuth.signOut();
-                    if (task.isSuccessful()) {
-                        Toast.makeText(this, "Verification email sent!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(this, "Failed to send verification email", Toast.LENGTH_SHORT).show();
-                    }
-                });
+        // Navigate to verification screen
+        Intent intent = new Intent(this, VerifyEmailActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private void saveUserToFirestore() {

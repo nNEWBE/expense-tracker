@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trackexpense.R;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -104,29 +103,14 @@ public class RegisterActivity extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     showLoading(false);
                     if (task.isSuccessful()) {
-                        // Sign out so user must verify first
-                        mAuth.signOut();
-
-                        // Show verification dialog
-                        showVerificationSentDialog();
+                        // Navigate to verification screen
+                        Intent intent = new Intent(this, VerifyEmailActivity.class);
+                        startActivity(intent);
+                        finish();
                     } else {
                         Toast.makeText(this, "Failed to send verification email", Toast.LENGTH_SHORT).show();
                     }
                 });
-    }
-
-    private void showVerificationSentDialog() {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Verify Your Email")
-                .setMessage(
-                        "A verification link has been sent to your email address.\n\nPlease verify your email before logging in.")
-                .setIcon(android.R.drawable.ic_dialog_email)
-                .setPositiveButton("Go to Login", (dialog, which) -> {
-                    startActivity(new Intent(this, LoginActivity.class));
-                    finish();
-                })
-                .setCancelable(false)
-                .show();
     }
 
     private void showLoading(boolean show) {
