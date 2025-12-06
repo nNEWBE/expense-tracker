@@ -118,8 +118,8 @@ public class AdminUserTransactionsDialog extends DialogFragment {
         // Category selection state
         final String[] selectedCategory = { null };
 
-        // Setup category grid
-        rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 4));
+        // Setup category grid - use 3 columns for better visibility
+        rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 3));
         CategorySelectionAdapter categoryAdapter = new CategorySelectionAdapter(
                 CategoryHelper.EXPENSE_CATEGORIES,
                 category -> selectedCategory[0] = category);
@@ -154,6 +154,15 @@ public class AdminUserTransactionsDialog extends DialogFragment {
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
                 .create();
+
+        // Set dialog width after showing
+        dialog.setOnShowListener(dialogInterface -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setLayout(
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+        });
 
         btnCancel.setOnClickListener(v -> dialog.dismiss());
 
