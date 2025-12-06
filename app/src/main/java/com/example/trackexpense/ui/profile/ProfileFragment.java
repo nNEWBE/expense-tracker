@@ -36,10 +36,11 @@ public class ProfileFragment extends Fragment {
     private PreferenceManager preferenceManager;
     private ExpenseViewModel expenseViewModel;
     private AdminService adminService;
-
-    private TextView tvName, tvEmail, tvCurrency, tvBudget, tvTheme;
+    
+    private TextView tvHeaderName, tvName, tvEmail, tvCurrency, tvBudget, tvTheme;
     private Chip chipGuestMode;
     private LinearLayout layoutAdmin;
+    private View dividerAdmin;
 
     @Nullable
     @Override
@@ -63,6 +64,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void initViews(View view) {
+        tvHeaderName = view.findViewById(R.id.tvHeaderName);
         tvName = view.findViewById(R.id.tvName);
         tvEmail = view.findViewById(R.id.tvEmail);
         tvCurrency = view.findViewById(R.id.tvCurrency);
@@ -70,15 +72,19 @@ public class ProfileFragment extends Fragment {
         tvTheme = view.findViewById(R.id.tvTheme);
         chipGuestMode = view.findViewById(R.id.chipGuestMode);
         layoutAdmin = view.findViewById(R.id.layoutAdmin);
+        dividerAdmin = view.findViewById(R.id.dividerAdmin);
     }
 
     private void loadUserData() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            tvName.setText(user.getDisplayName() != null ? user.getDisplayName() : "User");
+            String displayName = user.getDisplayName() != null ? user.getDisplayName() : "User";
+            tvHeaderName.setText(displayName);
+            tvName.setText(displayName);
             tvEmail.setText(user.getEmail());
             chipGuestMode.setVisibility(View.GONE);
         } else {
+            tvHeaderName.setText("Guest User");
             tvName.setText("Guest User");
             tvEmail.setText("No account");
             chipGuestMode.setVisibility(View.VISIBLE);
@@ -97,13 +103,15 @@ public class ProfileFragment extends Fragment {
     }
 
     private void checkAdminAccess() {
-        if (layoutAdmin != null) {
+        if (layoutAdmin != null && dividerAdmin != null) {
             layoutAdmin.setVisibility(View.GONE);
-
+            dividerAdmin.setVisibility(View.GONE);
+            
             adminService.checkAdminStatus(isAdmin -> {
                 if (isAdmin && getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         layoutAdmin.setVisibility(View.VISIBLE);
+                        dividerAdmin.setVisibility(View.VISIBLE);
                     });
                 }
             });
