@@ -44,7 +44,7 @@
             android:layout_marginTop="4dp"
             android:text="Today, 10:00 AM"
             android:textAppearance="?attr/textAppearanceBodySmall"
-            android:textColor="?attr/onSurfaceVariant"
+            android:textColor="?attr/colorOnSurfaceVariant"
             app:layout_constraintStart_toStartOf="@id/tvCategory"
             app:layout_constraintTop_toBottomOf="@id/tvCategory" />
 
