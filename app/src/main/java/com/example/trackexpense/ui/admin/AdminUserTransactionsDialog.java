@@ -39,6 +39,11 @@ import java.util.Locale;
 
 public class AdminUserTransactionsDialog extends DialogFragment {
 
+    // Listener interface for category selection
+    interface OnCategorySelectedListener {
+        void onSelected(String category);
+    }
+
     private User user;
     private AdminService adminService;
     private RecyclerView rvTransactions;
@@ -248,10 +253,6 @@ public class AdminUserTransactionsDialog extends DialogFragment {
         private String[] categories;
         private String selectedCategory = null;
         private OnCategorySelectedListener listener;
-
-        interface OnCategorySelectedListener {
-            void onSelected(String category);
-        }
 
         CategorySelectionAdapter(String[] categories, OnCategorySelectedListener listener) {
             this.categories = categories;
