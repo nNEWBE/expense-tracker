@@ -7,6 +7,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
@@ -25,6 +26,7 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,6 +108,7 @@ public class AdminUsersFragment extends Fragment {
 
     private void showUserActions(User user, View anchor) {
         PopupMenu popup = new PopupMenu(requireContext(), anchor);
+        popup.getMenu().add("Edit Username");
         popup.getMenu().add(user.isBlocked() ? "Unblock User" : "Block User");
         popup.getMenu().add("View Transactions");
         popup.getMenu().add(user.isAdmin() ? "Remove Admin" : "Make Admin");
@@ -113,7 +116,9 @@ public class AdminUsersFragment extends Fragment {
 
         popup.setOnMenuItemClickListener(item -> {
             String title = item.getTitle().toString();
-            if (title.contains("Block")) {
+            if (title.equals("Edit Username")) {
+                showEditUsernameDialog(user);
+            } else if (title.contains("Block")) {
                 toggleBlockUser(user);
             } else if (title.equals("View Transactions")) {
                 viewUserTransactions(user);
@@ -126,6 +131,36 @@ public class AdminUsersFragment extends Fragment {
         });
 
         popup.show();
+    }
+
+    private void showEditUsernameDialog(User user) {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_username, null);
+
+        TextInputEditText etUsername = dialogView.findViewById(R.id.etUsername);
+        etUsername.setText(user.getDisplayName());
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Edit Username")
+                .setView(dialogView)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String newName = etUsername.getText() != null ? etUsername.getText().toString().trim() : "";
+                    if (!newName.isEmpty()) {
+                        user.setDisplayName(newName);
+                        adminService.updateUser(user, new AdminService.OnCompleteListener() {
+                            @Override
+                            public void onSuccess() {
+                                Snackbar.make(requireView(), "Username updated", Snackbar.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onFailure(Exception e) {
+                                Snackbar.make(requireView(), "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void toggleBlockUser(User user) {
@@ -163,7 +198,6 @@ public class AdminUsersFragment extends Fragment {
     }
 
     private void viewUserTransactions(User user) {
-        // Launch user transactions activity/dialog
         AdminUserTransactionsDialog dialog = new AdminUserTransactionsDialog(user);
         dialog.show(getParentFragmentManager(), "user_transactions");
     }
@@ -172,12 +206,12 @@ public class AdminUsersFragment extends Fragment {
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Delete User")
                 .setMessage("Are you sure you want to delete " + user.getEmail()
-                        + "? This will also delete all their transactions.")
+                        + "?\n\nThis will permanently delete:\n• User account\n• All transactions\n• All data")
                 .setPositiveButton("Delete", (dialog, which) -> {
                     adminService.deleteUser(user.getId(), new AdminService.OnCompleteListener() {
                         @Override
                         public void onSuccess() {
-                            Snackbar.make(requireView(), "User deleted", Snackbar.LENGTH_SHORT).show();
+                            Snackbar.make(requireView(), "User deleted successfully", Snackbar.LENGTH_SHORT).show();
                         }
 
                         @Override
@@ -234,7 +268,9 @@ public class AdminUsersFragment extends Fragment {
             }
 
             public void bind(User user) {
-                String name = user.getDisplayName() != null ? user.getDisplayName() : user.getEmail();
+                String name = user.getDisplayName() != null && !user.getDisplayName().isEmpty()
+                        ? user.getDisplayName()
+                        : user.getEmail();
                 tvName.setText(name);
                 tvEmail.setText(user.getEmail());
 
@@ -259,6 +295,9 @@ public class AdminUsersFragment extends Fragment {
                 chipAdmin.setVisibility(user.isAdmin() ? View.VISIBLE : View.GONE);
 
                 btnMore.setOnClickListener(v -> showUserActions(user, v));
+
+                // Click on item to edit username
+                itemView.setOnClickListener(v -> showEditUsernameDialog(user));
             }
         }
     }
