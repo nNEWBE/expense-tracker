@@ -112,6 +112,25 @@
             android:inputType="textPassword" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilPhone"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:hint="Phone Number (with country code)"
+        app:helperText="e.g., +8801XXXXXXXXX"
+        app:helperTextEnabled="true"
+        app:layout_constraintTop_toBottomOf="@id/tilConfirmPassword"
+        app:startIconDrawable="@drawable/ic_phone">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etPhone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="phone" />
+    </com.google.android.material.textfield.TextInputLayout>
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnRegister"
         android:layout_width="match_parent"
@@ -120,7 +139,7 @@
         android:text="Create Account"
         android:textAllCaps="false"
         app:cornerRadius="12dp"
-        app:layout_constraintTop_toBottomOf="@id/tilConfirmPassword" />
+        app:layout_constraintTop_toBottomOf="@id/tilPhone" />
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/progressBar"

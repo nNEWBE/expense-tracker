@@ -18,7 +18,7 @@ import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private TextInputEditText etName, etEmail, etPassword, etConfirmPassword;
+    private TextInputEditText etName, etEmail, etPassword, etConfirmPassword, etPhone;
     private MaterialButton btnRegister;
     private CircularProgressIndicator progressBar;
     private TextView tvLogin;
@@ -35,6 +35,7 @@ public class RegisterActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
+        etPhone = findViewById(R.id.etPhone);
         btnRegister = findViewById(R.id.btnRegister);
         progressBar = findViewById(R.id.progressBar);
         tvLogin = findViewById(R.id.tvLogin);
@@ -51,6 +52,7 @@ public class RegisterActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
         String confirmPassword = etConfirmPassword.getText().toString().trim();
+        String phone = etPhone.getText().toString().trim();
 
         if (name.isEmpty()) {
             etName.setError("Name required");
@@ -72,6 +74,14 @@ public class RegisterActivity extends AppCompatActivity {
             etConfirmPassword.setError("Passwords do not match");
             return;
         }
+        if (phone.isEmpty()) {
+            etPhone.setError("Phone number required");
+            return;
+        }
+        if (!phone.startsWith("+")) {
+            etPhone.setError("Include country code (e.g., +880)");
+            return;
+        }
 
         showLoading(true);
 
@@ -86,29 +96,20 @@ public class RegisterActivity extends AppCompatActivity {
                                     .build();
                             user.updateProfile(profileUpdates)
                                     .addOnCompleteListener(profileTask -> {
-                                        // Send verification email
-                                        sendVerificationEmail(user);
+                                        showLoading(false);
+                                        // Navigate to phone verification
+                                        Intent intent = new Intent(this, VerifyEmailActivity.class);
+                                        intent.putExtra("phone_number", phone);
+                                        intent.putExtra("user_name", name);
+                                        intent.putExtra("user_email", email);
+                                        startActivity(intent);
+                                        finish();
                                     });
                         }
                     } else {
                         showLoading(false);
                         Toast.makeText(this, "Registration failed: " + task.getException().getMessage(),
                                 Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void sendVerificationEmail(FirebaseUser user) {
-        user.sendEmailVerification()
-                .addOnCompleteListener(task -> {
-                    showLoading(false);
-                    if (task.isSuccessful()) {
-                        // Navigate to verification screen
-                        Intent intent = new Intent(this, VerifyEmailActivity.class);
-                        startActivity(intent);
-                        finish();
-                    } else {
-                        Toast.makeText(this, "Failed to send verification email", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
