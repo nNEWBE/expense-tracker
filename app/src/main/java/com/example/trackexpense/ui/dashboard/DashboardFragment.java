@@ -12,6 +12,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
@@ -34,6 +36,8 @@ public class DashboardFragment extends Fragment {
     private TextView tvTotalExpense, tvRemainingBudget, tvTodaySpend;
     private PieChart pieChart;
     private LineChart lineChart;
+    private RecyclerView rvRecentTransactions;
+    private ExpenseAdapter expenseAdapter;
 
     @Nullable
     @Override
@@ -52,12 +56,21 @@ public class DashboardFragment extends Fragment {
         tvTodaySpend = view.findViewById(R.id.tvTodaySpend);
         pieChart = view.findViewById(R.id.pieChart);
         lineChart = view.findViewById(R.id.lineChart);
+        rvRecentTransactions = view.findViewById(R.id.rvRecentTransactions);
+
+        setupRecyclerView();
 
         ExtendedFloatingActionButton fab = view.findViewById(R.id.fabAddExpense);
         fab.setOnClickListener(
                 v -> Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_addExpenseFragment));
 
         setupObservers();
+    }
+
+    private void setupRecyclerView() {
+        expenseAdapter = new ExpenseAdapter();
+        rvRecentTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvRecentTransactions.setAdapter(expenseAdapter);
     }
 
     private void setupObservers() {
@@ -72,6 +85,7 @@ public class DashboardFragment extends Fragment {
 
         expenseViewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
             updateCharts(expenses);
+            expenseAdapter.setExpenses(expenses);
         });
     }
 
