@@ -1,5 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Primary Colors - Modern Teal -->
+    <color name="primary">#00897B</color>
+    <color name="primary_variant">#00695C</color>
+    <color name="on_primary">#FFFFFF</color>
+    
+    <!-- Secondary Colors - Amber Accent -->
+    <color name="secondary">#FFB300</color>
+    <color name="secondary_variant">#FF8F00</color>
+    <color name="on_secondary">#000000</color>
+    
+    <!-- Background Colors -->
+    <color name="background_light">#FAFAFA</color>
+    <color name="surface_light">#FFFFFF</color>
+    <color name="on_background_light">#1C1B1F</color>
+    <color name="on_surface_light">#1C1B1F</color>
+    
+    <color name="background_dark">#121212</color>
+    <color name="surface_dark">#1E1E1E</color>
+    <color name="on_background_dark">#E6E1E5</color>
+    <color name="on_surface_dark">#E6E1E5</color>
+    
+    <!-- Status Colors -->
+    <color name="income_green">#4CAF50</color>
+    <color name="expense_red">#F44336</color>
+    <color name="warning_yellow">#FFC107</color>
+    <color name="info_blue">#2196F3</color>
+    
+    <!-- Budget Indicators -->
+    <color name="budget_safe">#4CAF50</color>
+    <color name="budget_warning">#FF9800</color>
+    <color name="budget_danger">#F44336</color>
+    
+    <!-- Chart Colors -->
+    <color name="chart_1">#00897B</color>
+    <color name="chart_2">#FFB300</color>
+    <color name="chart_3">#7E57C2</color>
+    <color name="chart_4">#EC407A</color>
+    <color name="chart_5">#42A5F5</color>
+    <color name="chart_6">#66BB6A</color>
+    
+    <!-- Legacy -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>

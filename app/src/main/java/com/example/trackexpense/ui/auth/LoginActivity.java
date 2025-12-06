@@ -2,21 +2,30 @@ package com.example.trackexpense.ui.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
+import com.example.trackexpense.utils.PreferenceManager;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class LoginActivity extends AppCompatActivity {
 
     private TextInputEditText etEmail, etPassword;
     private MaterialButton btnLogin, btnGuest;
+    private TextView tvForgotPassword, tvRegister;
+    private CircularProgressIndicator progressBar;
     private FirebaseAuth mAuth;
+    private PreferenceManager preferenceManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,39 +33,100 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         mAuth = FirebaseAuth.getInstance();
+        preferenceManager = new PreferenceManager(this);
 
+        initViews();
+        setupClickListeners();
+    }
+
+    private void initViews() {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         btnGuest = findViewById(R.id.btnGuest);
+        tvForgotPassword = findViewById(R.id.tvForgotPassword);
+        tvRegister = findViewById(R.id.tvRegister);
+        progressBar = findViewById(R.id.progressBar);
+    }
 
+    private void setupClickListeners() {
         btnLogin.setOnClickListener(v -> loginUser());
         btnGuest.setOnClickListener(v -> continueAsGuest());
+        tvForgotPassword.setOnClickListener(v -> showForgotPasswordDialog());
+        tvRegister.setOnClickListener(v -> {
+            startActivity(new Intent(this, RegisterActivity.class));
+        });
     }
 
     private void loginUser() {
-        String email = etEmail.getText().toString();
-        String password = etPassword.getText().toString();
+        String email = etEmail.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
 
-        if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+        if (email.isEmpty()) {
+            etEmail.setError("Email required");
+            return;
+        }
+        if (password.isEmpty()) {
+            etPassword.setError("Password required");
             return;
         }
 
+        showLoading(true);
+
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
+                    showLoading(false);
                     if (task.isSuccessful()) {
+                        preferenceManager.setGuestMode(false);
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(LoginActivity.this, "Authentication Failed.", Toast.LENGTH_SHORT).show();
+                        String error = task.getException() != null ? task.getException().getMessage()
+                                : "Authentication failed";
+                        Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
                     }
                 });
     }
 
     private void continueAsGuest() {
-        // Guest mode logic - maybe set a flag in shared prefs
+        preferenceManager.setGuestMode(true);
         startActivity(new Intent(LoginActivity.this, MainActivity.class));
         finish();
+    }
+
+    private void showForgotPasswordDialog() {
+        TextInputEditText input = new TextInputEditText(this);
+        input.setHint("Enter your email");
+        input.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Reset Password")
+                .setMessage("We'll send you a password reset link.")
+                .setView(input)
+                .setPositiveButton("Send", (dialog, which) -> {
+                    String email = input.getText().toString().trim();
+                    if (!email.isEmpty()) {
+                        mAuth.sendPasswordResetEmail(email)
+                                .addOnCompleteListener(task -> {
+                                    if (task.isSuccessful()) {
+                                        Toast.makeText(this, "Reset email sent!", Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(this, "Failed to send reset email", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showLoading(boolean show) {
+        if (show) {
+            btnLogin.setVisibility(View.INVISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
+        } else {
+            btnLogin.setVisibility(View.VISIBLE);
+            progressBar.setVisibility(View.GONE);
+        }
     }
 }

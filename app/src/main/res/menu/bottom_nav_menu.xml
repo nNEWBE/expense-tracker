@@ -2,11 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/dashboardFragment"
-        android:icon="@android:drawable/ic_dialog_info"
+        android:icon="@android:drawable/ic_menu_today"
         android:title="Dashboard" />
+    
+    <item
+        android:id="@+id/transactionsFragment"
+        android:icon="@android:drawable/ic_menu_agenda"
+        android:title="Transactions" />
         
     <item
         android:id="@+id/profileFragment"
-        android:icon="@android:drawable/ic_menu_my_calendar"
+        android:icon="@android:drawable/ic_menu_myplaces"
         android:title="Profile" />
 </menu>

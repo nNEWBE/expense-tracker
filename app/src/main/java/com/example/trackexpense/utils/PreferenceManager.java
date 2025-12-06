@@ -1,0 +1,118 @@
+package com.example.trackexpense.utils;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
+public class PreferenceManager {
+
+    private static final String PREF_NAME = "expense_tracker_prefs";
+    private static final String KEY_CURRENCY = "currency";
+    private static final String KEY_MONTHLY_BUDGET = "monthly_budget";
+    private static final String KEY_WEEKLY_BUDGET = "weekly_budget";
+    private static final String KEY_GUEST_MODE = "guest_mode";
+    private static final String KEY_APP_LOCK_ENABLED = "app_lock_enabled";
+    private static final String KEY_APP_PIN = "app_pin";
+    private static final String KEY_BIOMETRIC_ENABLED = "biometric_enabled";
+    private static final String KEY_THEME_MODE = "theme_mode";
+    private static final String KEY_FIRST_LAUNCH = "first_launch";
+
+    private final SharedPreferences sharedPreferences;
+
+    public PreferenceManager(Context context) {
+        sharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+    }
+
+    // Currency
+    public void setCurrency(String currency) {
+        sharedPreferences.edit().putString(KEY_CURRENCY, currency).apply();
+    }
+
+    public String getCurrency() {
+        return sharedPreferences.getString(KEY_CURRENCY, "USD");
+    }
+
+    public String getCurrencySymbol() {
+        String currency = getCurrency();
+        switch (currency) {
+            case "BDT":
+                return "৳";
+            case "INR":
+                return "₹";
+            case "EUR":
+                return "€";
+            case "GBP":
+                return "£";
+            default:
+                return "$";
+        }
+    }
+
+    // Budget
+    public void setMonthlyBudget(double budget) {
+        sharedPreferences.edit().putFloat(KEY_MONTHLY_BUDGET, (float) budget).apply();
+    }
+
+    public double getMonthlyBudget() {
+        return sharedPreferences.getFloat(KEY_MONTHLY_BUDGET, 0f);
+    }
+
+    public void setWeeklyBudget(double budget) {
+        sharedPreferences.edit().putFloat(KEY_WEEKLY_BUDGET, (float) budget).apply();
+    }
+
+    public double getWeeklyBudget() {
+        return sharedPreferences.getFloat(KEY_WEEKLY_BUDGET, 0f);
+    }
+
+    // Guest Mode
+    public void setGuestMode(boolean isGuest) {
+        sharedPreferences.edit().putBoolean(KEY_GUEST_MODE, isGuest).apply();
+    }
+
+    public boolean isGuestMode() {
+        return sharedPreferences.getBoolean(KEY_GUEST_MODE, false);
+    }
+
+    // App Lock
+    public void setAppLockEnabled(boolean enabled) {
+        sharedPreferences.edit().putBoolean(KEY_APP_LOCK_ENABLED, enabled).apply();
+    }
+
+    public boolean isAppLockEnabled() {
+        return sharedPreferences.getBoolean(KEY_APP_LOCK_ENABLED, false);
+    }
+
+    public void setAppPin(String pin) {
+        sharedPreferences.edit().putString(KEY_APP_PIN, pin).apply();
+    }
+
+    public String getAppPin() {
+        return sharedPreferences.getString(KEY_APP_PIN, "");
+    }
+
+    public void setBiometricEnabled(boolean enabled) {
+        sharedPreferences.edit().putBoolean(KEY_BIOMETRIC_ENABLED, enabled).apply();
+    }
+
+    public boolean isBiometricEnabled() {
+        return sharedPreferences.getBoolean(KEY_BIOMETRIC_ENABLED, false);
+    }
+
+    // Theme
+    public void setThemeMode(int mode) {
+        sharedPreferences.edit().putInt(KEY_THEME_MODE, mode).apply();
+    }
+
+    public int getThemeMode() {
+        return sharedPreferences.getInt(KEY_THEME_MODE, -1); // -1 = system default
+    }
+
+    // First Launch
+    public void setFirstLaunch(boolean isFirst) {
+        sharedPreferences.edit().putBoolean(KEY_FIRST_LAUNCH, isFirst).apply();
+    }
+
+    public boolean isFirstLaunch() {
+        return sharedPreferences.getBoolean(KEY_FIRST_LAUNCH, true);
+    }
+}
