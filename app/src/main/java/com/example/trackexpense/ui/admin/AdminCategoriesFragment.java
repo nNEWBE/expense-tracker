@@ -38,6 +38,15 @@ import java.util.stream.Collectors;
 
 public class AdminCategoriesFragment extends Fragment {
 
+    // Listener interfaces
+    interface OnIconSelectedListener {
+        void onSelected(String iconName);
+    }
+
+    interface OnColorSelectedListener {
+        void onSelected(String colorHex);
+    }
+
     private AdminService adminService;
     private RecyclerView rvCategories;
     private TextInputEditText etSearch;
@@ -417,10 +426,6 @@ public class AdminCategoriesFragment extends Fragment {
         private String selectedIcon;
         private OnIconSelectedListener listener;
 
-        interface OnIconSelectedListener {
-            void onSelected(String iconName);
-        }
-
         IconAdapter(String selectedIcon, OnIconSelectedListener listener) {
             this.selectedIcon = selectedIcon;
             this.listener = listener;
@@ -486,10 +491,6 @@ public class AdminCategoriesFragment extends Fragment {
     class ColorAdapter extends RecyclerView.Adapter<ColorAdapter.ViewHolder> {
         private String selectedColor;
         private OnColorSelectedListener listener;
-
-        interface OnColorSelectedListener {
-            void onSelected(String colorHex);
-        }
 
         ColorAdapter(String selectedColor, OnColorSelectedListener listener) {
             this.selectedColor = selectedColor;
