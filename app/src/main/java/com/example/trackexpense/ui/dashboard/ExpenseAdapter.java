@@ -23,6 +23,8 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
 
     private List<Expense> expenses = new ArrayList<>();
     private OnItemClickListener listener;
+    private OnItemLongClickListener longClickListener;
+    private String currencySymbol = "$";
 
     @NonNull
     @Override
@@ -47,16 +49,35 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
         notifyDataSetChanged();
     }
 
+    public void setCurrencySymbol(String symbol) {
+        this.currencySymbol = symbol;
+    }
+
+    public Expense getExpenseAt(int position) {
+        if (position >= 0 && position < expenses.size()) {
+            return expenses.get(position);
+        }
+        return null;
+    }
+
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
+    }
+
+    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+        this.longClickListener = listener;
     }
 
     public interface OnItemClickListener {
         void onItemClick(Expense expense);
     }
 
+    public interface OnItemLongClickListener {
+        void onItemLongClick(Expense expense, int position);
+    }
+
     class ExpenseViewHolder extends RecyclerView.ViewHolder {
-        private TextView tvCategory, tvDate, tvAmount;
+        private TextView tvCategory, tvDate, tvAmount, tvNotes;
         private ImageView ivIcon;
 
         public ExpenseViewHolder(@NonNull View itemView) {
@@ -64,6 +85,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
             tvCategory = itemView.findViewById(R.id.tvCategory);
             tvDate = itemView.findViewById(R.id.tvDate);
             tvAmount = itemView.findViewById(R.id.tvAmount);
+            tvNotes = itemView.findViewById(R.id.tvNotes);
             ivIcon = itemView.findViewById(R.id.ivIcon);
 
             itemView.setOnClickListener(v -> {
@@ -71,6 +93,15 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
                 if (listener != null && position != RecyclerView.NO_POSITION) {
                     listener.onItemClick(expenses.get(position));
                 }
+            });
+
+            itemView.setOnLongClickListener(v -> {
+                int position = getAdapterPosition();
+                if (longClickListener != null && position != RecyclerView.NO_POSITION) {
+                    longClickListener.onItemLongClick(expenses.get(position), position);
+                    return true;
+                }
+                return false;
             });
         }
 
@@ -80,14 +111,22 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
             SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault());
             tvDate.setText(sdf.format(new Date(expense.getDate())));
 
+            // Show notes if available
+            if (tvNotes != null) {
+                if (expense.getNotes() != null && !expense.getNotes().isEmpty()) {
+                    tvNotes.setText(expense.getNotes());
+                    tvNotes.setVisibility(View.VISIBLE);
+                } else {
+                    tvNotes.setVisibility(View.GONE);
+                }
+            }
+
             if ("INCOME".equals(expense.getType())) {
-                tvAmount.setText(String.format("+ $%.2f", expense.getAmount()));
-                tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), android.R.color.holo_green_dark));
-                ivIcon.setBackgroundResource(R.drawable.circle_background); // Green bg logic can be added
-                // Update tint to green for income if desired
+                tvAmount.setText(String.format("+ %s%.2f", currencySymbol, expense.getAmount()));
+                tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.income_green));
             } else {
-                tvAmount.setText(String.format("- $%.2f", expense.getAmount()));
-                tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), android.R.color.holo_red_dark));
+                tvAmount.setText(String.format("- %s%.2f", currencySymbol, expense.getAmount()));
+                tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.expense_red));
             }
         }
     }

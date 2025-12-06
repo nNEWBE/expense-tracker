@@ -22,6 +22,8 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
 import com.example.trackexpense.utils.CategoryDetector;
+import com.example.trackexpense.utils.NotificationHelper;
+import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.viewmodel.ExpenseViewModel;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -34,6 +36,8 @@ import java.util.Calendar;
 public class AddExpenseFragment extends Fragment {
 
     private ExpenseViewModel viewModel;
+    private PreferenceManager preferenceManager;
+    private NotificationHelper notificationHelper;
     private Calendar selectedDate = Calendar.getInstance();
     private String selectedType = "EXPENSE";
 
@@ -56,6 +60,8 @@ public class AddExpenseFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(ExpenseViewModel.class);
+        preferenceManager = new PreferenceManager(requireContext());
+        notificationHelper = new NotificationHelper(requireContext());
 
         initViews(view);
         setupToolbar();
@@ -168,8 +174,31 @@ public class AddExpenseFragment extends Fragment {
             Expense expense = new Expense(amount, category, selectedDate.getTimeInMillis(), notes, selectedType);
             viewModel.insert(expense);
 
+            // Show notification
+            String symbol = preferenceManager.getCurrencySymbol();
+            notificationHelper.showTransactionAddedNotification(selectedType, amount, category, symbol);
+
+            // Check budget warning
+            checkBudgetStatus(amount);
+
             Snackbar.make(v, "Transaction saved successfully!", Snackbar.LENGTH_SHORT).show();
             NavHostFragment.findNavController(this).popBackStack();
         });
+    }
+
+    private void checkBudgetStatus(double newAmount) {
+        if ("EXPENSE".equals(selectedType)) {
+            double budget = preferenceManager.getMonthlyBudget();
+            if (budget > 0) {
+                // Get total expenses and check if budget exceeded
+                viewModel.getTotalExpense().observe(getViewLifecycleOwner(), totalExpense -> {
+                    if (totalExpense != null) {
+                        double total = totalExpense + newAmount;
+                        String symbol = preferenceManager.getCurrencySymbol();
+                        notificationHelper.showBudgetWarningNotification(total, budget, symbol);
+                    }
+                });
+            }
+        }
     }
 }
