@@ -3,12 +3,10 @@ package com.example.trackexpense.ui.splash;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 
-import com.airbnb.lottie.LottieAnimationView;
 import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
 import com.example.trackexpense.ui.auth.LoginActivity;
@@ -17,17 +15,19 @@ import com.google.firebase.auth.FirebaseAuth;
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
 
-    private static final int SPLASH_DURATION = 2500;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Install splash screen before super.onCreate
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        LottieAnimationView animationView = findViewById(R.id.animationView);
-        animationView.playAnimation();
+        // Keep splash screen visible while loading
+        splashScreen.setKeepOnScreenCondition(() -> false);
 
-        new Handler(Looper.getMainLooper()).postDelayed(this::navigateToNextScreen, SPLASH_DURATION);
+        // Navigate immediately
+        navigateToNextScreen();
     }
 
     private void navigateToNextScreen() {
@@ -43,7 +43,6 @@ public class SplashActivity extends AppCompatActivity {
         }
 
         startActivity(intent);
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         finish();
     }
 }

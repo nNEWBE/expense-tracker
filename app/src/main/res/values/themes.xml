@@ -31,6 +31,7 @@
 
     <style name="Theme.TrackExpense.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_salary</item>
         <item name="postSplashScreenTheme">@style/Theme.TrackExpense</item>
     </style>
 
