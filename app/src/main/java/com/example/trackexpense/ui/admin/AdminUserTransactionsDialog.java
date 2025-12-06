@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,6 +25,7 @@ import com.example.trackexpense.data.remote.AdminService;
 import com.example.trackexpense.utils.CategoryHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -103,19 +105,43 @@ public class AdminUserTransactionsDialog extends DialogFragment {
         TextView tvDialogTitle = dialogView.findViewById(R.id.tvDialogTitle);
         MaterialButtonToggleGroup toggleType = dialogView.findViewById(R.id.toggleType);
         TextInputEditText etAmount = dialogView.findViewById(R.id.etAmount);
-        TextInputEditText etCategory = dialogView.findViewById(R.id.etCategory);
+        RecyclerView rvCategories = dialogView.findViewById(R.id.rvCategories);
         TextInputEditText etNotes = dialogView.findViewById(R.id.etNotes);
         MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
         MaterialButton btnSave = dialogView.findViewById(R.id.btnSave);
 
+        // Category selection state
+        final String[] selectedCategory = { null };
+
+        // Setup category grid
+        rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 4));
+        CategorySelectionAdapter categoryAdapter = new CategorySelectionAdapter(
+                CategoryHelper.EXPENSE_CATEGORIES,
+                category -> selectedCategory[0] = category);
+        rvCategories.setAdapter(categoryAdapter);
+
+        // Handle type toggle to switch categories
+        toggleType.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) {
+                String[] categories = checkedId == R.id.btnIncome
+                        ? CategoryHelper.INCOME_CATEGORIES
+                        : CategoryHelper.EXPENSE_CATEGORIES;
+                categoryAdapter.setCategories(categories);
+                selectedCategory[0] = null; // Reset selection
+            }
+        });
+
         if (existingExpense != null) {
             tvDialogTitle.setText("Edit Transaction");
             etAmount.setText(String.valueOf(existingExpense.getAmount()));
-            etCategory.setText(existingExpense.getCategory());
             etNotes.setText(existingExpense.getNotes());
+            selectedCategory[0] = existingExpense.getCategory();
+
             if ("INCOME".equals(existingExpense.getType())) {
                 toggleType.check(R.id.btnIncome);
+                categoryAdapter.setCategories(CategoryHelper.INCOME_CATEGORIES);
             }
+            categoryAdapter.setSelectedCategory(existingExpense.getCategory());
         } else {
             tvDialogTitle.setText("Add Transaction");
         }
@@ -128,15 +154,14 @@ public class AdminUserTransactionsDialog extends DialogFragment {
 
         btnSave.setOnClickListener(v -> {
             String amountStr = etAmount.getText() != null ? etAmount.getText().toString().trim() : "";
-            String category = etCategory.getText() != null ? etCategory.getText().toString().trim() : "";
             String notes = etNotes.getText() != null ? etNotes.getText().toString().trim() : "";
 
             if (amountStr.isEmpty()) {
                 etAmount.setError("Required");
                 return;
             }
-            if (category.isEmpty()) {
-                etCategory.setError("Required");
+            if (selectedCategory[0] == null) {
+                showSnackbar("Please select a category");
                 return;
             }
 
@@ -153,7 +178,7 @@ public class AdminUserTransactionsDialog extends DialogFragment {
             if (existingExpense != null) {
                 // Update existing
                 existingExpense.setAmount(amount);
-                existingExpense.setCategory(category);
+                existingExpense.setCategory(selectedCategory[0]);
                 existingExpense.setNotes(notes);
                 existingExpense.setType(type);
 
@@ -171,7 +196,7 @@ public class AdminUserTransactionsDialog extends DialogFragment {
                 });
             } else {
                 // Add new transaction
-                adminService.addTransaction(user.getId(), amount, category, notes, type,
+                adminService.addTransaction(user.getId(), amount, selectedCategory[0], notes, type,
                         new AdminService.OnCompleteListener() {
                             @Override
                             public void onSuccess() {
@@ -218,7 +243,112 @@ public class AdminUserTransactionsDialog extends DialogFragment {
         }
     }
 
-    // Adapter
+    // Category Selection Adapter
+    class CategorySelectionAdapter extends RecyclerView.Adapter<CategorySelectionAdapter.ViewHolder> {
+        private String[] categories;
+        private String selectedCategory = null;
+        private OnCategorySelectedListener listener;
+
+        interface OnCategorySelectedListener {
+            void onSelected(String category);
+        }
+
+        CategorySelectionAdapter(String[] categories, OnCategorySelectedListener listener) {
+            this.categories = categories;
+            this.listener = listener;
+        }
+
+        public void setCategories(String[] categories) {
+            this.categories = categories;
+            this.selectedCategory = null;
+            notifyDataSetChanged();
+        }
+
+        public void setSelectedCategory(String category) {
+            this.selectedCategory = category;
+            notifyDataSetChanged();
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_category, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            holder.bind(categories[position]);
+        }
+
+        @Override
+        public int getItemCount() {
+            return categories.length;
+        }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            MaterialCardView cardView;
+            View iconBg;
+            ImageView ivIcon;
+            TextView tvName;
+
+            ViewHolder(View itemView) {
+                super(itemView);
+                cardView = (MaterialCardView) itemView;
+                iconBg = itemView.findViewById(R.id.iconBg);
+                ivIcon = itemView.findViewById(R.id.ivIcon);
+                tvName = itemView.findViewById(R.id.tvCategoryName);
+            }
+
+            void bind(String category) {
+                tvName.setText(category);
+
+                CategoryHelper.CategoryInfo info = CategoryHelper.getCategoryInfo(category);
+                ivIcon.setImageResource(info.iconRes);
+                ivIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), android.R.color.white));
+
+                GradientDrawable bg = new GradientDrawable();
+                bg.setShape(GradientDrawable.OVAL);
+                bg.setColor(ContextCompat.getColor(itemView.getContext(), info.colorRes));
+                iconBg.setBackground(bg);
+
+                // Selection state
+                boolean isSelected = category.equals(selectedCategory);
+                if (isSelected) {
+                    cardView.setStrokeColor(ContextCompat.getColor(itemView.getContext(), R.color.primary));
+                    cardView.setStrokeWidth(4);
+                } else {
+                    cardView.setStrokeWidth(0);
+                }
+
+                itemView.setOnClickListener(v -> {
+                    String oldSelected = selectedCategory;
+                    selectedCategory = category;
+
+                    if (oldSelected != null) {
+                        int oldPos = findCategoryPosition(oldSelected);
+                        if (oldPos >= 0)
+                            notifyItemChanged(oldPos);
+                    }
+                    notifyItemChanged(getAdapterPosition());
+
+                    if (listener != null) {
+                        listener.onSelected(category);
+                    }
+                });
+            }
+
+            private int findCategoryPosition(String category) {
+                for (int i = 0; i < categories.length; i++) {
+                    if (categories[i].equals(category))
+                        return i;
+                }
+                return -1;
+            }
+        }
+    }
+
+    // Transaction Adapter
     class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.ViewHolder> {
         private List<Expense> expenses = new ArrayList<>();
 
