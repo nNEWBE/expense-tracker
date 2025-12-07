@@ -49,9 +49,13 @@
         app:cardElevation="0dp">
 
         <ScrollView
+            android:id="@+id/scrollView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true">
+            android:fillViewport="true"
+            android:scrollbars="none"
+            android:overScrollMode="never"
+            android:clipToPadding="false">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -59,7 +63,7 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="32dp"
                 android:paddingTop="32dp"
-                android:paddingBottom="24dp">
+                android:paddingBottom="40dp">
 
                 <!-- Title -->
                 <TextView
@@ -149,45 +153,6 @@
 
                 </LinearLayout>
 
-                <!-- Phone Number -->
-                <TextView
-                    android:id="@+id/tvPhoneLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:alpha="0"
-                    android:text="Phone Number"
-                    android:textColor="#888888"
-                    android:textSize="14sp" />
-
-                <LinearLayout
-                    android:id="@+id/phoneContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:alpha="0"
-                    android:background="@drawable/input_underline_gray"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_phone"
-                        app:tint="#888888" />
-
-                    <EditText
-                        android:id="@+id/etPhone"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="12dp"
-                        android:background="@null"
-                        android:inputType="phone"
-                        android:text="+88"
-                        android:textColor="#333333"
-                        android:textSize="16sp" />
-
-                </LinearLayout>
-
                 <!-- Password -->
                 <TextView
                     android:id="@+id/tvPasswordLabel"
@@ -233,13 +198,6 @@
                         app:tint="#888888" />
 
                 </LinearLayout>
-
-                <!-- Hidden confirm password (same as password for simplicity) -->
-                <EditText
-                    android:id="@+id/etConfirmPassword"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:visibility="gone" />
 
                 <!-- Sign Up Button -->
                 <com.google.android.material.button.MaterialButton
@@ -359,7 +317,6 @@
 
             </LinearLayout>
         </ScrollView>
-
     </com.google.android.material.card.MaterialCardView>
 
 </FrameLayout>

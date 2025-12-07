@@ -8,31 +8,27 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.ScrollView;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
+import com.example.trackexpense.utils.BeautifulNotification;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserProfileChangeRequest;
-import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private EditText etName, etEmail, etPassword, etPhone;
+    private EditText etName, etEmail, etPassword;
     private MaterialButton btnRegister;
     private CircularProgressIndicator progressBar;
     private FirebaseAuth mAuth;
@@ -41,8 +37,9 @@ public class RegisterActivity extends AppCompatActivity {
     private MaterialCardView formCard;
     private View sphere1, sphere2, sphere3;
     private View tvTitle, tvNameLabel, nameContainer, tvEmailLabel, emailContainer;
-    private View tvPhoneLabel, phoneContainer, tvPasswordLabel, passwordContainer;
+    private View tvPasswordLabel, passwordContainer;
     private View loginContainer, dividerContainer, btnGuest, tvBack;
+    private ScrollView scrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +57,6 @@ public class RegisterActivity extends AppCompatActivity {
         etName = findViewById(R.id.etName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
-        etPhone = findViewById(R.id.etPhone);
         btnRegister = findViewById(R.id.btnRegister);
         progressBar = findViewById(R.id.progressBar);
 
@@ -74,17 +70,32 @@ public class RegisterActivity extends AppCompatActivity {
         nameContainer = findViewById(R.id.nameContainer);
         tvEmailLabel = findViewById(R.id.tvEmailLabel);
         emailContainer = findViewById(R.id.emailContainer);
-        tvPhoneLabel = findViewById(R.id.tvPhoneLabel);
-        phoneContainer = findViewById(R.id.phoneContainer);
         tvPasswordLabel = findViewById(R.id.tvPasswordLabel);
         passwordContainer = findViewById(R.id.passwordContainer);
         loginContainer = findViewById(R.id.loginContainer);
         dividerContainer = findViewById(R.id.dividerContainer);
         btnGuest = findViewById(R.id.btnGuest);
         tvBack = findViewById(R.id.tvBack);
+        scrollView = findViewById(R.id.scrollView);
 
-        // Ensure phone always has +88 prefix
-        setupPhonePrefix();
+        // Setup auto-scroll when fields get focus
+        setupAutoScrollOnFocus();
+    }
+
+    private void setupAutoScrollOnFocus() {
+        View.OnFocusChangeListener scrollToFocusedView = (v, hasFocus) -> {
+            if (hasFocus && scrollView != null) {
+                // Post to ensure view is laid out
+                scrollView.post(() -> {
+                    // Scroll the view into visible area
+                    scrollView.smoothScrollTo(0, v.getBottom());
+                });
+            }
+        };
+
+        etName.setOnFocusChangeListener(scrollToFocusedView);
+        etEmail.setOnFocusChangeListener(scrollToFocusedView);
+        etPassword.setOnFocusChangeListener(scrollToFocusedView);
     }
 
     private void startEntranceAnimations() {
@@ -110,10 +121,8 @@ public class RegisterActivity extends AppCompatActivity {
         animateViewSlideUp(nameContainer, 520, 25f);
         animateViewSlideUp(tvEmailLabel, 560, 25f);
         animateViewSlideUp(emailContainer, 600, 25f);
-        animateViewSlideUp(tvPhoneLabel, 640, 25f);
-        animateViewSlideUp(phoneContainer, 680, 25f);
-        animateViewSlideUp(tvPasswordLabel, 720, 25f);
-        animateViewSlideUp(passwordContainer, 760, 25f);
+        animateViewSlideUp(tvPasswordLabel, 640, 25f);
+        animateViewSlideUp(passwordContainer, 680, 25f);
 
         // Button with scale effect
         btnRegister.setScaleX(0.8f);
@@ -126,14 +135,14 @@ public class RegisterActivity extends AppCompatActivity {
         btnAnim.playTogether(btnScaleX, btnScaleY, btnAlpha);
         btnAnim.setDuration(400);
         btnAnim.setInterpolator(new OvershootInterpolator(1.2f));
-        btnAnim.setStartDelay(850);
+        btnAnim.setStartDelay(750);
         btnAnim.start();
 
         // Bottom elements fade in
-        animateViewFadeIn(loginContainer, 920);
-        animateViewFadeIn(dividerContainer, 960);
-        animateViewFadeIn(btnGuest, 1000);
-        animateViewFadeIn(tvBack, 1040);
+        animateViewFadeIn(loginContainer, 820);
+        animateViewFadeIn(dividerContainer, 860);
+        animateViewFadeIn(btnGuest, 900);
+        animateViewFadeIn(tvBack, 940);
 
         // Start floating spheres
         new Handler(Looper.getMainLooper()).postDelayed(this::startFloatingAnimations, 600);
@@ -208,29 +217,6 @@ public class RegisterActivity extends AppCompatActivity {
         }
     }
 
-    private void setupPhonePrefix() {
-        etPhone.addTextChangedListener(new android.text.TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(android.text.Editable s) {
-                String text = s.toString();
-                if (!text.startsWith("+88")) {
-                    etPhone.removeTextChangedListener(this);
-                    etPhone.setText("+88");
-                    etPhone.setSelection(etPhone.getText().length());
-                    etPhone.addTextChangedListener(this);
-                }
-            }
-        });
-    }
-
     private void setupListeners() {
         btnRegister.setOnClickListener(v -> registerUser());
 
@@ -269,7 +255,6 @@ public class RegisterActivity extends AppCompatActivity {
         String name = etName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
-        String phone = etPhone.getText().toString().trim();
 
         // Validation
         if (name.isEmpty()) {
@@ -279,6 +264,11 @@ public class RegisterActivity extends AppCompatActivity {
         }
         if (email.isEmpty()) {
             etEmail.setError("Email required");
+            etEmail.requestFocus();
+            return;
+        }
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.setError("Please enter a valid email");
             etEmail.requestFocus();
             return;
         }
@@ -295,49 +285,54 @@ public class RegisterActivity extends AppCompatActivity {
 
         showLoading(true);
 
+        // Create user with email and password
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
+                        // User created successfully
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            // Update display name
-                            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                                    .setDisplayName(name)
-                                    .build();
-                            user.updateProfile(profileUpdates)
-                                    .addOnCompleteListener(profileTask -> {
-                                        // Save user to Firestore
-                                        saveUserToFirestore(user, name, email, phone);
-
+                            // Send verification email
+                            user.sendEmailVerification()
+                                    .addOnCompleteListener(emailTask -> {
                                         showLoading(false);
-                                        new PreferenceManager(this).setGuestMode(false);
-                                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT)
-                                                .show();
-                                        goToMain();
+                                        if (emailTask.isSuccessful()) {
+                                            // Navigate to email verification screen
+                                            navigateToEmailVerification(name);
+                                        } else {
+                                            BeautifulNotification.showError(RegisterActivity.this,
+                                                    "Failed to send verification email. Please try again.");
+                                        }
                                     });
                         }
                     } else {
                         showLoading(false);
-                        String error = task.getException() != null ? task.getException().getMessage()
-                                : "Registration failed";
-                        Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+                        String errorMessage = "Registration failed";
+                        if (task.getException() != null) {
+                            String exMessage = task.getException().getMessage();
+                            if (exMessage != null) {
+                                if (exMessage.contains("email address is already in use")) {
+                                    errorMessage = "This email is already registered. Please login instead.";
+                                } else if (exMessage.contains("badly formatted")) {
+                                    errorMessage = "Invalid email format";
+                                } else if (exMessage.contains("weak password")) {
+                                    errorMessage = "Password is too weak. Please use a stronger password.";
+                                } else {
+                                    errorMessage = exMessage;
+                                }
+                            }
+                        }
+                        BeautifulNotification.showError(RegisterActivity.this, errorMessage);
                     }
                 });
     }
 
-    private void saveUserToFirestore(FirebaseUser user, String name, String email, String phone) {
-        Map<String, Object> userData = new HashMap<>();
-        userData.put("displayName", name);
-        userData.put("email", email);
-        userData.put("phoneNumber", phone);
-        userData.put("createdAt", System.currentTimeMillis());
-        userData.put("isBlocked", false);
-        userData.put("isAdmin", false);
-
-        FirebaseFirestore.getInstance()
-                .collection("users")
-                .document(user.getUid())
-                .set(userData);
+    private void navigateToEmailVerification(String name) {
+        Intent intent = new Intent(this, EmailVerificationActivity.class);
+        intent.putExtra("USER_NAME", name);
+        startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+        finish();
     }
 
     private void goToMain() {

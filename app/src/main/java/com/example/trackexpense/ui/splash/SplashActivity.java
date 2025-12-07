@@ -224,8 +224,17 @@ public class SplashActivity extends AppCompatActivity {
         Intent intent;
 
         if (auth.getCurrentUser() != null) {
-            intent = new Intent(this, MainActivity.class);
+            // Check if email is verified
+            if (auth.getCurrentUser().isEmailVerified()) {
+                // User is logged in and email is verified - go to main app
+                intent = new Intent(this, MainActivity.class);
+            } else {
+                // User is logged in but email is NOT verified - go to verification screen
+                intent = new Intent(this, com.example.trackexpense.ui.auth.EmailVerificationActivity.class);
+                intent.putExtra("USER_NAME", auth.getCurrentUser().getDisplayName());
+            }
         } else {
+            // No user logged in - go to welcome screen
             intent = new Intent(this, WelcomeActivity.class);
         }
 

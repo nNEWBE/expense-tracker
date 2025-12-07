@@ -21,6 +21,7 @@ import com.example.trackexpense.ui.admin.AdminActivity;
 import com.example.trackexpense.ui.auth.WelcomeActivity;
 import com.example.trackexpense.utils.ExportUtils;
 import com.example.trackexpense.utils.PreferenceManager;
+import com.example.trackexpense.utils.BeautifulNotification;
 import com.example.trackexpense.viewmodel.ExpenseViewModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -240,6 +241,7 @@ public class ProfileFragment extends Fragment {
                     FirebaseAuth.getInstance().signOut();
                     Intent intent = new Intent(requireContext(), WelcomeActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    intent.putExtra("SHOW_LOGOUT_MESSAGE", true);
                     startActivity(intent);
                 })
                 .setNegativeButton("Cancel", null)

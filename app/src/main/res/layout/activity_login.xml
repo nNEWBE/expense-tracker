@@ -49,9 +49,13 @@
         app:cardElevation="0dp">
 
         <ScrollView
+            android:id="@+id/scrollView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true">
+            android:fillViewport="true"
+            android:scrollbars="none"
+            android:overScrollMode="never"
+            android:clipToPadding="false">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -59,7 +63,7 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="32dp"
                 android:paddingTop="32dp"
-                android:paddingBottom="24dp">
+                android:paddingBottom="40dp">
 
                 <!-- Title -->
                 <TextView
@@ -80,7 +84,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="40dp"
                     android:alpha="0"
-                    android:text="Email/ phone number"
+                    android:text="Email"
                     android:textColor="#888888"
                     android:textSize="14sp" />
 
@@ -105,7 +109,6 @@
                         android:layout_height="match_parent"
                         android:layout_marginStart="12dp"
                         android:background="@null"
-                        android:hint="Enter Email / phone number"
                         android:inputType="textEmailAddress"
                         android:textColor="#333333"
                         android:textColorHint="#CCCCCC"
@@ -293,7 +296,6 @@
 
             </LinearLayout>
         </ScrollView>
-
     </com.google.android.material.card.MaterialCardView>
 
 </FrameLayout>

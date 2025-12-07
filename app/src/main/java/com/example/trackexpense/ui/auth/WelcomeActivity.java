@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
+import com.example.trackexpense.utils.BeautifulNotification;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -43,6 +44,16 @@ public class WelcomeActivity extends AppCompatActivity {
         initViews();
         startEntranceAnimations();
         setupListeners();
+        checkForLogoutMessage();
+    }
+
+    private void checkForLogoutMessage() {
+        if (getIntent().getBooleanExtra("SHOW_LOGOUT_MESSAGE", false)) {
+            // Show logout notification after a short delay for animations to settle
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                BeautifulNotification.showSuccess(this, "You have been successfully logged out. See you soon!");
+            }, 800);
+        }
     }
 
     private void initViews() {

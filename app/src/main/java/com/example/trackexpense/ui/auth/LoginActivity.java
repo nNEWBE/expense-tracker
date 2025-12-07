@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.ScrollView;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
@@ -18,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
+import com.example.trackexpense.utils.BeautifulNotification;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -42,6 +44,7 @@ public class LoginActivity extends AppCompatActivity {
     private View sphere1, sphere2, sphere3;
     private View tvTitle, tvEmailLabel, emailContainer, passwordLabelContainer, passwordContainer;
     private View registerContainer, dividerContainer, btnGuest, tvBack;
+    private ScrollView scrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +78,25 @@ public class LoginActivity extends AppCompatActivity {
         dividerContainer = findViewById(R.id.dividerContainer);
         btnGuest = findViewById(R.id.btnGuest);
         tvBack = findViewById(R.id.tvBack);
+        scrollView = findViewById(R.id.scrollView);
+
+        // Setup auto-scroll when fields get focus
+        setupAutoScrollOnFocus();
+    }
+
+    private void setupAutoScrollOnFocus() {
+        View.OnFocusChangeListener scrollToFocusedView = (v, hasFocus) -> {
+            if (hasFocus && scrollView != null) {
+                // Post to ensure view is laid out
+                scrollView.post(() -> {
+                    // Scroll the view into visible area
+                    scrollView.smoothScrollTo(0, v.getBottom());
+                });
+            }
+        };
+
+        etEmail.setOnFocusChangeListener(scrollToFocusedView);
+        etPassword.setOnFocusChangeListener(scrollToFocusedView);
     }
 
     private void startEntranceAnimations() {
@@ -252,16 +274,33 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            // Check if email is verified (optional)
+                            // Check if email is verified
+                            if (!user.isEmailVerified()) {
+                                showLoading(false);
+                                // Email not verified - send to verification screen
+                                user.sendEmailVerification().addOnCompleteListener(emailTask -> {
+                                    Intent intent = new Intent(this, EmailVerificationActivity.class);
+                                    intent.putExtra("USER_NAME", user.getDisplayName());
+                                    startActivity(intent);
+                                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                                    finish();
+                                });
+                                BeautifulNotification.showWarning(this, "Please verify your email to continue.");
+                                return;
+                            }
+
+                            // Email is verified - proceed to main
                             saveUserToFirestore();
                             new PreferenceManager(this).setGuestMode(false);
-                            goToMain();
+                            BeautifulNotification.showSuccess(this, "Welcome back! You've successfully signed in.");
+                            // Navigate after a short delay to show the notification
+                            new Handler(Looper.getMainLooper()).postDelayed(this::goToMain, 1500);
                         }
                     } else {
                         showLoading(false);
                         String error = task.getException() != null ? task.getException().getMessage()
                                 : "Authentication failed";
-                        Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
+                        BeautifulNotification.showError(this, error);
                     }
                 });
     }

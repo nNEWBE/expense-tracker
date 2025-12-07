@@ -25,9 +25,15 @@
             </intent-filter>
         </activity>
         
-        <activity android:name=".ui.auth.LoginActivity" />
-        <activity android:name=".ui.auth.RegisterActivity" />
-        <activity android:name=".ui.auth.VerifyEmailActivity" />
+        <activity 
+            android:name=".ui.auth.LoginActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity 
+            android:name=".ui.auth.RegisterActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity 
+            android:name=".ui.auth.EmailVerificationActivity"
+            android:windowSoftInputMode="adjustResize" />
         <activity android:name=".ui.auth.WelcomeActivity" />
         
         <activity
