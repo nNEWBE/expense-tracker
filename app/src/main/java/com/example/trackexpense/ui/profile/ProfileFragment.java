@@ -77,17 +77,30 @@ public class ProfileFragment extends Fragment {
 
     private void loadUserData() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        MaterialButton btnLogout = getView().findViewById(R.id.btnLogout);
+        MaterialButton btnDeleteAccount = getView().findViewById(R.id.btnDeleteAccount);
+        
         if (user != null) {
             String displayName = user.getDisplayName() != null ? user.getDisplayName() : "User";
             tvHeaderName.setText(displayName);
             tvName.setText(displayName);
             tvEmail.setText(user.getEmail());
             chipGuestMode.setVisibility(View.GONE);
+            
+            // Show Logout for logged in users
+            btnLogout.setText("Logout");
+            btnLogout.setIconResource(R.drawable.ic_logout);
+            btnDeleteAccount.setVisibility(View.VISIBLE);
         } else {
             tvHeaderName.setText("Guest User");
             tvName.setText("Guest User");
             tvEmail.setText("No account");
             chipGuestMode.setVisibility(View.VISIBLE);
+            
+            // Show Login for guest users
+            btnLogout.setText("Login / Register");
+            btnLogout.setIconResource(R.drawable.ic_person);
+            btnDeleteAccount.setVisibility(View.GONE);
         }
 
         // Load preferences
@@ -131,7 +144,17 @@ public class ProfileFragment extends Fragment {
         }
 
         MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
-        btnLogout.setOnClickListener(v -> logout());
+        btnLogout.setOnClickListener(v -> {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user != null) {
+                logout();
+            } else {
+                // Guest user - go to login
+                Intent intent = new Intent(requireContext(), LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+        });
 
         MaterialButton btnDeleteAccount = view.findViewById(R.id.btnDeleteAccount);
         btnDeleteAccount.setOnClickListener(v -> showDeleteAccountDialog());

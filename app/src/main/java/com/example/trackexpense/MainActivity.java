@@ -15,7 +15,6 @@ import androidx.work.WorkManager;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.utils.ReminderWorker;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.chip.Chip;
 
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
 
     private NavController navController;
     private BottomNavigationView bottomNav;
-    private Chip chipGuestMode;
     private PreferenceManager preferenceManager;
 
     @Override
@@ -41,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         setupNavigation();
-        setupGuestModeIndicator();
         checkNotificationPermission();
         scheduleDailyReminder();
     }
@@ -63,17 +60,6 @@ public class MainActivity extends AppCompatActivity {
                     bottomNav.setVisibility(View.VISIBLE);
                 }
             });
-        }
-    }
-
-    private void setupGuestModeIndicator() {
-        chipGuestMode = findViewById(R.id.chipGuestMode);
-        if (chipGuestMode != null) {
-            if (preferenceManager.isGuestMode()) {
-                chipGuestMode.setVisibility(View.VISIBLE);
-            } else {
-                chipGuestMode.setVisibility(View.GONE);
-            }
         }
     }
 
