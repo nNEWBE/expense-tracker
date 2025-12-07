@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="512dp"
+    android:height="512dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Background rounded rectangle -->
+    <path
+        android:fillColor="#2D5A6A"
+        android:pathData="M0,80C0,35.8 35.8,0 80,0h352c44.2,0 80,35.8 80,80v352c0,44.2 -35.8,80 -80,80H80c-44.2,0 -80,-35.8 -80,-80V80z" />
+
+    <!-- Inner rounded rectangle (card/wallet shape) -->
+    <path
+        android:fillColor="#1A3A4A"
+        android:pathData="M96,160c0,-26.5 21.5,-48 48,-48h224c26.5,0 48,21.5 48,48v192c0,26.5 -21.5,48 -48,48H144c-26.5,0 -48,-21.5 -48,-48V160z" />
+
+    <!-- Chart/graph line going up -->
+    <path
+        android:fillColor="none"
+        android:strokeColor="#6AA8B8"
+        android:strokeWidth="16"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M140,320L200,260L280,300L380,180" />
+
+    <!-- Arrow head pointing up-right -->
+    <path
+        android:fillColor="#6AA8B8"
+        android:pathData="M380,180l-50,10l40,-50z" />
+
+    <!-- Dollar sign circle -->
+    <path
+        android:fillColor="#4A8090"
+        android:pathData="M380,320m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0" />
+
+    <!-- Dollar sign $ -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M380,292v8c-8,0 -16,4 -16,12c0,8 8,12 16,12v16c-8,0 -16,4 -16,12c0,8 8,12 16,12v8h8v-8c8,0 16,-4 16,-12c0,-8 -8,-12 -16,-12v-16c8,0 16,-4 16,-12c0,-8 -8,-12 -16,-12v-8h-8z" />
+
+    <!-- Data point dots -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M200,260m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M280,300m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
+
+</vector>

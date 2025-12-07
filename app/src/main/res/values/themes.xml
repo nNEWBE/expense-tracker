@@ -32,6 +32,7 @@
     <style name="Theme.TrackExpense.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#1A3A4A</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/app_logo</item>
+
         <item name="windowSplashScreenIconBackgroundColor">#1A3A4A</item>
         <item name="postSplashScreenTheme">@style/Theme.TrackExpense</item>
     </style>
