@@ -27,8 +27,10 @@ import com.google.firebase.auth.FirebaseAuth;
 public class SplashActivity extends AppCompatActivity {
 
     private MaterialCardView logoCard;
-    private View tvAppName, tvTagline, progressIndicator;
+    private View tvAppName, tvTagline, loadingDotsContainer, tvLoading;
+    private View dot1, dot2, dot3;
     private View sphere1, sphere2, sphere3, sphere4, sphere5;
+    private boolean isAnimatingDots = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +48,11 @@ public class SplashActivity extends AppCompatActivity {
         logoCard = findViewById(R.id.logoCard);
         tvAppName = findViewById(R.id.tvAppName);
         tvTagline = findViewById(R.id.tvTagline);
-        progressIndicator = findViewById(R.id.progressIndicator);
+        loadingDotsContainer = findViewById(R.id.loadingDotsContainer);
+        tvLoading = findViewById(R.id.tvLoading);
+        dot1 = findViewById(R.id.dot1);
+        dot2 = findViewById(R.id.dot2);
+        dot3 = findViewById(R.id.dot3);
         sphere1 = findViewById(R.id.sphere1);
         sphere2 = findViewById(R.id.sphere2);
         sphere3 = findViewById(R.id.sphere3);
@@ -104,17 +110,56 @@ public class SplashActivity extends AppCompatActivity {
         tagAnimSet.setStartDelay(900);
         tagAnimSet.start();
 
-        // Progress indicator fade in
-        ObjectAnimator progressAlpha = ObjectAnimator.ofFloat(progressIndicator, "alpha", 0f, 1f);
-        progressAlpha.setDuration(300);
-        progressAlpha.setStartDelay(1100);
-        progressAlpha.start();
+        // Loading dots and text fade in
+        ObjectAnimator dotsAlpha = ObjectAnimator.ofFloat(loadingDotsContainer, "alpha", 0f, 1f);
+        dotsAlpha.setDuration(300);
+        dotsAlpha.setStartDelay(1100);
+        dotsAlpha.start();
+
+        ObjectAnimator loadingTextAlpha = ObjectAnimator.ofFloat(tvLoading, "alpha", 0f, 1f);
+        loadingTextAlpha.setDuration(300);
+        loadingTextAlpha.setStartDelay(1100);
+        loadingTextAlpha.start();
+
+        // Start dot bounce animation
+        new Handler(Looper.getMainLooper()).postDelayed(this::startDotBounceAnimation, 1100);
 
         // Start logo pulse after initial animation
         new Handler(Looper.getMainLooper()).postDelayed(this::startLogoPulse, 1000);
 
         // Navigate after animations complete
         new Handler(Looper.getMainLooper()).postDelayed(this::navigateToNextScreen, 2500);
+    }
+
+    private void startDotBounceAnimation() {
+        View[] dots = { dot1, dot2, dot3 };
+        int[] delays = { 0, 150, 300 };
+
+        for (int i = 0; i < dots.length; i++) {
+            animateDot(dots[i], delays[i]);
+        }
+    }
+
+    private void animateDot(View dot, int delay) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(dot, "scaleX", 1f, 1.5f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(dot, "scaleY", 1f, 1.5f, 1f);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(dot, "alpha", 0.5f, 1f, 0.5f);
+        ObjectAnimator translationY = ObjectAnimator.ofFloat(dot, "translationY", 0f, -15f, 0f);
+
+        AnimatorSet dotAnim = new AnimatorSet();
+        dotAnim.playTogether(scaleX, scaleY, alpha, translationY);
+        dotAnim.setDuration(600);
+        dotAnim.setStartDelay(delay);
+        dotAnim.setInterpolator(new AccelerateDecelerateInterpolator());
+        dotAnim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (isAnimatingDots) {
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> animateDot(dot, 0), 300);
+                }
+            }
+        });
+        dotAnim.start();
     }
 
     private void animateSpheres() {
@@ -151,13 +196,16 @@ public class SplashActivity extends AppCompatActivity {
         pulseSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                pulseSet.start(); // Loop the pulse
+                if (isAnimatingDots) {
+                    pulseSet.start(); // Loop the pulse
+                }
             }
         });
         pulseSet.start();
     }
 
     private void navigateToNextScreen() {
+        isAnimatingDots = false;
         FirebaseAuth auth = FirebaseAuth.getInstance();
         Intent intent;
 

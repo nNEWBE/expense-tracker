@@ -110,16 +110,49 @@
 
     </LinearLayout>
 
-    <!-- Bottom Progress -->
-    <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/progressIndicator"
-        android:layout_width="wrap_content"
+    <!-- Animated Loading Dots -->
+    <LinearLayout
+        android:id="@+id/loadingDotsContainer"
+        android:layout_width="42dp"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="60dp"
+
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/dot1"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_margin="6dp"
+            android:background="@drawable/loading_dot" />
+
+        <View
+            android:id="@+id/dot2"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_margin="6dp"
+            android:background="@drawable/loading_dot" />
+
+        <View
+            android:id="@+id/dot3"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_margin="6dp"
+            android:background="@drawable/loading_dot" />
+
+    </LinearLayout>
+
+    <!-- Loading Text -->
+    <TextView
+        android:id="@+id/tvLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="30dp"
         android:alpha="0"
-        android:indeterminate="true"
-        app:indicatorColor="@android:color/white"
-        app:trackColor="@android:color/transparent" />
+        android:text="Loading..."
+        android:textColor="#80FFFFFF"
+        android:textSize="12sp" />
 
 </FrameLayout>
