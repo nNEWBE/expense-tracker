@@ -1,8 +1,16 @@
 package com.example.trackexpense.ui.auth;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -12,6 +20,7 @@ import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -28,6 +37,13 @@ public class RegisterActivity extends AppCompatActivity {
     private CircularProgressIndicator progressBar;
     private FirebaseAuth mAuth;
 
+    // Animation views
+    private MaterialCardView formCard;
+    private View sphere1, sphere2, sphere3;
+    private View tvTitle, tvNameLabel, nameContainer, tvEmailLabel, emailContainer;
+    private View tvPhoneLabel, phoneContainer, tvPasswordLabel, passwordContainer;
+    private View loginContainer, dividerContainer, btnGuest, tvBack;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,6 +52,7 @@ public class RegisterActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
 
         initViews();
+        startEntranceAnimations();
         setupListeners();
     }
 
@@ -47,8 +64,148 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister = findViewById(R.id.btnRegister);
         progressBar = findViewById(R.id.progressBar);
 
+        // Animation views
+        formCard = findViewById(R.id.formCard);
+        sphere1 = findViewById(R.id.sphere1);
+        sphere2 = findViewById(R.id.sphere2);
+        sphere3 = findViewById(R.id.sphere3);
+        tvTitle = findViewById(R.id.tvTitle);
+        tvNameLabel = findViewById(R.id.tvNameLabel);
+        nameContainer = findViewById(R.id.nameContainer);
+        tvEmailLabel = findViewById(R.id.tvEmailLabel);
+        emailContainer = findViewById(R.id.emailContainer);
+        tvPhoneLabel = findViewById(R.id.tvPhoneLabel);
+        phoneContainer = findViewById(R.id.phoneContainer);
+        tvPasswordLabel = findViewById(R.id.tvPasswordLabel);
+        passwordContainer = findViewById(R.id.passwordContainer);
+        loginContainer = findViewById(R.id.loginContainer);
+        dividerContainer = findViewById(R.id.dividerContainer);
+        btnGuest = findViewById(R.id.btnGuest);
+        tvBack = findViewById(R.id.tvBack);
+
         // Ensure phone always has +88 prefix
         setupPhonePrefix();
+    }
+
+    private void startEntranceAnimations() {
+        // Animate spheres
+        animateSpheres();
+
+        // Form card slides up from bottom
+        ObjectAnimator cardTransY = ObjectAnimator.ofFloat(formCard, "translationY", 100f, 0f);
+        ObjectAnimator cardAlpha = ObjectAnimator.ofFloat(formCard, "alpha", 0f, 1f);
+
+        AnimatorSet cardAnim = new AnimatorSet();
+        cardAnim.playTogether(cardTransY, cardAlpha);
+        cardAnim.setDuration(600);
+        cardAnim.setInterpolator(new DecelerateInterpolator(1.5f));
+        cardAnim.setStartDelay(200);
+        cardAnim.start();
+
+        // Title bounces in
+        animateViewWithBounce(tvTitle, 400, 50f);
+
+        // Form fields cascade animation with faster stagger
+        animateViewSlideUp(tvNameLabel, 480, 25f);
+        animateViewSlideUp(nameContainer, 520, 25f);
+        animateViewSlideUp(tvEmailLabel, 560, 25f);
+        animateViewSlideUp(emailContainer, 600, 25f);
+        animateViewSlideUp(tvPhoneLabel, 640, 25f);
+        animateViewSlideUp(phoneContainer, 680, 25f);
+        animateViewSlideUp(tvPasswordLabel, 720, 25f);
+        animateViewSlideUp(passwordContainer, 760, 25f);
+
+        // Button with scale effect
+        btnRegister.setScaleX(0.8f);
+        btnRegister.setScaleY(0.8f);
+        ObjectAnimator btnScaleX = ObjectAnimator.ofFloat(btnRegister, "scaleX", 0.8f, 1f);
+        ObjectAnimator btnScaleY = ObjectAnimator.ofFloat(btnRegister, "scaleY", 0.8f, 1f);
+        ObjectAnimator btnAlpha = ObjectAnimator.ofFloat(btnRegister, "alpha", 0f, 1f);
+
+        AnimatorSet btnAnim = new AnimatorSet();
+        btnAnim.playTogether(btnScaleX, btnScaleY, btnAlpha);
+        btnAnim.setDuration(400);
+        btnAnim.setInterpolator(new OvershootInterpolator(1.2f));
+        btnAnim.setStartDelay(850);
+        btnAnim.start();
+
+        // Bottom elements fade in
+        animateViewFadeIn(loginContainer, 920);
+        animateViewFadeIn(dividerContainer, 960);
+        animateViewFadeIn(btnGuest, 1000);
+        animateViewFadeIn(tvBack, 1040);
+
+        // Start floating spheres
+        new Handler(Looper.getMainLooper()).postDelayed(this::startFloatingAnimations, 600);
+    }
+
+    private void animateSpheres() {
+        View[] spheres = { sphere1, sphere2, sphere3 };
+        int[] delays = { 100, 180, 140 };
+
+        for (int i = 0; i < spheres.length; i++) {
+            View sphere = spheres[i];
+            sphere.setScaleX(0.4f);
+            sphere.setScaleY(0.4f);
+
+            AnimatorSet sphereAnim = new AnimatorSet();
+            ObjectAnimator fadeIn = ObjectAnimator.ofFloat(sphere, "alpha", 0f, 1f);
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(sphere, "scaleX", 0.4f, 1f);
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(sphere, "scaleY", 0.4f, 1f);
+
+            sphereAnim.playTogether(fadeIn, scaleX, scaleY);
+            sphereAnim.setDuration(500);
+            sphereAnim.setInterpolator(new OvershootInterpolator(1.2f));
+            sphereAnim.setStartDelay(delays[i]);
+            sphereAnim.start();
+        }
+    }
+
+    private void animateViewWithBounce(View view, int delay, float startOffset) {
+        view.setTranslationY(startOffset);
+        ObjectAnimator transY = ObjectAnimator.ofFloat(view, "translationY", startOffset, 0f);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(view, "alpha", 0f, 1f);
+
+        AnimatorSet animSet = new AnimatorSet();
+        animSet.playTogether(transY, alpha);
+        animSet.setDuration(500);
+        animSet.setInterpolator(new OvershootInterpolator(1.0f));
+        animSet.setStartDelay(delay);
+        animSet.start();
+    }
+
+    private void animateViewSlideUp(View view, int delay, float startOffset) {
+        view.setTranslationY(startOffset);
+        ObjectAnimator transY = ObjectAnimator.ofFloat(view, "translationY", startOffset, 0f);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(view, "alpha", 0f, 1f);
+
+        AnimatorSet animSet = new AnimatorSet();
+        animSet.playTogether(transY, alpha);
+        animSet.setDuration(350);
+        animSet.setInterpolator(new DecelerateInterpolator());
+        animSet.setStartDelay(delay);
+        animSet.start();
+    }
+
+    private void animateViewFadeIn(View view, int delay) {
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(view, "alpha", 0f, 1f);
+        alpha.setDuration(300);
+        alpha.setStartDelay(delay);
+        alpha.start();
+    }
+
+    private void startFloatingAnimations() {
+        View[] spheres = { sphere1, sphere2, sphere3 };
+        int[] durations = { 2800, 2400, 2600 };
+        float[] amplitudes = { 10f, 12f, 8f };
+
+        for (int i = 0; i < spheres.length; i++) {
+            ObjectAnimator floatUp = ObjectAnimator.ofFloat(spheres[i], "translationY", 0f, -amplitudes[i], 0f);
+            floatUp.setDuration(durations[i]);
+            floatUp.setInterpolator(new AccelerateDecelerateInterpolator());
+            floatUp.setRepeatCount(ValueAnimator.INFINITE);
+            floatUp.start();
+        }
     }
 
     private void setupPhonePrefix() {
@@ -79,11 +236,13 @@ public class RegisterActivity extends AppCompatActivity {
 
         findViewById(R.id.tvLogin).setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
             finish();
         });
 
         findViewById(R.id.tvBack).setOnClickListener(v -> {
             startActivity(new Intent(this, WelcomeActivity.class));
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
             finish();
         });
 
@@ -201,6 +360,7 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         startActivity(new Intent(this, WelcomeActivity.class));
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
         finish();
     }
 }

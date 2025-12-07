@@ -9,46 +9,56 @@
     
     <!-- Large dark sphere top right -->
     <View
+        android:id="@+id/sphere1"
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:layout_gravity="end"
         android:layout_marginTop="80dp"
         android:layout_marginEnd="-30dp"
+        android:alpha="0"
         android:background="@drawable/sphere_dark" />
 
     <!-- Medium light sphere top -->
     <View
+        android:id="@+id/sphere2"
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_gravity="end"
         android:layout_marginTop="40dp"
         android:layout_marginEnd="60dp"
+        android:alpha="0"
         android:background="@drawable/sphere_light" />
 
     <!-- Small light sphere -->
     <View
+        android:id="@+id/sphere3"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_gravity="start"
         android:layout_marginTop="160dp"
         android:layout_marginStart="30dp"
+        android:alpha="0"
         android:background="@drawable/sphere_light" />
 
     <!-- Large dark sphere bottom left -->
     <View
+        android:id="@+id/sphere4"
         android:layout_width="180dp"
         android:layout_height="180dp"
         android:layout_gravity="start|bottom"
         android:layout_marginStart="-60dp"
         android:layout_marginBottom="120dp"
+        android:alpha="0"
         android:background="@drawable/sphere_dark" />
 
     <!-- Medium dark sphere bottom -->
     <View
+        android:id="@+id/sphere5"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_gravity="center_horizontal|bottom"
         android:layout_marginBottom="200dp"
+        android:alpha="0"
         android:background="@drawable/sphere_dark" />
 
     <!-- Content -->
@@ -67,8 +77,10 @@
 
         <!-- App Logo -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/logoCard"
             android:layout_width="100dp"
             android:layout_height="100dp"
+            android:alpha="0"
             app:cardBackgroundColor="#2D5A6A"
             app:cardCornerRadius="20dp"
             app:cardElevation="4dp"
@@ -84,18 +96,22 @@
 
         <!-- Welcome Text -->
         <TextView
+            android:id="@+id/tvWelcome"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            android:alpha="0"
             android:text="Welcome !"
             android:textColor="@android:color/white"
             android:textSize="36sp"
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/tvSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
+            android:alpha="0"
             android:gravity="center"
             android:lineSpacingExtra="4dp"
             android:text="You're taking the first step in\nchanging your life. Let us guide\nyou through it"
@@ -110,9 +126,11 @@
 
         <!-- Buttons at bottom -->
         <LinearLayout
+            android:id="@+id/buttonsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="60dp"
+            android:alpha="0"
             android:orientation="horizontal">
 
             <!-- Sign In Button (Outlined) -->
@@ -153,6 +171,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="40dp"
+            android:alpha="0"
             android:padding="12dp"
             android:text="Continue as Guest →"
             android:textColor="#80FFFFFF"

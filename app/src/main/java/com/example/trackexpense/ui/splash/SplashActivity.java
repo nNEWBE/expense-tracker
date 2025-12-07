@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
@@ -27,10 +28,10 @@ import com.google.firebase.auth.FirebaseAuth;
 public class SplashActivity extends AppCompatActivity {
 
     private MaterialCardView logoCard;
-    private View tvAppName, tvTagline, loadingDotsContainer, tvLoading;
-    private View dot1, dot2, dot3;
+    private View tvAppName, tvTagline, waveContainer, tvLoading;
+    private View bar1, bar2, bar3, bar4, bar5;
     private View sphere1, sphere2, sphere3, sphere4, sphere5;
-    private boolean isAnimatingDots = true;
+    private boolean isAnimating = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,11 +49,17 @@ public class SplashActivity extends AppCompatActivity {
         logoCard = findViewById(R.id.logoCard);
         tvAppName = findViewById(R.id.tvAppName);
         tvTagline = findViewById(R.id.tvTagline);
-        loadingDotsContainer = findViewById(R.id.loadingDotsContainer);
+        waveContainer = findViewById(R.id.waveContainer);
         tvLoading = findViewById(R.id.tvLoading);
-        dot1 = findViewById(R.id.dot1);
-        dot2 = findViewById(R.id.dot2);
-        dot3 = findViewById(R.id.dot3);
+
+        // Wave bars
+        bar1 = findViewById(R.id.bar1);
+        bar2 = findViewById(R.id.bar2);
+        bar3 = findViewById(R.id.bar3);
+        bar4 = findViewById(R.id.bar4);
+        bar5 = findViewById(R.id.bar5);
+
+        // Spheres
         sphere1 = findViewById(R.id.sphere1);
         sphere2 = findViewById(R.id.sphere2);
         sphere3 = findViewById(R.id.sphere3);
@@ -110,56 +117,51 @@ public class SplashActivity extends AppCompatActivity {
         tagAnimSet.setStartDelay(900);
         tagAnimSet.start();
 
-        // Loading dots and text fade in
-        ObjectAnimator dotsAlpha = ObjectAnimator.ofFloat(loadingDotsContainer, "alpha", 0f, 1f);
-        dotsAlpha.setDuration(300);
-        dotsAlpha.setStartDelay(1100);
-        dotsAlpha.start();
+        // Fade in wave container and loading text
+        ObjectAnimator waveAlpha = ObjectAnimator.ofFloat(waveContainer, "alpha", 0f, 1f);
+        waveAlpha.setDuration(400);
+        waveAlpha.setStartDelay(1100);
+        waveAlpha.start();
 
         ObjectAnimator loadingTextAlpha = ObjectAnimator.ofFloat(tvLoading, "alpha", 0f, 1f);
         loadingTextAlpha.setDuration(300);
-        loadingTextAlpha.setStartDelay(1100);
+        loadingTextAlpha.setStartDelay(1200);
         loadingTextAlpha.start();
 
-        // Start dot bounce animation
-        new Handler(Looper.getMainLooper()).postDelayed(this::startDotBounceAnimation, 1100);
+        // Start wave animation
+        new Handler(Looper.getMainLooper()).postDelayed(this::startWaveAnimation, 1100);
 
         // Start logo pulse after initial animation
         new Handler(Looper.getMainLooper()).postDelayed(this::startLogoPulse, 1000);
 
         // Navigate after animations complete
-        new Handler(Looper.getMainLooper()).postDelayed(this::navigateToNextScreen, 2500);
+        new Handler(Looper.getMainLooper()).postDelayed(this::navigateToNextScreen, 3000);
     }
 
-    private void startDotBounceAnimation() {
-        View[] dots = { dot1, dot2, dot3 };
-        int[] delays = { 0, 150, 300 };
+    private void startWaveAnimation() {
+        View[] bars = { bar1, bar2, bar3, bar4, bar5 };
+        int[] delays = { 0, 80, 160, 240, 320 };
 
-        for (int i = 0; i < dots.length; i++) {
-            animateDot(dots[i], delays[i]);
+        for (int i = 0; i < bars.length; i++) {
+            animateWaveBar(bars[i], delays[i], i);
         }
     }
 
-    private void animateDot(View dot, int delay) {
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(dot, "scaleX", 1f, 1.5f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(dot, "scaleY", 1f, 1.5f, 1f);
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(dot, "alpha", 0.5f, 1f, 0.5f);
-        ObjectAnimator translationY = ObjectAnimator.ofFloat(dot, "translationY", 0f, -15f, 0f);
+    private void animateWaveBar(View bar, int delay, int index) {
+        ObjectAnimator scaleAnim = ObjectAnimator.ofFloat(bar, "scaleY", 0.4f, 1.8f, 0.4f);
+        scaleAnim.setDuration(600 + (index * 50));
+        scaleAnim.setStartDelay(delay);
+        scaleAnim.setInterpolator(new AccelerateDecelerateInterpolator());
+        scaleAnim.setRepeatCount(ValueAnimator.INFINITE);
+        scaleAnim.start();
 
-        AnimatorSet dotAnim = new AnimatorSet();
-        dotAnim.playTogether(scaleX, scaleY, alpha, translationY);
-        dotAnim.setDuration(600);
-        dotAnim.setStartDelay(delay);
-        dotAnim.setInterpolator(new AccelerateDecelerateInterpolator());
-        dotAnim.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                if (isAnimatingDots) {
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> animateDot(dot, 0), 300);
-                }
-            }
-        });
-        dotAnim.start();
+        // Alpha pulse effect
+        ObjectAnimator alphaAnim = ObjectAnimator.ofFloat(bar, "alpha", 0.6f, 1f, 0.6f);
+        alphaAnim.setDuration(600 + (index * 50));
+        alphaAnim.setStartDelay(delay);
+        alphaAnim.setInterpolator(new AccelerateDecelerateInterpolator());
+        alphaAnim.setRepeatCount(ValueAnimator.INFINITE);
+        alphaAnim.start();
     }
 
     private void animateSpheres() {
@@ -182,7 +184,19 @@ public class SplashActivity extends AppCompatActivity {
             sphereAnim.setInterpolator(new AccelerateDecelerateInterpolator());
             sphereAnim.setStartDelay(delays[i]);
             sphereAnim.start();
+
+            // Add floating animation
+            startFloatingAnimation(sphere, i * 200);
         }
+    }
+
+    private void startFloatingAnimation(View sphere, int delay) {
+        ObjectAnimator floatUp = ObjectAnimator.ofFloat(sphere, "translationY", 0f, -15f, 0f);
+        floatUp.setDuration(2500 + delay);
+        floatUp.setStartDelay(delay);
+        floatUp.setInterpolator(new AccelerateDecelerateInterpolator());
+        floatUp.setRepeatCount(ValueAnimator.INFINITE);
+        floatUp.start();
     }
 
     private void startLogoPulse() {
@@ -196,8 +210,8 @@ public class SplashActivity extends AppCompatActivity {
         pulseSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (isAnimatingDots) {
-                    pulseSet.start(); // Loop the pulse
+                if (isAnimating) {
+                    pulseSet.start();
                 }
             }
         });
@@ -205,7 +219,7 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void navigateToNextScreen() {
-        isAnimatingDots = false;
+        isAnimating = false;
         FirebaseAuth auth = FirebaseAuth.getInstance();
         Intent intent;
 

@@ -7,34 +7,43 @@
 
     <!-- 3D Spheres Decoration -->
     <View
+        android:id="@+id/sphere1"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_gravity="end"
         android:layout_marginTop="20dp"
         android:layout_marginEnd="-20dp"
+        android:alpha="0"
         android:background="@drawable/sphere_dark" />
 
     <View
+        android:id="@+id/sphere2"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_gravity="end"
         android:layout_marginTop="100dp"
         android:layout_marginEnd="50dp"
+        android:alpha="0"
         android:background="@drawable/sphere_light" />
 
     <View
+        android:id="@+id/sphere3"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_gravity="start"
         android:layout_marginTop="80dp"
         android:layout_marginStart="20dp"
+        android:alpha="0"
         android:background="@drawable/sphere_light" />
 
     <!-- White Card Content -->
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/formCard"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="140dp"
+        android:alpha="0"
+        android:translationY="100dp"
         app:cardBackgroundColor="@android:color/white"
         app:cardCornerRadius="30dp"
         app:cardElevation="0dp">
@@ -54,9 +63,11 @@
 
                 <!-- Title -->
                 <TextView
+                    android:id="@+id/tvTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
+                    android:alpha="0"
                     android:text="Get Started"
                     android:textColor="#1A3A4A"
                     android:textSize="26sp"
@@ -64,16 +75,20 @@
 
                 <!-- Full Name -->
                 <TextView
+                    android:id="@+id/tvNameLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="32dp"
+                    android:alpha="0"
                     android:text="Full Name"
                     android:textColor="#888888"
                     android:textSize="14sp" />
 
                 <LinearLayout
+                    android:id="@+id/nameContainer"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
+                    android:alpha="0"
                     android:background="@drawable/input_underline_gray"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
@@ -98,16 +113,20 @@
 
                 <!-- Email -->
                 <TextView
+                    android:id="@+id/tvEmailLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
+                    android:alpha="0"
                     android:text="Email"
                     android:textColor="#888888"
                     android:textSize="14sp" />
 
                 <LinearLayout
+                    android:id="@+id/emailContainer"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
+                    android:alpha="0"
                     android:background="@drawable/input_underline_gray"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
@@ -132,16 +151,20 @@
 
                 <!-- Phone Number -->
                 <TextView
+                    android:id="@+id/tvPhoneLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
+                    android:alpha="0"
                     android:text="Phone Number"
                     android:textColor="#888888"
                     android:textSize="14sp" />
 
                 <LinearLayout
+                    android:id="@+id/phoneContainer"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
+                    android:alpha="0"
                     android:background="@drawable/input_underline_gray"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
@@ -167,16 +190,20 @@
 
                 <!-- Password -->
                 <TextView
+                    android:id="@+id/tvPasswordLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
+                    android:alpha="0"
                     android:text="Password"
                     android:textColor="#888888"
                     android:textSize="14sp" />
 
                 <LinearLayout
+                    android:id="@+id/passwordContainer"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
+                    android:alpha="0"
                     android:background="@drawable/input_underline_gray"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
@@ -220,6 +247,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="32dp"
+                    android:alpha="0"
                     android:backgroundTint="#1A3A4A"
                     android:text="SIGN UP"
                     android:textAllCaps="true"
@@ -240,10 +268,12 @@
 
                 <!-- Already have account -->
                 <LinearLayout
+                    android:id="@+id/loginContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginTop="24dp"
+                    android:alpha="0"
                     android:orientation="horizontal">
 
                     <TextView
@@ -266,9 +296,11 @@
 
                 <!-- Divider -->
                 <LinearLayout
+                    android:id="@+id/dividerContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
+                    android:alpha="0"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -301,6 +333,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginTop="20dp"
+                    android:alpha="0"
                     android:text="Continue as Guest"
                     android:textAllCaps="false"
                     android:textColor="#1A3A4A"
@@ -318,6 +351,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginTop="16dp"
+                    android:alpha="0"
                     android:padding="8dp"
                     android:text="← Back"
                     android:textColor="#888888"
