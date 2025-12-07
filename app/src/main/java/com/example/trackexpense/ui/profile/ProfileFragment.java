@@ -18,7 +18,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.remote.AdminService;
 import com.example.trackexpense.ui.admin.AdminActivity;
-import com.example.trackexpense.ui.auth.LoginActivity;
+import com.example.trackexpense.ui.auth.WelcomeActivity;
 import com.example.trackexpense.utils.ExportUtils;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.viewmodel.ExpenseViewModel;
@@ -79,14 +79,14 @@ public class ProfileFragment extends Fragment {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         MaterialButton btnLogout = getView().findViewById(R.id.btnLogout);
         MaterialButton btnDeleteAccount = getView().findViewById(R.id.btnDeleteAccount);
-        
+
         if (user != null) {
             String displayName = user.getDisplayName() != null ? user.getDisplayName() : "User";
             tvHeaderName.setText(displayName);
             tvName.setText(displayName);
             tvEmail.setText(user.getEmail());
             chipGuestMode.setVisibility(View.GONE);
-            
+
             // Show Logout for logged in users
             btnLogout.setText("Logout");
             btnLogout.setIconResource(R.drawable.ic_logout);
@@ -96,7 +96,7 @@ public class ProfileFragment extends Fragment {
             tvName.setText("Guest User");
             tvEmail.setText("No account");
             chipGuestMode.setVisibility(View.VISIBLE);
-            
+
             // Show Login for guest users
             btnLogout.setText("Login / Register");
             btnLogout.setIconResource(R.drawable.ic_person);
@@ -149,8 +149,8 @@ public class ProfileFragment extends Fragment {
             if (user != null) {
                 logout();
             } else {
-                // Guest user - go to login
-                Intent intent = new Intent(requireContext(), LoginActivity.class);
+                // Guest user - go to welcome/login
+                Intent intent = new Intent(requireContext(), WelcomeActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
             }
@@ -302,15 +302,15 @@ public class ProfileFragment extends Fragment {
                     user.delete()
                             .addOnCompleteListener(deleteTask -> {
                                 if (deleteTask.isSuccessful()) {
-                                    Toast.makeText(requireContext(), "Account deleted successfully", 
+                                    Toast.makeText(requireContext(), "Account deleted successfully",
                                             Toast.LENGTH_SHORT).show();
                                     Intent intent = new Intent(requireContext(), LoginActivity.class);
                                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                     startActivity(intent);
                                 } else {
                                     // User may need to re-authenticate
-                                    Toast.makeText(requireContext(), 
-                                            "Failed to delete account. Please re-login and try again.", 
+                                    Toast.makeText(requireContext(),
+                                            "Failed to delete account. Please re-login and try again.",
                                             Toast.LENGTH_LONG).show();
                                 }
                             });

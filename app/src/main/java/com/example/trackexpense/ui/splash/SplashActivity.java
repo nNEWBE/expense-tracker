@@ -9,7 +9,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
-import com.example.trackexpense.ui.auth.LoginActivity;
+import com.example.trackexpense.ui.auth.WelcomeActivity;
 import com.google.firebase.auth.FirebaseAuth;
 
 @SuppressLint("CustomSplashScreen")
@@ -38,8 +38,8 @@ public class SplashActivity extends AppCompatActivity {
             // User is logged in
             intent = new Intent(this, MainActivity.class);
         } else {
-            // No user, show login
-            intent = new Intent(this, LoginActivity.class);
+            // No user, show welcome screen
+            intent = new Intent(this, WelcomeActivity.class);
         }
 
         startActivity(intent);

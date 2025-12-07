@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- Background wave -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#4A90D9" />
+        </shape>
+    </item>
+    
+    <!-- Curved bottom -->
+    <item android:top="120dp">
+        <shape android:shape="oval">
+            <solid android:color="#87CEEB" />
+            <size android:width="600dp" android:height="200dp" />
+        </shape>
+    </item>
+    
+</layer-list>

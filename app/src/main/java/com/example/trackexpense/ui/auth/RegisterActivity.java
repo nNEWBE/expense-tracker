@@ -3,7 +3,7 @@ package com.example.trackexpense.ui.auth;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,17 +11,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.trackexpense.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
-import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private TextInputEditText etName, etEmail, etPassword, etConfirmPassword, etPhone;
+    private EditText etName, etEmail, etPassword, etConfirmPassword, etPhone;
     private MaterialButton btnRegister;
     private CircularProgressIndicator progressBar;
-    private TextView tvLogin;
     private FirebaseAuth mAuth;
 
     @Override
@@ -31,6 +29,11 @@ public class RegisterActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
+        initViews();
+        setupListeners();
+    }
+
+    private void initViews() {
         etName = findViewById(R.id.etName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
@@ -38,11 +41,23 @@ public class RegisterActivity extends AppCompatActivity {
         etPhone = findViewById(R.id.etPhone);
         btnRegister = findViewById(R.id.btnRegister);
         progressBar = findViewById(R.id.progressBar);
-        tvLogin = findViewById(R.id.tvLogin);
+    }
 
+    private void setupListeners() {
         btnRegister.setOnClickListener(v -> registerUser());
-        tvLogin.setOnClickListener(v -> {
+
+        findViewById(R.id.tvLogin).setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        });
+
+        findViewById(R.id.tvLoginTab).setOnClickListener(v -> {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        });
+
+        findViewById(R.id.tvBack).setOnClickListener(v -> {
+            startActivity(new Intent(this, WelcomeActivity.class));
             finish();
         });
     }
@@ -54,32 +69,40 @@ public class RegisterActivity extends AppCompatActivity {
         String confirmPassword = etConfirmPassword.getText().toString().trim();
         String phone = etPhone.getText().toString().trim();
 
+        // Validation
         if (name.isEmpty()) {
             etName.setError("Name required");
+            etName.requestFocus();
             return;
         }
         if (email.isEmpty()) {
             etEmail.setError("Email required");
+            etEmail.requestFocus();
             return;
         }
         if (password.isEmpty()) {
             etPassword.setError("Password required");
+            etPassword.requestFocus();
             return;
         }
         if (password.length() < 6) {
             etPassword.setError("Password must be at least 6 characters");
+            etPassword.requestFocus();
             return;
         }
         if (!password.equals(confirmPassword)) {
             etConfirmPassword.setError("Passwords do not match");
+            etConfirmPassword.requestFocus();
             return;
         }
         if (phone.isEmpty()) {
             etPhone.setError("Phone number required");
+            etPhone.requestFocus();
             return;
         }
         if (!phone.startsWith("+")) {
             etPhone.setError("Include country code (e.g., +880)");
+            etPhone.requestFocus();
             return;
         }
 
@@ -108,8 +131,9 @@ public class RegisterActivity extends AppCompatActivity {
                         }
                     } else {
                         showLoading(false);
-                        Toast.makeText(this, "Registration failed: " + task.getException().getMessage(),
-                                Toast.LENGTH_SHORT).show();
+                        String error = task.getException() != null ? task.getException().getMessage()
+                                : "Registration failed";
+                        Toast.makeText(this, error, Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -122,5 +146,11 @@ public class RegisterActivity extends AppCompatActivity {
             btnRegister.setVisibility(View.VISIBLE);
             progressBar.setVisibility(View.GONE);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        startActivity(new Intent(this, WelcomeActivity.class));
+        finish();
     }
 }

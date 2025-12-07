@@ -2,7 +2,10 @@ package com.example.trackexpense.ui.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.method.PasswordTransformationMethod;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -10,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
-import com.example.trackexpense.data.ExpenseRepository;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -19,15 +21,17 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class LoginActivity extends AppCompatActivity {
 
-    private TextInputEditText etEmail, etPassword;
-    private MaterialButton btnLogin, btnGuest;
-    private TextView tvForgotPassword, tvRegister;
+    private EditText etEmail, etPassword;
+    private MaterialButton btnLogin;
     private CircularProgressIndicator progressBar;
+    private ImageView ivTogglePassword;
     private FirebaseAuth mAuth;
-    private PreferenceManager preferenceManager;
-    private boolean wasGuestMode = false;
+    private boolean passwordVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,31 +39,47 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         mAuth = FirebaseAuth.getInstance();
-        preferenceManager = new PreferenceManager(this);
-
-        // Check if user was in guest mode before
-        wasGuestMode = preferenceManager.isGuestMode();
 
         initViews();
-        setupClickListeners();
+        setupListeners();
     }
 
     private void initViews() {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
-        btnGuest = findViewById(R.id.btnGuest);
-        tvForgotPassword = findViewById(R.id.tvForgotPassword);
-        tvRegister = findViewById(R.id.tvRegister);
         progressBar = findViewById(R.id.progressBar);
+        ivTogglePassword = findViewById(R.id.ivTogglePassword);
     }
 
-    private void setupClickListeners() {
+    private void setupListeners() {
         btnLogin.setOnClickListener(v -> loginUser());
-        btnGuest.setOnClickListener(v -> continueAsGuest());
-        tvForgotPassword.setOnClickListener(v -> showForgotPasswordDialog());
-        tvRegister.setOnClickListener(v -> {
+
+        findViewById(R.id.tvRegister).setOnClickListener(v -> {
             startActivity(new Intent(this, RegisterActivity.class));
+            finish();
+        });
+
+        findViewById(R.id.tvSignupTab).setOnClickListener(v -> {
+            startActivity(new Intent(this, RegisterActivity.class));
+            finish();
+        });
+
+        findViewById(R.id.tvForgotPassword).setOnClickListener(v -> showForgotPasswordDialog());
+
+        findViewById(R.id.tvBack).setOnClickListener(v -> {
+            startActivity(new Intent(this, WelcomeActivity.class));
+            finish();
+        });
+
+        ivTogglePassword.setOnClickListener(v -> {
+            passwordVisible = !passwordVisible;
+            if (passwordVisible) {
+                etPassword.setTransformationMethod(null);
+            } else {
+                etPassword.setTransformationMethod(new PasswordTransformationMethod());
+            }
+            etPassword.setSelection(etPassword.getText().length());
         });
     }
 
@@ -69,10 +89,12 @@ public class LoginActivity extends AppCompatActivity {
 
         if (email.isEmpty()) {
             etEmail.setError("Email required");
+            etEmail.requestFocus();
             return;
         }
         if (password.isEmpty()) {
             etPassword.setError("Password required");
+            etPassword.requestFocus();
             return;
         }
 
@@ -80,29 +102,23 @@ public class LoginActivity extends AppCompatActivity {
 
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
-                    showLoading(false);
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             // Check if email is verified
-                            if (user.isEmailVerified()) {
-                                preferenceManager.setGuestMode(false);
-
-                                // Create/update user document in Firestore
-                                saveUserToFirestore();
-
-                                // Check if user had data in guest mode
-                                if (wasGuestMode) {
-                                    showSyncDataDialog();
-                                } else {
-                                    navigateToMain();
-                                }
-                            } else {
-                                // Email not verified
+                            if (!user.isEmailVerified()) {
+                                showLoading(false);
                                 showEmailNotVerifiedDialog(user);
+                                return;
                             }
+
+                            // Save user to Firestore and go to main
+                            saveUserToFirestore();
+                            new PreferenceManager(this).setGuestMode(false);
+                            goToMain();
                         }
                     } else {
+                        showLoading(false);
                         String error = task.getException() != null ? task.getException().getMessage()
                                 : "Authentication failed";
                         Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
@@ -118,55 +134,33 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void saveUserToFirestore() {
-        if (mAuth.getCurrentUser() == null)
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null)
             return;
 
-        String userId = mAuth.getCurrentUser().getUid();
-        String email = mAuth.getCurrentUser().getEmail();
-        String displayName = mAuth.getCurrentUser().getDisplayName();
+        String userId = user.getUid();
+        String email = user.getEmail();
+        String displayName = user.getDisplayName();
 
-        java.util.Map<String, Object> userData = new java.util.HashMap<>();
+        Map<String, Object> userData = new HashMap<>();
         userData.put("email", email);
         userData.put("displayName", displayName != null ? displayName : "User");
-        userData.put("lastLoginAt", System.currentTimeMillis());
+        userData.put("lastLogin", System.currentTimeMillis());
 
         com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("users")
                 .document(userId)
-                .set(userData, com.google.firebase.firestore.SetOptions.merge());
-    }
-
-    private void showSyncDataDialog() {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Sync Local Data")
-                .setMessage(
-                        "You have local expense data from Guest Mode. Would you like to sync it to your cloud account?")
-                .setPositiveButton("Yes, Sync", (dialog, which) -> {
-                    syncLocalDataToCloud();
-                    navigateToMain();
-                })
-                .setNegativeButton("No, Skip", (dialog, which) -> {
-                    navigateToMain();
-                })
-                .setCancelable(false)
-                .show();
-    }
-
-    private void syncLocalDataToCloud() {
-        ExpenseRepository repository = new ExpenseRepository(getApplication());
-        repository.syncLocalToCloud();
-        Toast.makeText(this, "Syncing data to cloud...", Toast.LENGTH_SHORT).show();
-    }
-
-    private void navigateToMain() {
-        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-        finish();
-    }
-
-    private void continueAsGuest() {
-        preferenceManager.setGuestMode(true);
-        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-        finish();
+                .update(userData)
+                .addOnFailureListener(e -> {
+                    // If update fails (doc doesn't exist), create it
+                    userData.put("createdAt", System.currentTimeMillis());
+                    userData.put("isBlocked", false);
+                    userData.put("isAdmin", false);
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            .collection("users")
+                            .document(userId)
+                            .set(userData);
+                });
     }
 
     private void showForgotPasswordDialog() {
@@ -176,10 +170,10 @@ public class LoginActivity extends AppCompatActivity {
 
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Reset Password")
-                .setMessage("We'll send you a password reset link.")
+                .setMessage("Enter your email to receive a password reset link.")
                 .setView(input)
                 .setPositiveButton("Send", (dialog, which) -> {
-                    String email = input.getText().toString().trim();
+                    String email = input.getText() != null ? input.getText().toString().trim() : "";
                     if (!email.isEmpty()) {
                         mAuth.sendPasswordResetEmail(email)
                                 .addOnCompleteListener(task -> {
@@ -195,6 +189,14 @@ public class LoginActivity extends AppCompatActivity {
                 .show();
     }
 
+    private void goToMain() {
+        showLoading(false);
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
     private void showLoading(boolean show) {
         if (show) {
             btnLogin.setVisibility(View.INVISIBLE);
@@ -203,5 +205,11 @@ public class LoginActivity extends AppCompatActivity {
             btnLogin.setVisibility(View.VISIBLE);
             progressBar.setVisibility(View.GONE);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        startActivity(new Intent(this, WelcomeActivity.class));
+        finish();
     }
 }
