@@ -8,16 +8,22 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
+import com.example.trackexpense.utils.PreferenceManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private EditText etName, etEmail, etPassword, etConfirmPassword, etPhone;
+    private EditText etName, etEmail, etPassword, etPhone;
     private MaterialButton btnRegister;
     private CircularProgressIndicator progressBar;
     private FirebaseAuth mAuth;
@@ -37,7 +43,6 @@ public class RegisterActivity extends AppCompatActivity {
         etName = findViewById(R.id.etName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
-        etConfirmPassword = findViewById(R.id.etConfirmPassword);
         etPhone = findViewById(R.id.etPhone);
         btnRegister = findViewById(R.id.btnRegister);
         progressBar = findViewById(R.id.progressBar);
@@ -51,14 +56,14 @@ public class RegisterActivity extends AppCompatActivity {
             finish();
         });
 
-        findViewById(R.id.tvLoginTab).setOnClickListener(v -> {
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
-        });
-
         findViewById(R.id.tvBack).setOnClickListener(v -> {
             startActivity(new Intent(this, WelcomeActivity.class));
             finish();
+        });
+
+        findViewById(R.id.btnGuest).setOnClickListener(v -> {
+            new PreferenceManager(this).setGuestMode(true);
+            goToMain();
         });
     }
 
@@ -66,7 +71,6 @@ public class RegisterActivity extends AppCompatActivity {
         String name = etName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
-        String confirmPassword = etConfirmPassword.getText().toString().trim();
         String phone = etPhone.getText().toString().trim();
 
         // Validation
@@ -90,21 +94,6 @@ public class RegisterActivity extends AppCompatActivity {
             etPassword.requestFocus();
             return;
         }
-        if (!password.equals(confirmPassword)) {
-            etConfirmPassword.setError("Passwords do not match");
-            etConfirmPassword.requestFocus();
-            return;
-        }
-        if (phone.isEmpty()) {
-            etPhone.setError("Phone number required");
-            etPhone.requestFocus();
-            return;
-        }
-        if (!phone.startsWith("+")) {
-            etPhone.setError("Include country code (e.g., +880)");
-            etPhone.requestFocus();
-            return;
-        }
 
         showLoading(true);
 
@@ -119,14 +108,14 @@ public class RegisterActivity extends AppCompatActivity {
                                     .build();
                             user.updateProfile(profileUpdates)
                                     .addOnCompleteListener(profileTask -> {
+                                        // Save user to Firestore
+                                        saveUserToFirestore(user, name, email, phone);
+
                                         showLoading(false);
-                                        // Navigate to phone verification
-                                        Intent intent = new Intent(this, VerifyEmailActivity.class);
-                                        intent.putExtra("phone_number", phone);
-                                        intent.putExtra("user_name", name);
-                                        intent.putExtra("user_email", email);
-                                        startActivity(intent);
-                                        finish();
+                                        new PreferenceManager(this).setGuestMode(false);
+                                        Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT)
+                                                .show();
+                                        goToMain();
                                     });
                         }
                     } else {
@@ -136,6 +125,28 @@ public class RegisterActivity extends AppCompatActivity {
                         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    private void saveUserToFirestore(FirebaseUser user, String name, String email, String phone) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("displayName", name);
+        userData.put("email", email);
+        userData.put("phoneNumber", phone);
+        userData.put("createdAt", System.currentTimeMillis());
+        userData.put("isBlocked", false);
+        userData.put("isAdmin", false);
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(user.getUid())
+                .set(userData);
+    }
+
+    private void goToMain() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void showLoading(boolean show) {

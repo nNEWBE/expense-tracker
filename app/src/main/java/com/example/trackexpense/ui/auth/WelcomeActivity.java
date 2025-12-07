@@ -2,6 +2,7 @@ package com.example.trackexpense.ui.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -27,7 +28,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
         MaterialButton btnLogin = findViewById(R.id.btnLogin);
         MaterialButton btnRegister = findViewById(R.id.btnRegister);
-        MaterialButton btnGuest = findViewById(R.id.btnGuest);
+        TextView btnGuest = findViewById(R.id.btnGuest);
 
         btnLogin.setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));

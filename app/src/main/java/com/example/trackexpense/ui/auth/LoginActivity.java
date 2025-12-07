@@ -2,11 +2,8 @@ package com.example.trackexpense.ui.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.method.PasswordTransformationMethod;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,9 +26,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText etEmail, etPassword;
     private MaterialButton btnLogin;
     private CircularProgressIndicator progressBar;
-    private ImageView ivTogglePassword;
     private FirebaseAuth mAuth;
-    private boolean passwordVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,18 +44,12 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         progressBar = findViewById(R.id.progressBar);
-        ivTogglePassword = findViewById(R.id.ivTogglePassword);
     }
 
     private void setupListeners() {
         btnLogin.setOnClickListener(v -> loginUser());
 
         findViewById(R.id.tvRegister).setOnClickListener(v -> {
-            startActivity(new Intent(this, RegisterActivity.class));
-            finish();
-        });
-
-        findViewById(R.id.tvSignupTab).setOnClickListener(v -> {
             startActivity(new Intent(this, RegisterActivity.class));
             finish();
         });
@@ -72,14 +61,9 @@ public class LoginActivity extends AppCompatActivity {
             finish();
         });
 
-        ivTogglePassword.setOnClickListener(v -> {
-            passwordVisible = !passwordVisible;
-            if (passwordVisible) {
-                etPassword.setTransformationMethod(null);
-            } else {
-                etPassword.setTransformationMethod(new PasswordTransformationMethod());
-            }
-            etPassword.setSelection(etPassword.getText().length());
+        findViewById(R.id.btnGuest).setOnClickListener(v -> {
+            new PreferenceManager(this).setGuestMode(true);
+            goToMain();
         });
     }
 
@@ -105,14 +89,7 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            // Check if email is verified
-                            if (!user.isEmailVerified()) {
-                                showLoading(false);
-                                showEmailNotVerifiedDialog(user);
-                                return;
-                            }
-
-                            // Save user to Firestore and go to main
+                            // Check if email is verified (optional)
                             saveUserToFirestore();
                             new PreferenceManager(this).setGuestMode(false);
                             goToMain();
@@ -124,13 +101,6 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
                     }
                 });
-    }
-
-    private void showEmailNotVerifiedDialog(FirebaseUser user) {
-        // Navigate to verification screen
-        Intent intent = new Intent(this, VerifyEmailActivity.class);
-        startActivity(intent);
-        finish();
     }
 
     private void saveUserToFirestore() {
@@ -152,7 +122,6 @@ public class LoginActivity extends AppCompatActivity {
                 .document(userId)
                 .update(userData)
                 .addOnFailureListener(e -> {
-                    // If update fails (doc doesn't exist), create it
                     userData.put("createdAt", System.currentTimeMillis());
                     userData.put("isBlocked", false);
                     userData.put("isAdmin", false);
