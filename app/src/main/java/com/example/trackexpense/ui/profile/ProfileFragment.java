@@ -238,7 +238,7 @@ public class ProfileFragment extends Fragment {
                 .setMessage("Are you sure you want to logout?")
                 .setPositiveButton("Logout", (dialog, which) -> {
                     FirebaseAuth.getInstance().signOut();
-                    Intent intent = new Intent(requireContext(), LoginActivity.class);
+                    Intent intent = new Intent(requireContext(), WelcomeActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                 })
@@ -304,7 +304,7 @@ public class ProfileFragment extends Fragment {
                                 if (deleteTask.isSuccessful()) {
                                     Toast.makeText(requireContext(), "Account deleted successfully",
                                             Toast.LENGTH_SHORT).show();
-                                    Intent intent = new Intent(requireContext(), LoginActivity.class);
+                                    Intent intent = new Intent(requireContext(), WelcomeActivity.class);
                                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                     startActivity(intent);
                                 } else {
