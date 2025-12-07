@@ -71,14 +71,30 @@
                     android:textColor="#888888"
                     android:textSize="14sp" />
 
-                <EditText
-                    android:id="@+id/etName"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/input_underline_gray"
-                    android:inputType="textPersonName"
-                    android:textColor="#333333"
-                    android:textSize="16sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_person"
+                        app:tint="#888888" />
+
+                    <EditText
+                        android:id="@+id/etName"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="12dp"
+                        android:background="@null"
+                        android:inputType="textPersonName"
+                        android:textColor="#333333"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
 
                 <!-- Email -->
                 <TextView
@@ -89,14 +105,30 @@
                     android:textColor="#888888"
                     android:textSize="14sp" />
 
-                <EditText
-                    android:id="@+id/etEmail"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/input_underline_gray"
-                    android:inputType="textEmailAddress"
-                    android:textColor="#333333"
-                    android:textSize="16sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_email"
+                        app:tint="#888888" />
+
+                    <EditText
+                        android:id="@+id/etEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="12dp"
+                        android:background="@null"
+                        android:inputType="textEmailAddress"
+                        android:textColor="#333333"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
 
                 <!-- Phone Number -->
                 <TextView
@@ -107,16 +139,31 @@
                     android:textColor="#888888"
                     android:textSize="14sp" />
 
-                <EditText
-                    android:id="@+id/etPhone"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/input_underline_gray"
-                    android:hint="+880..."
-                    android:inputType="phone"
-                    android:textColor="#333333"
-                    android:textColorHint="#CCCCCC"
-                    android:textSize="16sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_phone"
+                        app:tint="#888888" />
+
+                    <EditText
+                        android:id="@+id/etPhone"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="12dp"
+                        android:background="@null"
+                        android:inputType="phone"
+                        android:text="+88"
+                        android:textColor="#333333"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
 
                 <!-- Password -->
                 <TextView
@@ -127,16 +174,40 @@
                     android:textColor="#888888"
                     android:textSize="14sp" />
 
-                <EditText
-                    android:id="@+id/etPassword"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/input_underline_gray"
-                    android:inputType="textPassword"
-                    android:textColor="#333333"
-                    android:textSize="16sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                <!-- Confirm Password (hidden field, using same password) -->
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_lock"
+                        app:tint="#888888" />
+
+                    <EditText
+                        android:id="@+id/etPassword"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:inputType="textPassword"
+                        android:textColor="#333333"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:id="@+id/ivTogglePassword"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_view"
+                        app:tint="#888888" />
+
+                </LinearLayout>
+
+                <!-- Hidden confirm password (same as password for simplicity) -->
                 <EditText
                     android:id="@+id/etConfirmPassword"
                     android:layout_width="match_parent"
@@ -223,7 +294,7 @@
 
                 </LinearLayout>
 
-                <!-- Guest Mode Button (replacing social login) -->
+                <!-- Guest Mode Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnGuest"
                     style="@style/Widget.Material3.Button.OutlinedButton"

@@ -65,6 +65,19 @@ public class LoginActivity extends AppCompatActivity {
             new PreferenceManager(this).setGuestMode(true);
             goToMain();
         });
+
+        // Password visibility toggle
+        findViewById(R.id.ivTogglePassword).setOnClickListener(v -> {
+            if (etPassword.getInputType() == (android.text.InputType.TYPE_CLASS_TEXT
+                    | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
+                etPassword.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                        | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+            } else {
+                etPassword.setInputType(
+                        android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            }
+            etPassword.setSelection(etPassword.getText().length());
+        });
     }
 
     private void loginUser() {

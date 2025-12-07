@@ -46,6 +46,32 @@ public class RegisterActivity extends AppCompatActivity {
         etPhone = findViewById(R.id.etPhone);
         btnRegister = findViewById(R.id.btnRegister);
         progressBar = findViewById(R.id.progressBar);
+
+        // Ensure phone always has +88 prefix
+        setupPhonePrefix();
+    }
+
+    private void setupPhonePrefix() {
+        etPhone.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                String text = s.toString();
+                if (!text.startsWith("+88")) {
+                    etPhone.removeTextChangedListener(this);
+                    etPhone.setText("+88");
+                    etPhone.setSelection(etPhone.getText().length());
+                    etPhone.addTextChangedListener(this);
+                }
+            }
+        });
     }
 
     private void setupListeners() {
@@ -64,6 +90,19 @@ public class RegisterActivity extends AppCompatActivity {
         findViewById(R.id.btnGuest).setOnClickListener(v -> {
             new PreferenceManager(this).setGuestMode(true);
             goToMain();
+        });
+
+        // Password visibility toggle
+        findViewById(R.id.ivTogglePassword).setOnClickListener(v -> {
+            if (etPassword.getInputType() == (android.text.InputType.TYPE_CLASS_TEXT
+                    | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
+                etPassword.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                        | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+            } else {
+                etPassword.setInputType(
+                        android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            }
+            etPassword.setSelection(etPassword.getText().length());
         });
     }
 
