@@ -5,44 +5,57 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Inner rounded rectangle (card/wallet shape) -->
+    <!-- Inner card/screen area -->
     <path
-        android:fillColor="#1A3A4A"
-        android:pathData="M24,34c0,-5.5 4.5,-10 10,-10h40c5.5,0 10,4.5 10,10v40c0,5.5 -4.5,10 -10,10H34c-5.5,0 -10,-4.5 -10,-10V34z" />
+        android:fillColor="#1E4A5A"
+        android:pathData="M24,30c0,-5.5 4.5,-10 10,-10h40c5.5,0 10,4.5 10,10v48c0,5.5 -4.5,10 -10,10H34c-5.5,0 -10,-4.5 -10,-10V30z" />
 
-    <!-- Chart/graph line going up -->
+    <!-- Main upward trend line -->
     <path
         android:fillColor="none"
-        android:strokeColor="#6AA8B8"
+        android:strokeColor="#7FBFCF"
         android:strokeWidth="3"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M32,68L44,56L58,64L76,42" />
+        android:pathData="M30,70L42,58L56,62L72,40" />
 
-    <!-- Arrow head pointing up-right -->
+    <!-- Arrow at the end -->
     <path
-        android:fillColor="#6AA8B8"
-        android:pathData="M76,42l-10,2l8,-10z" />
+        android:fillColor="#7FBFCF"
+        android:pathData="M72,40l-8,2l6,-10z" />
 
-    <!-- Dollar sign circle -->
+    <!-- Bar chart elements -->
     <path
-        android:fillColor="#4A8090"
-        android:pathData="M76,68m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0" />
-
-    <!-- Dollar sign $ simplified -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:pathData="M76,62v12M73,65c0,-2 6,-2 6,0c0,2 -6,2 -6,4c0,2 6,2 6,0" />
-
-    <!-- Data point dots -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M44,56m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+        android:fillColor="#5A9AAA"
+        android:pathData="M30,78v-12h6v12z" />
 
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M58,64m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+        android:fillColor="#6AAFBF"
+        android:pathData="M40,78v-20h6v20z" />
+
+    <path
+        android:fillColor="#7ABFCF"
+        android:pathData="M50,78v-16h6v16z" />
+
+    <path
+        android:fillColor="#8ACFDF"
+        android:pathData="M60,78v-24h6v24z" />
+
+    <!-- Coin/Dollar icon -->
+    <path
+        android:fillColor="#5A9AAA"
+        android:pathData="M76,74m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0" />
+
+    <path
+        android:fillColor="#1E4A5A"
+        android:pathData="M76,74m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+
+    <!-- Dollar sign mini -->
+    <path
+        android:fillColor="#7FBFCF"
+        android:strokeColor="#7FBFCF"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M76,69v10M74,71c0,-2 4,-2 4,0c0,2 -4,2 -4,4c0,2 4,2 4,0" />
 
 </vector>
