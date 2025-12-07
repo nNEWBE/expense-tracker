@@ -5,68 +5,57 @@
     android:viewportWidth="512"
     android:viewportHeight="512">
 
-    <!-- Outer background with rounded corners -->
+    <!-- Premium Background -->
     <path
-        android:fillColor="#3D6B7A"
-        android:pathData="M0,100C0,44.8 44.8,0 100,0h312c55.2,0 100,44.8 100,100v312c0,55.2 -44.8,100 -100,100H100C44.8,512 0,467.2 0,412V100z" />
+        android:fillColor="#1A3A4A"
+        android:pathData="M0,0h512v512H0z" />
 
-    <!-- Inner card/screen area -->
+    <!-- Wallet Body - Main Container -->
     <path
-        android:fillColor="#1E4A5A"
-        android:pathData="M80,130c0,-27.6 22.4,-50 50,-50h252c27.6,0 50,22.4 50,50v252c0,27.6 -22.4,50 -50,50H130c-27.6,0 -50,-22.4 -50,-50V130z" />
+        android:fillColor="#2D5A6A"
+        android:pathData="M100,140 h312 c33.1,0 60,26.9 60,60 v152 c0,33.1 -26.9,60 -60,60 h-312 c-33.1,0 -60,-26.9 -60,-60 v-152 c0,33.1 26.9,60 60,60 z" />
 
-    <!-- Graph grid lines (horizontal) -->
+    <!-- Wallet Flap/Pocket -->
     <path
-        android:strokeColor="#2A5A6A"
-        android:strokeWidth="2"
-        android:pathData="M110,180h292M110,240h292M110,300h292" />
+        android:fillColor="#3C6B7A"
+        android:pathData="M100,200 h312 c33.1,0 60,26.9 60,60 v92 c0,33.1 -26.9,60 -60,60 h-312 c-33.1,0 -60,-26.9 -60,-60 v-92 c0,33.1 26.9,60 60,60 z" />
 
-    <!-- Main upward trend line -->
+    <!-- Receipt/List Paper Coming Out -->
     <path
-        android:fillColor="none"
-        android:strokeColor="#7FBFCF"
-        android:strokeWidth="12"
+        android:fillColor="#FFFFFF"
+        android:pathData="M180,180 h152 c11,0 20,9 20,20 v200 c0,11 -9,20 -20,20 h-152 c-11,0 -20,-9 -20,-20 v-200 c0,-11 9,-20 20,-20 z" />
+
+    <!-- Receipt Top Edge (Torn Effect) -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:pathData="M180,180 h152 v8 l-8,4 l-8,-4 l-8,4 l-8,-4 l-8,4 l-8,-4 l-8,4 l-8,-4 l-8,4 l-8,-4 l-8,4 l-8,-4 l-8,4 l-8,-4 l-8,4 l-8,-4 l-8,4 l-8,-4 v-8 z" />
+
+    <!-- Expense List Items -->
+    <path
+        android:fillColor="#4A8090"
+        android:pathData="M200,220 h112 v8 h-112 z M200,250 h90 v8 h-90 z M200,280 h105 v8 h-105 z M200,310 h85 v8 h-85 z" />
+
+    <!-- Dollar Amounts (Right Aligned) -->
+    <path
+        android:fillColor="#1A3A4A"
+        android:pathData="M285,220 h27 v8 h-27 z M265,250 h47 v8 h-47 z M275,280 h37 v8 h-37 z M255,310 h57 v8 h-57 z" />
+
+    <!-- Total Line at Bottom -->
+    <path
+        android:fillColor="#1A3A4A"
+        android:pathData="M200,360 h112 v3 h-112 z" />
+
+    <!-- Total Amount -->
+    <path
+        android:fillColor="#4FC3F7"
+        android:pathData="M240,375 h72 v12 h-72 z" />
+
+    <!-- Dollar Sign Icon -->
+    <path
+        android:fillColor="#4FC3F7"
+        android:strokeColor="#4FC3F7"
+        android:strokeWidth="8"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M130,340L200,280L280,300L360,180" />
-
-    <!-- Arrow at the end of trend -->
-    <path
-        android:fillColor="#7FBFCF"
-        android:pathData="M360,180l-35,5l25,-45z" />
-
-    <!-- Bar chart elements -->
-    <path
-        android:fillColor="#5A9AAA"
-        android:pathData="M130,360v-60h30v60z" />
-
-    <path
-        android:fillColor="#6AAFBF"
-        android:pathData="M180,360v-100h30v100z" />
-
-    <path
-        android:fillColor="#7ABFCF"
-        android:pathData="M230,360v-80h30v80z" />
-
-    <path
-        android:fillColor="#8ACFDF"
-        android:pathData="M280,360v-120h30v120z" />
-
-    <!-- Coin/Dollar icon in corner -->
-    <path
-        android:fillColor="#5A9AAA"
-        android:pathData="M380,380m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0" />
-
-    <path
-        android:fillColor="#1E4A5A"
-        android:pathData="M380,380m-35,0a35,35 0,1 1,70 0a35,35 0,1 1,-70 0" />
-
-    <!-- Dollar sign -->
-    <path
-        android:fillColor="#7FBFCF"
-        android:strokeColor="#7FBFCF"
-        android:strokeWidth="4"
-        android:strokeLineCap="round"
-        android:pathData="M380,355v50M368,365c0,-8 24,-8 24,0c0,10 -24,10 -24,20c0,8 24,8 24,0" />
+        android:pathData="M256,340 v30 M244,348 c0,-8 24,-8 24,0 c0,10 -24,10 -24,18 c0,8 24,8 24,0" />
 
 </vector>
