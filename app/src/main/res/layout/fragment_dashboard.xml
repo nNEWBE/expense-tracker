@@ -438,113 +438,106 @@
 
             </FrameLayout>
 
-            <!-- Quick Actions -->
-            <LinearLayout
+            <!-- Quick Filters Card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="-20dp"
-                android:paddingHorizontal="20dp">
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="-24dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1dp"
+                app:strokeWidth="0dp">
 
-                <com.google.android.material.card.MaterialCardView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardBackgroundColor="@android:color/white"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="4dp"
-                    app:strokeWidth="0dp">
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingVertical="16dp"
+                    android:background="@android:color/white"
+                    android:paddingHorizontal="8dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFilterAll"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="0.8"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:padding="0dp"
+                        android:text="All"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.05"
+                        android:textColor="@android:color/white"
+                        app:backgroundTint="@color/primary"
+                        app:cornerRadius="12dp"
+                        app:elevation="0dp"
+                        app:icon="@drawable/ic_nav_analytics"
+                        app:iconGravity="textStart"
+                        app:iconPadding="4dp"
+                        app:iconSize="16dp" />
 
-                        <LinearLayout
-                            android:id="@+id/quickAddIncome"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical"
-                            android:padding="8dp">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFilterIncome"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:padding="0dp"
+                        android:text="Income"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.05"
+                        android:textColor="@color/income_green"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="@color/income_green"
+                        app:strokeWidth="1dp"
+                        app:elevation="0dp"
+                        app:icon="@drawable/ic_arrow_up"
+                        app:iconGravity="textStart"
+                        app:iconPadding="4dp"
+                        app:iconSize="16dp" />
 
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:background="@drawable/quick_action_bg_income"
-                                android:padding="10dp"
-                                android:src="@drawable/ic_arrow_up"
-                                app:tint="#4CAF50" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFilterExpense"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:padding="0dp"
+                        android:text="Expense"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.05"
+                        android:textColor="@color/expense_red"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="@color/expense_red"
+                        app:strokeWidth="1dp"
+                        app:elevation="0dp"
+                        app:icon="@drawable/ic_arrow_down"
+                        app:iconGravity="textStart"
+                        app:iconPadding="4dp"
+                        app:iconSize="16dp" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="Add Income"
-                                android:textColor="@color/on_background_light"
-                                android:textSize="12sp" />
+                </LinearLayout>
 
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:id="@+id/quickAddExpense"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical"
-                            android:padding="8dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:background="@drawable/quick_action_bg_expense"
-                                android:padding="10dp"
-                                android:src="@drawable/ic_arrow_down"
-                                app:tint="#F44336" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="Add Expense"
-                                android:textColor="@color/on_background_light"
-                                android:textSize="12sp" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:id="@+id/quickViewAnalytics"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical"
-                            android:padding="8dp">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:background="@drawable/quick_action_bg_analytics"
-                                android:padding="10dp"
-                                android:src="@drawable/ic_nav_analytics"
-                                app:tint="#1A3A4A" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="Analytics"
-                                android:textColor="@color/on_background_light"
-                                android:textSize="12sp" />
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-            </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Transactions Header -->
             <LinearLayout
@@ -583,86 +576,6 @@
                 android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false"
                 android:paddingHorizontal="12dp" />
-
-            <!-- Statistics Section -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="24dp"
-                android:text="Spending Overview"
-                android:textColor="@color/on_background_light"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <!-- Pie Chart Card with Modern Style -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="2dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Category Breakdown"
-                        android:textColor="#888888"
-                        android:textSize="12sp" />
-
-                    <com.github.mikephil.charting.charts.PieChart
-                        android:id="@+id/pieChart"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Bar Chart Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="220dp"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="2dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Weekly Spending"
-                        android:textColor="#888888"
-                        android:textSize="12sp" />
-
-                    <com.github.mikephil.charting.charts.BarChart
-                        android:id="@+id/barChart"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

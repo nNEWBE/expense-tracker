@@ -12,16 +12,16 @@
 
     <!-- App Logo -->
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="8dp">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:strokeWidth="1.5dp"
+        app:strokeColor="#3B87CEEB">
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@mipmap/ic_launcher"
-            android:scaleType="centerInside"/>
+        <com.google.android.material.imageview.ShapeableImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center"
+            android:src="@drawable/app_logo" />
 
     </com.google.android.material.card.MaterialCardView>
 

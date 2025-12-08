@@ -53,13 +53,15 @@ public class DashboardFragment extends Fragment {
     private TextView tvTotalBalance, tvTotalIncome, tvTotalExpense, tvSeeAll;
     private TextView tvGreeting, tvUserName;
     private TextView tvBudgetRemaining, tvBudgetSpent, tvDaysLeft;
-    private PieChart pieChart;
-    private BarChart barChart;
+    // Charts removed
     private RecyclerView rvRecentTransactions;
     private ExpenseAdapter expenseAdapter;
     private MaterialCardView btnMenu, btnNotification, cardBalance, cardBudget;
-    private View quickAddIncome, quickAddExpense, quickViewAnalytics;
+    private com.google.android.material.button.MaterialButton btnFilterAll, btnFilterIncome, btnFilterExpense;
     private View cardContainer;
+
+    private List<Expense> allExpenses = new ArrayList<>();
+    private String currentFilter = "ALL";
 
     // Notification panel views
     private View notificationOverlay, notificationDimBackground, notificationPanel;
@@ -128,16 +130,16 @@ public class DashboardFragment extends Fragment {
         tvSeeAll = view.findViewById(R.id.tvSeeAll);
         tvGreeting = view.findViewById(R.id.tvGreeting);
         tvUserName = view.findViewById(R.id.tvUserName);
-        pieChart = view.findViewById(R.id.pieChart);
-        barChart = view.findViewById(R.id.barChart);
+        // Charts removed
         rvRecentTransactions = view.findViewById(R.id.rvRecentTransactions);
         btnMenu = view.findViewById(R.id.btnMenu);
         btnNotification = view.findViewById(R.id.btnNotification);
         cardBalance = view.findViewById(R.id.cardBalance);
         cardBudget = view.findViewById(R.id.cardBudget);
-        quickAddIncome = view.findViewById(R.id.quickAddIncome);
-        quickAddExpense = view.findViewById(R.id.quickAddExpense);
-        quickViewAnalytics = view.findViewById(R.id.quickViewAnalytics);
+
+        btnFilterAll = view.findViewById(R.id.btnFilterAll);
+        btnFilterIncome = view.findViewById(R.id.btnFilterIncome);
+        btnFilterExpense = view.findViewById(R.id.btnFilterExpense);
 
         // Budget card views
         tvBudgetRemaining = view.findViewById(R.id.tvBudgetRemaining);
@@ -294,30 +296,21 @@ public class DashboardFragment extends Fragment {
 
         // Notification button - handled in setupNotificationPanel()
 
-        // Quick actions
-        quickAddIncome.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("type", "INCOME");
-            Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_addExpenseFragment, bundle);
-        });
+        // Filter listeners
+        btnFilterAll.setOnClickListener(v -> applyFilter("ALL"));
+        btnFilterIncome.setOnClickListener(v -> applyFilter("INCOME"));
+        btnFilterExpense.setOnClickListener(v -> applyFilter("EXPENSE"));
 
-        quickAddExpense.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("type", "EXPENSE");
-            Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_addExpenseFragment, bundle);
-        });
-
-        quickViewAnalytics.setOnClickListener(v -> {
-            Navigation.findNavController(view).navigate(R.id.transactionsFragment);
-        });
+        // Initialize filter UI
+        updateFilterUI();
     }
 
     private void observeData() {
         expenseViewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
             if (expenses != null) {
+                allExpenses = expenses;
                 updateSummary(expenses);
-                updateCharts(expenses);
-                updateRecentTransactions(expenses);
+                updateRecentTransactions();
                 updateNotifications(expenses);
             }
         });
@@ -376,143 +369,57 @@ public class DashboardFragment extends Fragment {
         tvDaysLeft.setText(String.valueOf(daysLeft));
     }
 
-    private void updateCharts(List<Expense> expenses) {
-        updatePieChart(expenses);
-        updateBarChart(expenses);
-    }
-
-    private void updatePieChart(List<Expense> expenses) {
-        Map<String, Float> categoryMap = new HashMap<>();
-        for (Expense e : expenses) {
-            if ("EXPENSE".equals(e.getType())) {
-                String cat = e.getCategory();
-                float current = categoryMap.getOrDefault(cat, 0f);
-                categoryMap.put(cat, current + (float) e.getAmount());
-            }
-        }
-
-        List<PieEntry> pieEntries = new ArrayList<>();
-        for (Map.Entry<String, Float> entry : categoryMap.entrySet()) {
-            pieEntries.add(new PieEntry(entry.getValue(), entry.getKey()));
-        }
-
-        if (pieEntries.isEmpty()) {
-            pieChart.setNoDataText("No expense data yet");
-            pieChart.setNoDataTextColor(Color.GRAY);
-            pieChart.invalidate();
-            return;
-        }
-
-        int[] colors = {
-                ContextCompat.getColor(requireContext(), R.color.category_food),
-                ContextCompat.getColor(requireContext(), R.color.category_transport),
-                ContextCompat.getColor(requireContext(), R.color.category_shopping),
-                ContextCompat.getColor(requireContext(), R.color.category_entertainment),
-                ContextCompat.getColor(requireContext(), R.color.category_health),
-                ContextCompat.getColor(requireContext(), R.color.category_bills),
-                ContextCompat.getColor(requireContext(), R.color.category_education),
-                ContextCompat.getColor(requireContext(), R.color.category_travel)
-        };
-
-        PieDataSet dataSet = new PieDataSet(pieEntries, "");
-        dataSet.setColors(colors);
-        dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(11f);
-        dataSet.setSliceSpace(4f);
-        dataSet.setSelectionShift(8f);
-        dataSet.setValueFormatter(new PercentFormatter(pieChart));
-
-        PieData pieData = new PieData(dataSet);
-        pieChart.setData(pieData);
-        pieChart.setUsePercentValues(true);
-        pieChart.getDescription().setEnabled(false);
-        pieChart.setHoleRadius(58f);
-        pieChart.setTransparentCircleRadius(62f);
-        pieChart.setTransparentCircleColor(Color.WHITE);
-        pieChart.setTransparentCircleAlpha(110);
-        pieChart.setCenterText("Spending");
-        pieChart.setCenterTextSize(14f);
-        pieChart.setCenterTextColor(ContextCompat.getColor(requireContext(), R.color.primary_dark));
-        pieChart.setEntryLabelColor(Color.WHITE);
-        pieChart.setEntryLabelTextSize(10f);
-        pieChart.getLegend().setEnabled(false);
-        pieChart.setDrawEntryLabels(false);
-        pieChart.animateY(1200);
-        pieChart.invalidate();
-    }
-
-    private void updateBarChart(List<Expense> expenses) {
-        // Get last 7 days data
-        Calendar cal = Calendar.getInstance();
-        String[] days = new String[7];
-        float[] expenseAmounts = new float[7];
-
-        for (int i = 6; i >= 0; i--) {
-            Calendar dayCal = (Calendar) cal.clone();
-            dayCal.add(Calendar.DAY_OF_YEAR, i - 6);
-
-            // Shorter day labels
-            String[] dayNames = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-            days[6 - i] = dayNames[dayCal.get(Calendar.DAY_OF_WEEK) - 1];
-
-            dayCal.set(Calendar.HOUR_OF_DAY, 0);
-            dayCal.set(Calendar.MINUTE, 0);
-            dayCal.set(Calendar.SECOND, 0);
-            long dayStart = dayCal.getTimeInMillis();
-            dayCal.add(Calendar.DAY_OF_YEAR, 1);
-            long dayEnd = dayCal.getTimeInMillis();
-
-            for (Expense e : expenses) {
-                if (e.getDate() >= dayStart && e.getDate() < dayEnd) {
-                    if ("EXPENSE".equals(e.getType())) {
-                        expenseAmounts[6 - i] += e.getAmount();
-                    }
+    private void updateRecentTransactions() {
+        List<Expense> filtered = new ArrayList<>();
+        if (allExpenses != null) {
+            for (Expense e : allExpenses) {
+                if ("ALL".equals(currentFilter) || currentFilter.equals(e.getType())) {
+                    filtered.add(e);
                 }
             }
         }
-
-        List<BarEntry> barEntries = new ArrayList<>();
-        for (int i = 0; i < 7; i++) {
-            barEntries.add(new BarEntry(i, expenseAmounts[i]));
-        }
-
-        BarDataSet dataSet = new BarDataSet(barEntries, "");
-
-        // Gradient-like colors for bars
-        int[] barColors = new int[7];
-        int primaryColor = ContextCompat.getColor(requireContext(), R.color.primary);
-        int primaryLight = ContextCompat.getColor(requireContext(), R.color.primary_light);
-        for (int i = 0; i < 7; i++) {
-            barColors[i] = i == 6 ? primaryColor : primaryLight;
-        }
-        dataSet.setColors(barColors);
-        dataSet.setDrawValues(false);
-
-        BarData barData = new BarData(dataSet);
-        barData.setBarWidth(0.6f);
-
-        barChart.setData(barData);
-        barChart.getDescription().setEnabled(false);
-        barChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
-        barChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(days));
-        barChart.getXAxis().setGranularity(1f);
-        barChart.getXAxis().setDrawGridLines(false);
-        barChart.getXAxis().setTextColor(Color.GRAY);
-        barChart.getAxisLeft().setDrawGridLines(true);
-        barChart.getAxisLeft().setGridColor(Color.parseColor("#E0E0E0"));
-        barChart.getAxisLeft().setTextColor(Color.GRAY);
-        barChart.getAxisRight().setEnabled(false);
-        barChart.getLegend().setEnabled(false);
-        barChart.setFitBars(true);
-        barChart.setDrawGridBackground(false);
-        barChart.animateY(1200);
-        barChart.invalidate();
+        int count = Math.min(filtered.size(), 10); // Show up to 10
+        expenseAdapter.setExpenses(filtered.subList(0, count));
     }
 
-    private void updateRecentTransactions(List<Expense> expenses) {
-        int count = Math.min(expenses.size(), 5);
-        List<Expense> recent = expenses.subList(0, count);
-        expenseAdapter.setExpenses(recent);
+    private void applyFilter(String filter) {
+        currentFilter = filter;
+        updateFilterUI();
+        updateRecentTransactions();
+    }
+
+    private void updateFilterUI() {
+        if (btnFilterAll == null)
+            return;
+        updateButtonStyle(btnFilterAll, "ALL".equals(currentFilter), R.color.primary);
+        updateButtonStyle(btnFilterIncome, "INCOME".equals(currentFilter), R.color.income_green);
+        updateButtonStyle(btnFilterExpense, "EXPENSE".equals(currentFilter), R.color.expense_red);
+    }
+
+    private void updateButtonStyle(com.google.android.material.button.MaterialButton btn, boolean isActive,
+            int colorRes) {
+        int color = androidx.core.content.ContextCompat.getColor(requireContext(), colorRes);
+        if (isActive) {
+            // Modern tonal style: 20% opacity background, 100% opacity text/icon
+            int fadedColor = androidx.core.graphics.ColorUtils.setAlphaComponent(color, 50);
+
+            btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(fadedColor));
+            btn.setTextColor(color);
+            btn.setIconTint(android.content.res.ColorStateList.valueOf(color));
+            btn.setStrokeWidth(0);
+            btn.setElevation(0);
+        } else {
+            btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
+            btn.setTextColor(color);
+            btn.setIconTint(android.content.res.ColorStateList.valueOf(color));
+            btn.setStrokeColor(android.content.res.ColorStateList.valueOf(color));
+            btn.setStrokeWidth(dpToPx(1));
+            btn.setElevation(0);
+        }
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
     // ===================== NOTIFICATION PANEL METHODS =====================

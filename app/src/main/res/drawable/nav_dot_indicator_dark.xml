@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modern pill-shaped active indicator for dark mode -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#4ECDC4"/>
+    <corners android:radius="3dp"/>
+    <size android:width="20dp" android:height="3dp"/>
+</shape>

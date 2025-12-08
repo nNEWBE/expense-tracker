@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Stylized leaf/plant icon similar to reference image -->
+    <!-- Main leaf shape -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M17.5,2C15.5,2 13,4 12,6.5C11,4 8.5,2 6.5,2C3.5,2 2,4.5 2,7.5C2,13 12,22 12,22C12,22 22,13 22,7.5C22,4.5 20.5,2 17.5,2z"/>
+    <!-- Leaf vein line -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#1A3A4A"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M12,7L12,17"/>
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#1A3A4A"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M12,10L9,7"/>
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#1A3A4A"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M12,10L15,7"/>
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#1A3A4A"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M12,14L8,11"/>
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#1A3A4A"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M12,14L16,11"/>
+</vector>

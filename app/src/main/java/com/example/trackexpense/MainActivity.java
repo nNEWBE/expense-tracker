@@ -23,7 +23,6 @@ import androidx.core.view.WindowCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.NavigationUI;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
@@ -33,7 +32,7 @@ import com.example.trackexpense.data.local.AppDatabase;
 import com.example.trackexpense.utils.BeautifulNotification;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.utils.ReminderWorker;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.textfield.TextInputEditText;
@@ -53,10 +52,15 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private NavController navController;
-    private BottomNavigationView bottomNav;
+    private FloatingActionButton fabAdd;
+    private View bottomNavContainer;
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private PreferenceManager preferenceManager;
+
+    // Custom bottom nav views
+    private View navDashboard, navTransaction, navAnalytics, navProfile;
+    private ImageView icDashboard, icTransaction, icAnalytics, icProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +113,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        // Disable swipe gesture - drawer only opens via menu button
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
     }
 
     private void setupDrawerHeader() {
@@ -142,16 +149,87 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (navHostFragment != null) {
             navController = navHostFragment.getNavController();
-            bottomNav = findViewById(R.id.bottom_nav);
-            NavigationUI.setupWithNavController(bottomNav, navController);
+            fabAdd = findViewById(R.id.fab_add);
+            bottomNavContainer = findViewById(R.id.bottom_nav_container);
 
-            navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-                if (destination.getId() == R.id.addExpenseFragment) {
-                    bottomNav.setVisibility(View.GONE);
-                } else {
-                    bottomNav.setVisibility(View.VISIBLE);
+            // Initialize custom nav views
+            navDashboard = findViewById(R.id.nav_dashboard);
+            navTransaction = findViewById(R.id.nav_transaction);
+            navAnalytics = findViewById(R.id.nav_analytics);
+            navProfile = findViewById(R.id.nav_profile);
+
+            icDashboard = findViewById(R.id.ic_dashboard);
+            icTransaction = findViewById(R.id.ic_transaction);
+            icAnalytics = findViewById(R.id.ic_analytics);
+            icProfile = findViewById(R.id.ic_profile);
+
+            // Handle center FAB click to navigate to add expense
+            fabAdd.setOnClickListener(v -> {
+                navController.navigate(R.id.addExpenseFragment);
+            });
+
+            // Set up click listeners for custom nav items - only navigate if not already
+            // there
+            navDashboard.setOnClickListener(v -> {
+                if (navController.getCurrentDestination() != null &&
+                        navController.getCurrentDestination().getId() != R.id.dashboardFragment) {
+                    navController.navigate(R.id.dashboardFragment);
                 }
             });
+
+            navTransaction.setOnClickListener(v -> {
+                if (navController.getCurrentDestination() != null &&
+                        navController.getCurrentDestination().getId() != R.id.transactionsFragment) {
+                    navController.navigate(R.id.transactionsFragment);
+                }
+            });
+
+            navAnalytics.setOnClickListener(v -> {
+                if (navController.getCurrentDestination() != null &&
+                        navController.getCurrentDestination().getId() != R.id.analyticsFragment) {
+                    navController.navigate(R.id.analyticsFragment);
+                }
+            });
+
+            navProfile.setOnClickListener(v -> {
+                if (navController.getCurrentDestination() != null &&
+                        navController.getCurrentDestination().getId() != R.id.profileFragment) {
+                    navController.navigate(R.id.profileFragment);
+                }
+            });
+
+            // Listen for destination changes to update indicators
+            // Listen for destination changes to update indicators
+            navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+                int destId = destination.getId();
+                // Bottom nav stays visible on all pages
+                updateNavIndicators(destId);
+            });
+
+            // Set initial state
+            updateNavIndicators(R.id.dashboardFragment);
+        }
+    }
+
+    private void updateNavIndicators(int selectedId) {
+        int activeColor = ContextCompat.getColor(this, R.color.nav_active_color);
+        int inactiveColor = ContextCompat.getColor(this, R.color.nav_inactive_color);
+
+        // Reset all icons to inactive color
+        icDashboard.setColorFilter(inactiveColor);
+        icTransaction.setColorFilter(inactiveColor);
+        icAnalytics.setColorFilter(inactiveColor);
+        icProfile.setColorFilter(inactiveColor);
+
+        // Set active icon color based on selected destination
+        if (selectedId == R.id.dashboardFragment) {
+            icDashboard.setColorFilter(activeColor);
+        } else if (selectedId == R.id.transactionsFragment) {
+            icTransaction.setColorFilter(activeColor);
+        } else if (selectedId == R.id.analyticsFragment) {
+            icAnalytics.setColorFilter(activeColor);
+        } else if (selectedId == R.id.profileFragment) {
+            icProfile.setColorFilter(activeColor);
         }
     }
 

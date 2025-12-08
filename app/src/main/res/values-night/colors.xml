@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Navigation Colors (Dark Mode) -->
+    <color name="nav_active_color">#4ECDC4</color>
+    <color name="nav_inactive_color">#6B7280</color>
+</resources>
