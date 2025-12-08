@@ -81,6 +81,63 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setupDrawerHeader();
         checkNotificationPermission();
         scheduleDailyReminder();
+        setupBackPressHandler();
+    }
+
+    private void setupBackPressHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Close drawer if open
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return;
+                }
+
+                // Check if we're on a main destination
+                if (navController != null) {
+                    int currentDest = navController.getCurrentDestination() != null
+                            ? navController.getCurrentDestination().getId()
+                            : 0;
+
+                    // Main destinations where we should show exit dialog
+                    if (currentDest == R.id.dashboardFragment ||
+                            currentDest == R.id.transactionsFragment ||
+                            currentDest == R.id.analyticsFragment ||
+                            currentDest == R.id.profileFragment) {
+                        showExitConfirmation();
+                    } else {
+                        // Navigate back normally for other screens
+                        navController.popBackStack();
+                    }
+                }
+            }
+        });
+    }
+
+    private void showExitConfirmation() {
+        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheetDialog = new com.google.android.material.bottomsheet.BottomSheetDialog(
+                this, R.style.BottomSheetDialogTheme);
+
+        View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_exit, null);
+        bottomSheetDialog.setContentView(sheetView);
+
+        // Make bottom sheet background transparent
+        if (bottomSheetDialog.getWindow() != null) {
+            bottomSheetDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        com.google.android.material.button.MaterialButton btnCancel = sheetView.findViewById(R.id.btnCancel);
+        com.google.android.material.button.MaterialButton btnExit = sheetView.findViewById(R.id.btnExit);
+
+        btnCancel.setOnClickListener(v -> bottomSheetDialog.dismiss());
+
+        btnExit.setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            finishAffinity();
+        });
+
+        bottomSheetDialog.show();
     }
 
     private void enableImmersiveMode() {

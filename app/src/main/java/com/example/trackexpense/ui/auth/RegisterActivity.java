@@ -292,17 +292,28 @@ public class RegisterActivity extends AppCompatActivity {
                         // User created successfully
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            // Send verification email
-                            user.sendEmailVerification()
-                                    .addOnCompleteListener(emailTask -> {
-                                        showLoading(false);
-                                        if (emailTask.isSuccessful()) {
-                                            // Navigate to email verification screen
-                                            navigateToEmailVerification(name);
-                                        } else {
-                                            BeautifulNotification.showError(RegisterActivity.this,
-                                                    "Failed to send verification email. Please try again.");
-                                        }
+                            // Update Firebase Auth profile with displayName
+                            com.google.firebase.auth.UserProfileChangeRequest profileUpdates = new com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                                    .setDisplayName(name)
+                                    .build();
+
+                            user.updateProfile(profileUpdates)
+                                    .addOnCompleteListener(profileTask -> {
+                                        // Save user to Firestore
+                                        saveUserToFirestore(name, email);
+
+                                        // Send verification email
+                                        user.sendEmailVerification()
+                                                .addOnCompleteListener(emailTask -> {
+                                                    showLoading(false);
+                                                    if (emailTask.isSuccessful()) {
+                                                        // Navigate to email verification screen
+                                                        navigateToEmailVerification(name);
+                                                    } else {
+                                                        BeautifulNotification.showError(RegisterActivity.this,
+                                                                "Failed to send verification email. Please try again.");
+                                                    }
+                                                });
                                     });
                         }
                     } else {
@@ -325,6 +336,31 @@ public class RegisterActivity extends AppCompatActivity {
                         BeautifulNotification.showError(RegisterActivity.this, errorMessage);
                     }
                 });
+    }
+
+    private void saveUserToFirestore(String displayName, String email) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null)
+            return;
+
+        String userId = user.getUid();
+
+        java.util.Map<String, Object> userData = new java.util.HashMap<>();
+        userData.put("email", email);
+        userData.put("displayName", displayName);
+        userData.put("createdAt", System.currentTimeMillis());
+        userData.put("lastLoginAt", System.currentTimeMillis());
+        userData.put("isBlocked", false);
+        userData.put("isAdmin", false);
+        userData.put("isVerified", false);
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId)
+                .set(userData)
+                .addOnSuccessListener(
+                        aVoid -> android.util.Log.d("RegisterActivity", "User saved to Firestore: " + email))
+                .addOnFailureListener(e -> android.util.Log.e("RegisterActivity", "Error saving user to Firestore", e));
     }
 
     private void navigateToEmailVerification(String name) {

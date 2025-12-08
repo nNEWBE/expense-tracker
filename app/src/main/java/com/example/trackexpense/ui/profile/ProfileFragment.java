@@ -216,23 +216,66 @@ public class ProfileFragment extends Fragment {
         LinearLayout layoutDeleteAccount = getView().findViewById(R.id.layoutDeleteAccount);
 
         if (user != null) {
-            // Get display name with fallback
-            String displayName = user.getDisplayName();
-            if (displayName == null || displayName.trim().isEmpty()) {
-                displayName = "No Name Provided";
-            }
+            // Fetch user data from Firestore
+            String userId = user.getUid();
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(userId)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (!isAdded())
+                            return;
 
-            // Get email with fallback
-            String email = user.getEmail();
-            if (email == null || email.trim().isEmpty()) {
-                email = "No Email Provided";
-            }
+                        String displayName;
+                        String email;
 
-            tvHeaderName.setText(displayName);
-            if (tvHeaderEmail != null)
-                tvHeaderEmail.setText(email);
-            tvName.setText(displayName);
-            tvEmail.setText(email);
+                        if (documentSnapshot.exists()) {
+                            // Get data from Firestore
+                            displayName = documentSnapshot.getString("displayName");
+                            email = documentSnapshot.getString("email");
+                        } else {
+                            // Fallback to Firebase Auth data
+                            displayName = user.getDisplayName();
+                            email = user.getEmail();
+                        }
+
+                        // Apply fallbacks for null/empty values
+                        if (displayName == null || displayName.trim().isEmpty()) {
+                            displayName = "No Name Provided";
+                        }
+                        if (email == null || email.trim().isEmpty()) {
+                            email = "No Email Provided";
+                        }
+
+                        // Update UI
+                        tvHeaderName.setText(displayName);
+                        if (tvHeaderEmail != null)
+                            tvHeaderEmail.setText(email);
+                        tvName.setText(displayName);
+                        tvEmail.setText(email);
+                    })
+                    .addOnFailureListener(e -> {
+                        if (!isAdded())
+                            return;
+
+                        // Fallback to Firebase Auth data on failure
+                        String displayName = user.getDisplayName();
+                        String email = user.getEmail();
+
+                        if (displayName == null || displayName.trim().isEmpty()) {
+                            displayName = "No Name Provided";
+                        }
+                        if (email == null || email.trim().isEmpty()) {
+                            email = "No Email Provided";
+                        }
+
+                        tvHeaderName.setText(displayName);
+                        if (tvHeaderEmail != null)
+                            tvHeaderEmail.setText(email);
+                        tvName.setText(displayName);
+                        tvEmail.setText(email);
+                    });
+
             chipGuestMode.setVisibility(View.GONE);
 
             // Show Logout for logged in users

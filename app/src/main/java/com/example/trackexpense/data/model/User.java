@@ -7,6 +7,7 @@ public class User {
     private String photoUrl;
     private boolean isBlocked;
     private boolean isAdmin;
+    private boolean isVerified;
     private long createdAt;
     private long lastLoginAt;
     private int transactionCount;
@@ -20,6 +21,7 @@ public class User {
         this.displayName = displayName;
         this.isBlocked = false;
         this.isAdmin = false;
+        this.isVerified = false;
         this.createdAt = System.currentTimeMillis();
     }
 
@@ -94,5 +96,13 @@ public class User {
 
     public void setTransactionCount(int transactionCount) {
         this.transactionCount = transactionCount;
+    }
+
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(boolean verified) {
+        isVerified = verified;
     }
 }

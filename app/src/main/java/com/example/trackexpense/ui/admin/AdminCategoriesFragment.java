@@ -8,6 +8,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -49,19 +50,20 @@ public class AdminCategoriesFragment extends Fragment {
 
     private AdminService adminService;
     private RecyclerView rvCategories;
-    private TextInputEditText etSearch;
-    private ChipGroup chipGroupType;
+    private EditText etSearch;
+    private Chip chipAll, chipExpense, chipIncome;
     private TextView tvCategoryCount;
     private FloatingActionButton fabAdd;
     private CategoryAdapter adapter;
     private List<CategoryModel> allCategories = new ArrayList<>();
 
-    // Icon options
+    // Icon options - expanded list
     private static final String[] ICON_NAMES = {
             "ic_food", "ic_transport", "ic_shopping", "ic_entertainment",
             "ic_health", "ic_bills", "ic_education", "ic_travel",
             "ic_groceries", "ic_subscription", "ic_salary", "ic_freelance",
-            "ic_investment", "ic_gift", "ic_other"
+            "ic_investment", "ic_gift", "ic_school", "ic_location",
+            "ic_document", "ic_book", "ic_grid", "ic_other"
     };
 
     private static final String[] COLOR_OPTIONS = {
@@ -83,7 +85,9 @@ public class AdminCategoriesFragment extends Fragment {
         adminService = AdminService.getInstance();
 
         etSearch = view.findViewById(R.id.etSearch);
-        chipGroupType = view.findViewById(R.id.chipGroupType);
+        chipAll = view.findViewById(R.id.chipAll);
+        chipExpense = view.findViewById(R.id.chipExpense);
+        chipIncome = view.findViewById(R.id.chipIncome);
         tvCategoryCount = view.findViewById(R.id.tvCategoryCount);
         rvCategories = view.findViewById(R.id.rvCategories);
         fabAdd = view.findViewById(R.id.fabAdd);
@@ -99,6 +103,11 @@ public class AdminCategoriesFragment extends Fragment {
         adapter = new CategoryAdapter();
         rvCategories.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvCategories.setAdapter(adapter);
+
+        // Add item animation
+        android.view.animation.LayoutAnimationController controller = android.view.animation.AnimationUtils
+                .loadLayoutAnimation(requireContext(), R.anim.layout_animation_fall_down);
+        rvCategories.setLayoutAnimation(controller);
     }
 
     private void setupSearch() {
@@ -119,7 +128,13 @@ public class AdminCategoriesFragment extends Fragment {
     }
 
     private void setupFilters() {
-        chipGroupType.setOnCheckedStateChangeListener((group, checkedIds) -> filterCategories());
+        View.OnClickListener chipListener = v -> filterCategories();
+        if (chipAll != null)
+            chipAll.setOnClickListener(chipListener);
+        if (chipExpense != null)
+            chipExpense.setOnClickListener(chipListener);
+        if (chipIncome != null)
+            chipIncome.setOnClickListener(chipListener);
     }
 
     private void setupFab() {
@@ -135,14 +150,16 @@ public class AdminCategoriesFragment extends Fragment {
 
     private void filterCategories() {
         String query = etSearch.getText() != null ? etSearch.getText().toString().toLowerCase() : "";
-        int checkedId = chipGroupType.getCheckedChipId();
+
+        boolean showExpenseOnly = chipExpense != null && chipExpense.isChecked();
+        boolean showIncomeOnly = chipIncome != null && chipIncome.isChecked();
 
         List<CategoryModel> filtered = allCategories.stream()
                 .filter(c -> query.isEmpty() || c.getName().toLowerCase().contains(query))
                 .filter(c -> {
-                    if (checkedId == R.id.chipExpense)
+                    if (showExpenseOnly)
                         return "EXPENSE".equals(c.getType());
-                    if (checkedId == R.id.chipIncome)
+                    if (showIncomeOnly)
                         return "INCOME".equals(c.getType());
                     return true;
                 })
@@ -199,6 +216,17 @@ public class AdminCategoriesFragment extends Fragment {
         });
         rvColors.setLayoutManager(new GridLayoutManager(requireContext(), 6));
         rvColors.setAdapter(colorAdapter);
+
+        // Custom color picker button
+        MaterialButton btnCustomColor = dialogView.findViewById(R.id.btnCustomColor);
+        View customColorPreview = dialogView.findViewById(R.id.customColorPreview);
+
+        if (btnCustomColor != null) {
+            btnCustomColor.setOnClickListener(v -> {
+                showColorPickerDialog(selectedColor, colorAdapter, previewBg, previewIcon,
+                        previewName, selectedIcon[0], etName, customColorPreview);
+            });
+        }
 
         // Update preview on name change
         etName.addTextChangedListener(new TextWatcher() {
@@ -319,30 +347,227 @@ public class AdminCategoriesFragment extends Fragment {
                 return R.drawable.ic_investment;
             case "ic_gift":
                 return R.drawable.ic_gift;
+            case "ic_school":
+                return R.drawable.ic_school;
+            case "ic_location":
+                return R.drawable.ic_location;
+            case "ic_document":
+                return R.drawable.ic_document;
+            case "ic_book":
+                return R.drawable.ic_book;
+            case "ic_grid":
+                return R.drawable.ic_grid;
             default:
                 return R.drawable.ic_other;
         }
     }
 
-    private void confirmDeleteCategory(CategoryModel category) {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Delete Category")
-                .setMessage("Delete \"" + category.getName() + "\"?")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    adminService.deleteCategory(category.getId(), new AdminService.OnCompleteListener() {
-                        @Override
-                        public void onSuccess() {
-                            Snackbar.make(requireView(), "Category deleted", Snackbar.LENGTH_SHORT).show();
-                        }
+    private void showColorPickerDialog(String[] selectedColor, ColorAdapter colorAdapter,
+            View previewBg, ImageView previewIcon, TextView previewName,
+            String selectedIcon, TextInputEditText etName, View customColorPreview) {
 
-                        @Override
-                        public void onFailure(Exception e) {
-                            Snackbar.make(requireView(), "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
-                        }
-                    });
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_color_picker, null);
+
+        View colorPreviewCircle = dialogView.findViewById(R.id.colorPreview);
+        TextView tvColorHex = dialogView.findViewById(R.id.tvColorHex);
+        TextView tvRgbValues = dialogView.findViewById(R.id.tvRgbValues);
+        android.widget.SeekBar seekRed = dialogView.findViewById(R.id.seekRed);
+        android.widget.SeekBar seekGreen = dialogView.findViewById(R.id.seekGreen);
+        android.widget.SeekBar seekBlue = dialogView.findViewById(R.id.seekBlue);
+        TextView tvRedValue = dialogView.findViewById(R.id.tvRedValue);
+        TextView tvGreenValue = dialogView.findViewById(R.id.tvGreenValue);
+        TextView tvBlueValue = dialogView.findViewById(R.id.tvBlueValue);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelColor);
+        MaterialButton btnApply = dialogView.findViewById(R.id.btnApplyColor);
+
+        // Quick pick colors
+        View quickColor1 = dialogView.findViewById(R.id.quickColor1);
+        View quickColor2 = dialogView.findViewById(R.id.quickColor2);
+        View quickColor3 = dialogView.findViewById(R.id.quickColor3);
+        View quickColor4 = dialogView.findViewById(R.id.quickColor4);
+        View quickColor5 = dialogView.findViewById(R.id.quickColor5);
+
+        // Initial color values
+        final int[] rgb = { 124, 58, 237 }; // Purple default
+
+        // Update preview function
+        Runnable updateColorPreview = () -> {
+            int color = Color.rgb(rgb[0], rgb[1], rgb[2]);
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.OVAL);
+            bg.setColor(color);
+            colorPreviewCircle.setBackground(bg);
+
+            String hex = String.format("#%02X%02X%02X", rgb[0], rgb[1], rgb[2]);
+            tvColorHex.setText(hex);
+            tvRgbValues.setText(String.format("RGB(%d, %d, %d)", rgb[0], rgb[1], rgb[2]));
+
+            tvRedValue.setText(String.valueOf(rgb[0]));
+            tvGreenValue.setText(String.valueOf(rgb[1]));
+            tvBlueValue.setText(String.valueOf(rgb[2]));
+        };
+
+        // Initial preview
+        seekRed.setProgress(rgb[0]);
+        seekGreen.setProgress(rgb[1]);
+        seekBlue.setProgress(rgb[2]);
+        updateColorPreview.run();
+
+        // SeekBar listeners
+        android.widget.SeekBar.OnSeekBarChangeListener seekListener = new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+                if (seekBar == seekRed)
+                    rgb[0] = progress;
+                else if (seekBar == seekGreen)
+                    rgb[1] = progress;
+                else if (seekBar == seekBlue)
+                    rgb[2] = progress;
+                updateColorPreview.run();
+            }
+
+            @Override
+            public void onStartTrackingTouch(android.widget.SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(android.widget.SeekBar seekBar) {
+            }
+        };
+
+        seekRed.setOnSeekBarChangeListener(seekListener);
+        seekGreen.setOnSeekBarChangeListener(seekListener);
+        seekBlue.setOnSeekBarChangeListener(seekListener);
+
+        // Quick pick handlers
+        View.OnClickListener quickPickListener = v -> {
+            if (v == quickColor1) {
+                rgb[0] = 239;
+                rgb[1] = 68;
+                rgb[2] = 68;
+            } // Red
+            else if (v == quickColor2) {
+                rgb[0] = 59;
+                rgb[1] = 130;
+                rgb[2] = 246;
+            } // Blue
+            else if (v == quickColor3) {
+                rgb[0] = 16;
+                rgb[1] = 185;
+                rgb[2] = 129;
+            } // Green
+            else if (v == quickColor4) {
+                rgb[0] = 249;
+                rgb[1] = 115;
+                rgb[2] = 22;
+            } // Orange
+            else if (v == quickColor5) {
+                rgb[0] = 139;
+                rgb[1] = 92;
+                rgb[2] = 246;
+            } // Purple
+
+            seekRed.setProgress(rgb[0]);
+            seekGreen.setProgress(rgb[1]);
+            seekBlue.setProgress(rgb[2]);
+            updateColorPreview.run();
+        };
+
+        quickColor1.setOnClickListener(quickPickListener);
+        quickColor2.setOnClickListener(quickPickListener);
+        quickColor3.setOnClickListener(quickPickListener);
+        quickColor4.setOnClickListener(quickPickListener);
+        quickColor5.setOnClickListener(quickPickListener);
+
+        androidx.appcompat.app.AlertDialog colorDialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> colorDialog.dismiss());
+
+        btnApply.setOnClickListener(v -> {
+            String hex = String.format("#%02X%02X%02X", rgb[0], rgb[1], rgb[2]);
+
+            selectedColor[0] = hex;
+            colorAdapter.clearSelection();
+            colorAdapter.notifyDataSetChanged();
+
+            // Update main preview
+            updatePreview(previewBg, previewIcon, previewName, selectedIcon, hex,
+                    etName.getText() != null ? etName.getText().toString() : "Category");
+
+            // Show custom color preview
+            if (customColorPreview != null) {
+                GradientDrawable bg = new GradientDrawable();
+                bg.setShape(GradientDrawable.OVAL);
+                bg.setColor(Color.rgb(rgb[0], rgb[1], rgb[2]));
+                customColorPreview.setBackground(bg);
+                customColorPreview.setVisibility(View.VISIBLE);
+            }
+
+            colorDialog.dismiss();
+        });
+
+        colorDialog.show();
+    }
+
+    private void confirmDeleteCategory(CategoryModel category) {
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_delete_category, null);
+
+        TextView tvCategoryName = dialogView.findViewById(R.id.tvCategoryName);
+        TextView tvCategoryType = dialogView.findViewById(R.id.tvCategoryType);
+        View categoryIconBg = dialogView.findViewById(R.id.categoryIconBg);
+        ImageView ivCategoryIcon = dialogView.findViewById(R.id.ivCategoryIcon);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        MaterialButton btnDelete = dialogView.findViewById(R.id.btnDelete);
+
+        // Set category info
+        tvCategoryName.setText(category.getName());
+        tvCategoryType.setText(category.getType());
+        if ("INCOME".equals(category.getType())) {
+            tvCategoryType.setTextColor(ContextCompat.getColor(requireContext(), R.color.income_green));
+        } else {
+            tvCategoryType.setTextColor(ContextCompat.getColor(requireContext(), R.color.expense_red));
+        }
+
+        // Set icon
+        ivCategoryIcon.setImageResource(getIconResource(category.getIconName()));
+        ivCategoryIcon.setColorFilter(Color.WHITE);
+
+        // Set background color
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.OVAL);
+        try {
+            bg.setColor(Color.parseColor(category.getColorHex()));
+        } catch (Exception e) {
+            bg.setColor(ContextCompat.getColor(requireContext(), R.color.primary));
+        }
+        categoryIconBg.setBackground(bg);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnDelete.setOnClickListener(v -> {
+            adminService.deleteCategory(category.getId(), new AdminService.OnCompleteListener() {
+                @Override
+                public void onSuccess() {
+                    Snackbar.make(requireView(), "Category deleted", Snackbar.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    Snackbar.make(requireView(), "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
+                }
+            });
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     // Category Adapter
@@ -372,18 +597,20 @@ public class AdminCategoriesFragment extends Fragment {
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
-            View iconBg;
-            ImageView ivIcon, btnEdit, btnDelete;
-            TextView tvName;
-            Chip chipType, chipDefault;
+            View iconBg, iconRing, colorDot;
+            ImageView ivIcon;
+            View btnEdit, btnDelete;
+            TextView tvName, chipType, chipDefault;
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
                 iconBg = itemView.findViewById(R.id.iconBg);
+                iconRing = itemView.findViewById(R.id.iconRing);
                 ivIcon = itemView.findViewById(R.id.ivIcon);
                 tvName = itemView.findViewById(R.id.tvName);
                 chipType = itemView.findViewById(R.id.chipType);
                 chipDefault = itemView.findViewById(R.id.chipDefault);
+                colorDot = itemView.findViewById(R.id.colorDot);
                 btnEdit = itemView.findViewById(R.id.btnEdit);
                 btnDelete = itemView.findViewById(R.id.btnDelete);
             }
@@ -396,22 +623,45 @@ public class AdminCategoriesFragment extends Fragment {
                 ivIcon.setImageResource(iconRes);
                 ivIcon.setColorFilter(Color.WHITE);
 
+                int categoryColor;
+                try {
+                    categoryColor = Color.parseColor(category.getColorHex());
+                } catch (Exception e) {
+                    categoryColor = ContextCompat.getColor(itemView.getContext(), R.color.primary);
+                }
+
                 GradientDrawable bg = new GradientDrawable();
                 bg.setShape(GradientDrawable.OVAL);
-                try {
-                    bg.setColor(Color.parseColor(category.getColorHex()));
-                } catch (Exception e) {
-                    bg.setColor(ContextCompat.getColor(itemView.getContext(), R.color.primary));
-                }
+                bg.setColor(categoryColor);
                 iconBg.setBackground(bg);
 
-                // Set type chip
-                chipType.setText(category.getType());
-                if ("INCOME".equals(category.getType())) {
-                    chipType.setChipBackgroundColorResource(R.color.income_green);
-                } else {
-                    chipType.setChipBackgroundColorResource(R.color.expense_red);
+                // Icon ring with lighter version of color
+                if (iconRing != null) {
+                    GradientDrawable ring = new GradientDrawable();
+                    ring.setShape(GradientDrawable.OVAL);
+                    ring.setStroke(4, Color.argb(40, Color.red(categoryColor),
+                            Color.green(categoryColor), Color.blue(categoryColor)));
+                    iconRing.setBackground(ring);
                 }
+
+                // Color dot preview
+                if (colorDot != null) {
+                    GradientDrawable dot = new GradientDrawable();
+                    dot.setShape(GradientDrawable.OVAL);
+                    dot.setColor(categoryColor);
+                    colorDot.setBackground(dot);
+                }
+
+                // Set type badge
+                chipType.setText(category.getType());
+                GradientDrawable typeBg = new GradientDrawable();
+                typeBg.setCornerRadius(24);
+                if ("INCOME".equals(category.getType())) {
+                    typeBg.setColor(ContextCompat.getColor(itemView.getContext(), R.color.income_green));
+                } else {
+                    typeBg.setColor(ContextCompat.getColor(itemView.getContext(), R.color.expense_red));
+                }
+                chipType.setBackground(typeBg);
 
                 chipDefault.setVisibility(category.isDefault() ? View.VISIBLE : View.GONE);
 
@@ -497,13 +747,23 @@ public class AdminCategoriesFragment extends Fragment {
             this.listener = listener;
         }
 
+        public void clearSelection() {
+            this.selectedColor = null;
+        }
+
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = new View(parent.getContext());
+            // Create container with margins for spacing
+            android.widget.FrameLayout container = new android.widget.FrameLayout(parent.getContext());
             int size = (int) (40 * parent.getContext().getResources().getDisplayMetrics().density);
-            view.setLayoutParams(new ViewGroup.LayoutParams(size, size));
-            return new ViewHolder(view);
+            int margin = (int) (6 * parent.getContext().getResources().getDisplayMetrics().density);
+
+            RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(size, size);
+            params.setMargins(margin, margin, margin, margin);
+            container.setLayoutParams(params);
+
+            return new ViewHolder(container);
         }
 
         @Override

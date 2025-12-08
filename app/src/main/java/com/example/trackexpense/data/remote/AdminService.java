@@ -97,6 +97,15 @@ public class AdminService {
                                 user.setBlocked(Boolean.TRUE.equals(doc.getBoolean("isBlocked")));
                                 user.setAdmin(Boolean.TRUE.equals(doc.getBoolean("isAdmin")));
 
+                                // Check verified status - multiple ways:
+                                // 1. isVerified field
+                                // 2. emailVerified field (Firebase Auth)
+                                // 3. Has photoUrl (usually means Google/social sign-in = verified)
+                                boolean isVerified = Boolean.TRUE.equals(doc.getBoolean("isVerified")) ||
+                                        Boolean.TRUE.equals(doc.getBoolean("emailVerified")) ||
+                                        (doc.getString("photoUrl") != null && !doc.getString("photoUrl").isEmpty());
+                                user.setVerified(isVerified);
+
                                 Long createdAt = doc.getLong("createdAt");
                                 user.setCreatedAt(createdAt != null ? createdAt : 0);
 
@@ -104,7 +113,7 @@ public class AdminService {
                                 user.setLastLoginAt(lastLoginAt != null ? lastLoginAt : 0);
 
                                 users.add(user);
-                                Log.d(TAG, "getAllUsers: Added user " + user.getEmail());
+                                Log.d(TAG, "getAllUsers: Added user " + user.getEmail() + ", verified=" + isVerified);
                             } catch (Exception e) {
                                 Log.e(TAG, "Error parsing user document: " + doc.getId(), e);
                             }

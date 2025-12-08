@@ -36,7 +36,7 @@ public class AdminUsersFragment extends Fragment {
 
     private AdminService adminService;
     private RecyclerView rvUsers;
-    private TextInputEditText etSearch;
+    private EditText etSearch;
     private TextView tvUserCount;
     private UserAdapter adapter;
     private List<User> allUsers = new ArrayList<>();
@@ -66,6 +66,11 @@ public class AdminUsersFragment extends Fragment {
         adapter = new UserAdapter();
         rvUsers.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvUsers.setAdapter(adapter);
+
+        // Add item animation
+        android.view.animation.LayoutAnimationController controller = android.view.animation.AnimationUtils
+                .loadLayoutAnimation(requireContext(), R.anim.layout_animation_fall_down);
+        rvUsers.setLayoutAnimation(controller);
     }
 
     private void setupSearch() {
@@ -253,8 +258,9 @@ public class AdminUsersFragment extends Fragment {
         class UserViewHolder extends RecyclerView.ViewHolder {
             TextView tvInitial, tvName, tvEmail;
             Chip chipBlocked, chipAdmin;
-            ImageView btnMore;
+            View btnMore;
             View avatarBg;
+            ImageView ivVerified;
 
             public UserViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -265,6 +271,7 @@ public class AdminUsersFragment extends Fragment {
                 chipAdmin = itemView.findViewById(R.id.chipAdmin);
                 btnMore = itemView.findViewById(R.id.btnMore);
                 avatarBg = itemView.findViewById(R.id.avatarBg);
+                ivVerified = itemView.findViewById(R.id.ivVerified);
             }
 
             public void bind(User user) {
@@ -293,6 +300,11 @@ public class AdminUsersFragment extends Fragment {
                 // Show badges
                 chipBlocked.setVisibility(user.isBlocked() ? View.VISIBLE : View.GONE);
                 chipAdmin.setVisibility(user.isAdmin() ? View.VISIBLE : View.GONE);
+
+                // Show verified badge
+                if (ivVerified != null) {
+                    ivVerified.setVisibility(user.isVerified() ? View.VISIBLE : View.GONE);
+                }
 
                 btnMore.setOnClickListener(v -> showUserActions(user, v));
 

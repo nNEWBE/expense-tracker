@@ -335,29 +335,51 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void showForgotPasswordDialog() {
-        TextInputEditText input = new TextInputEditText(this);
-        input.setHint("Enter your email");
-        input.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_forgot_password, null);
 
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Reset Password")
-                .setMessage("Enter your email to receive a password reset link.")
-                .setView(input)
-                .setPositiveButton("Send", (dialog, which) -> {
-                    String email = input.getText() != null ? input.getText().toString().trim() : "";
-                    if (!email.isEmpty()) {
-                        mAuth.sendPasswordResetEmail(email)
-                                .addOnCompleteListener(task -> {
-                                    if (task.isSuccessful()) {
-                                        Toast.makeText(this, "Reset email sent!", Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Toast.makeText(this, "Failed to send reset email", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        TextInputEditText etResetEmail = dialogView.findViewById(R.id.etResetEmail);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelReset);
+        com.google.android.material.button.MaterialButton btnSend = dialogView.findViewById(R.id.btnSendReset);
+
+        // Pre-fill email if user already entered one
+        String currentEmail = etEmail.getText().toString().trim();
+        if (!currentEmail.isEmpty()) {
+            etResetEmail.setText(currentEmail);
+        }
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnSend.setOnClickListener(v -> {
+            String email = etResetEmail.getText() != null ? etResetEmail.getText().toString().trim() : "";
+            if (email.isEmpty()) {
+                etResetEmail.setError("Email required");
+                return;
+            }
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                etResetEmail.setError("Enter a valid email");
+                return;
+            }
+
+            // Show loading state
+            btnSend.setEnabled(false);
+            btnSend.setText("Sending...");
+
+            mAuth.sendPasswordResetEmail(email)
+                    .addOnCompleteListener(task -> {
+                        dialog.dismiss();
+                        if (task.isSuccessful()) {
+                            BeautifulNotification.showSuccess(this, "Password reset link sent to your email!");
+                        } else {
+                            BeautifulNotification.showError(this, "Failed to send reset email. Please try again.");
+                        }
+                    });
+        });
+
+        dialog.show();
     }
 
     private void goToMain() {
