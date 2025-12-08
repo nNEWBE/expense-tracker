@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_dashboard"
+            android:icon="@drawable/ic_nav_dashboard"
+            android:title="Dashboard" />
+        
+        <item
+            android:id="@+id/nav_analytics"
+            android:icon="@drawable/ic_nav_analytics"
+            android:title="Analytics" />
+            
+        <item
+            android:id="@+id/nav_budget"
+            android:icon="@drawable/ic_nav_budget"
+            android:title="Budget Goals" />
+    </group>
+    
+    <item android:title="Features">
+        <menu>
+            <item
+                android:id="@+id/nav_export"
+                android:icon="@drawable/ic_nav_export"
+                android:title="Export Data" />
+                
+            <item
+                android:id="@+id/nav_categories"
+                android:icon="@drawable/ic_nav_categories"
+                android:title="Manage Categories" />
+                
+            <item
+                android:id="@+id/nav_recurring"
+                android:icon="@drawable/ic_nav_recurring"
+                android:title="Recurring Expenses" />
+        </menu>
+    </item>
+    
+    <item android:title="Settings">
+        <menu>
+            <item
+                android:id="@+id/nav_notifications"
+                android:icon="@drawable/ic_nav_notifications"
+                android:title="Notifications" />
+                
+            <item
+                android:id="@+id/nav_theme"
+                android:icon="@drawable/ic_nav_theme"
+                android:title="Theme" />
+                
+            <item
+                android:id="@+id/nav_backup"
+                android:icon="@drawable/ic_nav_backup"
+                android:title="Backup and Restore" />
+        </menu>
+    </item>
+    
+    <item android:title="Support">
+        <menu>
+            <item
+                android:id="@+id/nav_help"
+                android:icon="@drawable/ic_nav_help"
+                android:title="Help and FAQ" />
+                
+            <item
+                android:id="@+id/nav_feedback"
+                android:icon="@drawable/ic_nav_feedback"
+                android:title="Send Feedback" />
+                
+            <item
+                android:id="@+id/nav_rate"
+                android:icon="@drawable/ic_nav_rate"
+                android:title="Rate Us" />
+        </menu>
+    </item>
+
+</menu>

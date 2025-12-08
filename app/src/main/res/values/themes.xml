@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Base Light Theme -->
     <style name="Theme.TrackExpense" parent="Theme.Material3.Light.NoActionBar">
         <!-- Primary colors -->
         <item name="colorPrimary">@color/primary</item>
@@ -17,27 +18,56 @@
         <item name="colorOnBackground">@color/on_background_light</item>
         <item name="colorOnSurface">@color/on_surface_light</item>
         
-        <!-- Status bar -->
-        <item name="android:statusBarColor">@color/background_light</item>
-        <item name="android:windowLightStatusBar">true</item>
-        
-        <!-- Navigation bar -->
-        <item name="android:navigationBarColor">@color/surface_light</item>
+        <!-- True fullscreen - hide all system bars -->
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
         
         <!-- Component styles -->
         <item name="bottomNavigationStyle">@style/Widget.TrackExpense.BottomNavigation</item>
         <item name="materialCardViewStyle">@style/Widget.TrackExpense.CardView</item>
     </style>
 
+    <!-- Dark Theme -->
+    <style name="Theme.TrackExpense.Dark" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Primary colors -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_variant</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        
+        <!-- Secondary colors -->
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryVariant">@color/secondary_variant</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        
+        <!-- Background colors -->
+        <item name="android:colorBackground">@color/background_dark</item>
+        <item name="colorSurface">@color/surface_dark</item>
+        <item name="colorOnBackground">@color/on_background_dark</item>
+        <item name="colorOnSurface">@color/on_surface_dark</item>
+        
+        <!-- True fullscreen - hide all system bars -->
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+        
+        <!-- Component styles -->
+        <item name="bottomNavigationStyle">@style/Widget.TrackExpense.BottomNavigation.Dark</item>
+        <item name="materialCardViewStyle">@style/Widget.TrackExpense.CardView.Dark</item>
+    </style>
+
     <style name="Theme.TrackExpense.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#1A3A4A</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/app_logo</item>
-
         <item name="windowSplashScreenIconBackgroundColor">#1A3A4A</item>
         <item name="postSplashScreenTheme">@style/Theme.TrackExpense</item>
     </style>
 
-    <!-- Bottom Navigation Style -->
+    <!-- Bottom Navigation Style - Light -->
     <style name="Widget.TrackExpense.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
         <item name="backgroundTint">@color/surface_light</item>
         <item name="itemIconTint">@color/bottom_nav_color</item>
@@ -46,13 +76,33 @@
         <item name="labelVisibilityMode">labeled</item>
     </style>
 
+    <!-- Bottom Navigation Style - Dark -->
+    <style name="Widget.TrackExpense.BottomNavigation.Dark" parent="Widget.Material3.BottomNavigationView">
+        <item name="backgroundTint">@color/surface_dark</item>
+        <item name="itemIconTint">@color/bottom_nav_color_dark</item>
+        <item name="itemTextColor">@color/bottom_nav_color_dark</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.TrackExpense.BottomNavigation.ActiveIndicator.Dark</item>
+        <item name="labelVisibilityMode">labeled</item>
+    </style>
+
     <style name="Widget.TrackExpense.BottomNavigation.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
         <item name="android:color">@color/category_entertainment_bg</item>
     </style>
 
-    <!-- Card Style -->
+    <style name="Widget.TrackExpense.BottomNavigation.ActiveIndicator.Dark" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">#30B5A4FF</item>
+    </style>
+
+    <!-- Card Style - Light -->
     <style name="Widget.TrackExpense.CardView" parent="Widget.Material3.CardView.Elevated">
         <item name="cardBackgroundColor">@color/surface_light</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">0dp</item>
+    </style>
+
+    <!-- Card Style - Dark -->
+    <style name="Widget.TrackExpense.CardView.Dark" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardBackgroundColor">@color/surface_dark</item>
         <item name="cardCornerRadius">16dp</item>
         <item name="cardElevation">0dp</item>
     </style>
@@ -70,6 +120,13 @@
     </style>
 
     <style name="MaterialAlertDialog.Body.Text" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
-        <item name="android:textColor">@color/on_background_light</item>
+        <item name="android:textColor">?attr/colorOnBackground</item>
+    </style>
+
+    <!-- Modern Bottom Nav Indicator -->
+    <style name="App.BottomNavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">#201A3A4A</item>
+        <item name="android:width">64dp</item>
+        <item name="android:height">32dp</item>
     </style>
 </resources>

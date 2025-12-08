@@ -115,4 +115,35 @@ public class PreferenceManager {
     public boolean isFirstLaunch() {
         return sharedPreferences.getBoolean(KEY_FIRST_LAUNCH, true);
     }
+
+    // Notifications
+    private static final String KEY_NOTIFICATIONS_ENABLED = "notifications_enabled";
+    private static final String KEY_DAILY_REMINDER_TIME = "daily_reminder_time";
+
+    public void setNotificationsEnabled(boolean enabled) {
+        sharedPreferences.edit().putBoolean(KEY_NOTIFICATIONS_ENABLED, enabled).apply();
+    }
+
+    public boolean isNotificationsEnabled() {
+        return sharedPreferences.getBoolean(KEY_NOTIFICATIONS_ENABLED, true);
+    }
+
+    public void setDailyReminderTime(String time) {
+        sharedPreferences.edit().putString(KEY_DAILY_REMINDER_TIME, time).apply();
+    }
+
+    public String getDailyReminderTime() {
+        return sharedPreferences.getString(KEY_DAILY_REMINDER_TIME, "20:00");
+    }
+
+    // Last Backup
+    private static final String KEY_LAST_BACKUP = "last_backup";
+
+    public void setLastBackupTime(long time) {
+        sharedPreferences.edit().putLong(KEY_LAST_BACKUP, time).apply();
+    }
+
+    public long getLastBackupTime() {
+        return sharedPreferences.getLong(KEY_LAST_BACKUP, 0);
+    }
 }

@@ -54,6 +54,10 @@ public class EmailVerificationActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Enable edge-to-edge fullscreen
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
         setContentView(R.layout.activity_email_verification);
 
         mAuth = FirebaseAuth.getInstance();

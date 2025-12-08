@@ -33,6 +33,9 @@ public class WelcomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Enable edge-to-edge fullscreen
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
         // Check if already logged in
         if (FirebaseAuth.getInstance().getCurrentUser() != null) {
             goToMain();

@@ -37,6 +37,10 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
+
+        // Enable edge-to-edge fullscreen
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
         setContentView(R.layout.activity_splash);
 
         splashScreen.setKeepOnScreenCondition(() -> false);

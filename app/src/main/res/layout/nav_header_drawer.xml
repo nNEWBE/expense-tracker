@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/drawer_header_bg"
+    android:gravity="bottom"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="48dp"
+    android:paddingBottom="24dp">
+
+    <!-- App Logo -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="8dp">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@mipmap/ic_launcher"
+            android:scaleType="centerInside"/>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- App Name -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Expense Tracker"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <!-- Tagline -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:alpha="0.9"
+        android:text="Smart Money Management"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp" />
+
+    <!-- User Info Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/drawer_user_info_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <ImageView
+            android:id="@+id/ivDrawerUserImage"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/circle_user_image_bg"
+            android:padding="8dp"
+            android:src="@drawable/ic_person"
+            app:tint="@android:color/white" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvDrawerUserName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="User Name"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvDrawerUserEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:alpha="0.8"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="user@email.com"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/ivDrawerUserSettings"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_nav_settings"
+            app:tint="#FFFFFF" />
+
+    </LinearLayout>
+
+</LinearLayout>

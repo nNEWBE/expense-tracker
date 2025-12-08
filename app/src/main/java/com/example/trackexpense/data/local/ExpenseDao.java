@@ -41,4 +41,8 @@ public interface ExpenseDao {
 
     @Query("SELECT * FROM expenses WHERE date BETWEEN :startDate AND :endDate")
     LiveData<List<Expense>> getExpensesByDateRange(long startDate, long endDate);
+
+    // Synchronous query for export
+    @Query("SELECT * FROM expenses ORDER BY date DESC")
+    List<Expense> getAllExpensesSync();
 }

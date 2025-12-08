@@ -16,6 +16,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
 import com.example.trackexpense.utils.PreferenceManager;
@@ -31,7 +32,10 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.PercentFormatter;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -45,10 +49,17 @@ public class DashboardFragment extends Fragment {
     private PreferenceManager preferenceManager;
 
     private TextView tvTotalBalance, tvTotalIncome, tvTotalExpense, tvSeeAll;
+    private TextView tvGreeting, tvUserName;
+    private TextView tvBudgetRemaining, tvBudgetSpent, tvDaysLeft;
     private PieChart pieChart;
     private BarChart barChart;
     private RecyclerView rvRecentTransactions;
     private ExpenseAdapter expenseAdapter;
+    private MaterialCardView btnMenu, btnNotification, cardBalance, cardBudget;
+    private View quickAddIncome, quickAddExpense, quickViewAnalytics;
+    private View cardContainer;
+
+    private boolean isShowingBalance = true;
 
     @Nullable
     @Override
@@ -65,9 +76,11 @@ public class DashboardFragment extends Fragment {
         preferenceManager = new PreferenceManager(requireContext());
 
         initViews(view);
+        setupUserInfo();
         setupRecyclerView();
         setupClickListeners(view);
         observeData();
+        animateBalanceCard();
     }
 
     private void initViews(View view) {
@@ -75,9 +88,138 @@ public class DashboardFragment extends Fragment {
         tvTotalIncome = view.findViewById(R.id.tvTotalIncome);
         tvTotalExpense = view.findViewById(R.id.tvTotalExpense);
         tvSeeAll = view.findViewById(R.id.tvSeeAll);
+        tvGreeting = view.findViewById(R.id.tvGreeting);
+        tvUserName = view.findViewById(R.id.tvUserName);
         pieChart = view.findViewById(R.id.pieChart);
         barChart = view.findViewById(R.id.barChart);
         rvRecentTransactions = view.findViewById(R.id.rvRecentTransactions);
+        btnMenu = view.findViewById(R.id.btnMenu);
+        btnNotification = view.findViewById(R.id.btnNotification);
+        cardBalance = view.findViewById(R.id.cardBalance);
+        cardBudget = view.findViewById(R.id.cardBudget);
+        quickAddIncome = view.findViewById(R.id.quickAddIncome);
+        quickAddExpense = view.findViewById(R.id.quickAddExpense);
+        quickViewAnalytics = view.findViewById(R.id.quickViewAnalytics);
+
+        // Budget card views
+        tvBudgetRemaining = view.findViewById(R.id.tvBudgetRemaining);
+        tvBudgetSpent = view.findViewById(R.id.tvBudgetSpent);
+        tvDaysLeft = view.findViewById(R.id.tvDaysLeft);
+        cardContainer = view.findViewById(R.id.cardContainer);
+
+        // Setup swipe gesture on card container
+        setupCardSwipeGesture();
+    }
+
+    private void animateBalanceCard() {
+        // Set camera distance for proper 3D effect
+        float scale = getResources().getDisplayMetrics().density;
+        cardBalance.setCameraDistance(8000 * scale);
+
+        // Initial state - invisible and slightly scaled down
+        cardBalance.setAlpha(0f);
+        cardBalance.setScaleX(0.8f);
+        cardBalance.setScaleY(0.8f);
+        cardBalance.setRotationY(-90f);
+
+        // Entrance animation with 3D flip
+        android.animation.AnimatorSet animatorSet = new android.animation.AnimatorSet();
+
+        // Fade in
+        android.animation.ObjectAnimator fadeIn = android.animation.ObjectAnimator.ofFloat(cardBalance, "alpha", 0f,
+                1f);
+        fadeIn.setDuration(400);
+
+        // Scale up
+        android.animation.ObjectAnimator scaleX = android.animation.ObjectAnimator.ofFloat(cardBalance, "scaleX", 0.8f,
+                1f);
+        android.animation.ObjectAnimator scaleY = android.animation.ObjectAnimator.ofFloat(cardBalance, "scaleY", 0.8f,
+                1f);
+        scaleX.setDuration(600);
+        scaleY.setDuration(600);
+
+        // Flip rotation with overshoot for bounce effect
+        android.animation.ObjectAnimator flipIn = android.animation.ObjectAnimator.ofFloat(cardBalance, "rotationY",
+                -90f, 0f);
+        flipIn.setDuration(800);
+        flipIn.setInterpolator(new android.view.animation.OvershootInterpolator(0.8f));
+
+        // Play all together
+        animatorSet.playTogether(fadeIn, scaleX, scaleY, flipIn);
+        animatorSet.setStartDelay(300);
+        animatorSet.start();
+    }
+
+    private void setupCardSwipeGesture() {
+        float scale = getResources().getDisplayMetrics().density;
+        cardBalance.setCameraDistance(8000 * scale);
+        cardBudget.setCameraDistance(8000 * scale);
+
+        // Flip on tap/click
+        cardBalance.setOnClickListener(v -> flipToCard(false));
+        cardBudget.setOnClickListener(v -> flipToCard(true));
+    }
+
+    private void flipToCard(boolean showBalance) {
+        if (isShowingBalance == showBalance)
+            return; // Already showing the desired card
+
+        isShowingBalance = showBalance;
+
+        MaterialCardView cardOut = showBalance ? cardBudget : cardBalance;
+        MaterialCardView cardIn = showBalance ? cardBalance : cardBudget;
+
+        // Flip out animation for current card
+        android.animation.ObjectAnimator flipOut = android.animation.ObjectAnimator.ofFloat(
+                cardOut, "rotationY", 0f, showBalance ? 90f : -90f);
+        flipOut.setDuration(250);
+        flipOut.setInterpolator(new android.view.animation.AccelerateInterpolator());
+
+        flipOut.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                cardOut.setVisibility(View.GONE);
+                cardOut.setRotationY(0f);
+
+                // Prepare incoming card
+                cardIn.setVisibility(View.VISIBLE);
+                cardIn.setRotationY(showBalance ? -90f : 90f);
+
+                // Flip in animation for new card
+                android.animation.ObjectAnimator flipIn = android.animation.ObjectAnimator.ofFloat(
+                        cardIn, "rotationY", showBalance ? -90f : 90f, 0f);
+                flipIn.setDuration(250);
+                flipIn.setInterpolator(new android.view.animation.DecelerateInterpolator());
+                flipIn.start();
+            }
+        });
+
+        flipOut.start();
+    }
+
+    private void setupUserInfo() {
+        // Set greeting based on time of day
+        Calendar cal = Calendar.getInstance();
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        String greeting;
+        if (hour < 12) {
+            greeting = "Good Morning 🌞";
+        } else if (hour < 17) {
+            greeting = "Good Afternoon ☀️";
+        } else {
+            greeting = "Good Evening 🌙";
+        }
+        tvGreeting.setText(greeting);
+
+        // Set user name
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && user.getDisplayName() != null && !user.getDisplayName().isEmpty()) {
+            tvUserName.setText(user.getDisplayName());
+        } else if (preferenceManager.isGuestMode()) {
+            tvUserName.setText("Guest User");
+        } else {
+            tvUserName.setText("User");
+        }
     }
 
     private void setupRecyclerView() {
@@ -93,6 +235,35 @@ public class DashboardFragment extends Fragment {
                 v -> Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_addExpenseFragment));
 
         tvSeeAll.setOnClickListener(v -> Navigation.findNavController(view).navigate(R.id.transactionsFragment));
+
+        // Menu button opens drawer
+        btnMenu.setOnClickListener(v -> {
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).openDrawer();
+            }
+        });
+
+        // Notification button
+        btnNotification.setOnClickListener(v -> {
+            Navigation.findNavController(view).navigate(R.id.profileFragment);
+        });
+
+        // Quick actions
+        quickAddIncome.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("type", "INCOME");
+            Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_addExpenseFragment, bundle);
+        });
+
+        quickAddExpense.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("type", "EXPENSE");
+            Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_addExpenseFragment, bundle);
+        });
+
+        quickViewAnalytics.setOnClickListener(v -> {
+            Navigation.findNavController(view).navigate(R.id.transactionsFragment);
+        });
     }
 
     private void observeData() {
@@ -109,12 +280,25 @@ public class DashboardFragment extends Fragment {
         String symbol = preferenceManager.getCurrencySymbol();
         double totalIncome = 0;
         double totalExpense = 0;
+        double monthlyExpense = 0;
+
+        // Get current month start
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        long monthStart = cal.getTimeInMillis();
 
         for (Expense e : expenses) {
             if ("INCOME".equals(e.getType())) {
                 totalIncome += e.getAmount();
             } else {
                 totalExpense += e.getAmount();
+                // Calculate monthly expense
+                if (e.getDate() >= monthStart) {
+                    monthlyExpense += e.getAmount();
+                }
             }
         }
 
@@ -122,6 +306,27 @@ public class DashboardFragment extends Fragment {
         tvTotalBalance.setText(String.format("%s%,.2f", symbol, balance));
         tvTotalIncome.setText(String.format("%s%,.2f", symbol, totalIncome));
         tvTotalExpense.setText(String.format("%s%,.2f", symbol, totalExpense));
+
+        // Update budget card
+        updateBudgetCard(symbol, monthlyExpense);
+    }
+
+    private void updateBudgetCard(String symbol, double monthlyExpense) {
+        double monthlyBudget = preferenceManager.getMonthlyBudget();
+        double remaining = monthlyBudget - monthlyExpense;
+
+        if (remaining < 0)
+            remaining = 0;
+
+        tvBudgetRemaining.setText(String.format("%s%,.2f", symbol, remaining));
+        tvBudgetSpent.setText(String.format("%s%,.2f", symbol, monthlyExpense));
+
+        // Calculate days left in month
+        Calendar cal = Calendar.getInstance();
+        int currentDay = cal.get(Calendar.DAY_OF_MONTH);
+        int totalDays = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        int daysLeft = totalDays - currentDay;
+        tvDaysLeft.setText(String.valueOf(daysLeft));
     }
 
     private void updateCharts(List<Expense> expenses) {
@@ -165,23 +370,27 @@ public class DashboardFragment extends Fragment {
         PieDataSet dataSet = new PieDataSet(pieEntries, "");
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(12f);
-        dataSet.setSliceSpace(3f);
+        dataSet.setValueTextSize(11f);
+        dataSet.setSliceSpace(4f);
+        dataSet.setSelectionShift(8f);
         dataSet.setValueFormatter(new PercentFormatter(pieChart));
 
         PieData pieData = new PieData(dataSet);
         pieChart.setData(pieData);
         pieChart.setUsePercentValues(true);
         pieChart.getDescription().setEnabled(false);
-        pieChart.setHoleRadius(55f);
-        pieChart.setTransparentCircleRadius(60f);
-        pieChart.setCenterText("Expenses");
-        pieChart.setCenterTextSize(16f);
-        pieChart.setCenterTextColor(Color.DKGRAY);
+        pieChart.setHoleRadius(58f);
+        pieChart.setTransparentCircleRadius(62f);
+        pieChart.setTransparentCircleColor(Color.WHITE);
+        pieChart.setTransparentCircleAlpha(110);
+        pieChart.setCenterText("Spending");
+        pieChart.setCenterTextSize(14f);
+        pieChart.setCenterTextColor(ContextCompat.getColor(requireContext(), R.color.primary_dark));
         pieChart.setEntryLabelColor(Color.WHITE);
-        pieChart.setEntryLabelTextSize(11f);
+        pieChart.setEntryLabelTextSize(10f);
         pieChart.getLegend().setEnabled(false);
-        pieChart.animateY(1000);
+        pieChart.setDrawEntryLabels(false);
+        pieChart.animateY(1200);
         pieChart.invalidate();
     }
 
@@ -189,13 +398,15 @@ public class DashboardFragment extends Fragment {
         // Get last 7 days data
         Calendar cal = Calendar.getInstance();
         String[] days = new String[7];
-        float[] incomeAmounts = new float[7];
         float[] expenseAmounts = new float[7];
 
         for (int i = 6; i >= 0; i--) {
             Calendar dayCal = (Calendar) cal.clone();
             dayCal.add(Calendar.DAY_OF_YEAR, i - 6);
-            days[6 - i] = String.format("%d/%d", dayCal.get(Calendar.MONTH) + 1, dayCal.get(Calendar.DAY_OF_MONTH));
+
+            // Shorter day labels
+            String[] dayNames = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+            days[6 - i] = dayNames[dayCal.get(Calendar.DAY_OF_WEEK) - 1];
 
             dayCal.set(Calendar.HOUR_OF_DAY, 0);
             dayCal.set(Calendar.MINUTE, 0);
@@ -206,46 +417,48 @@ public class DashboardFragment extends Fragment {
 
             for (Expense e : expenses) {
                 if (e.getDate() >= dayStart && e.getDate() < dayEnd) {
-                    if ("INCOME".equals(e.getType())) {
-                        incomeAmounts[6 - i] += e.getAmount();
-                    } else {
+                    if ("EXPENSE".equals(e.getType())) {
                         expenseAmounts[6 - i] += e.getAmount();
                     }
                 }
             }
         }
 
-        List<BarEntry> incomeEntries = new ArrayList<>();
-        List<BarEntry> expenseEntries = new ArrayList<>();
+        List<BarEntry> barEntries = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            incomeEntries.add(new BarEntry(i, incomeAmounts[i]));
-            expenseEntries.add(new BarEntry(i, expenseAmounts[i]));
+            barEntries.add(new BarEntry(i, expenseAmounts[i]));
         }
 
-        BarDataSet incomeDataSet = new BarDataSet(incomeEntries, "Income");
-        incomeDataSet.setColor(ContextCompat.getColor(requireContext(), R.color.income_green));
+        BarDataSet dataSet = new BarDataSet(barEntries, "");
 
-        BarDataSet expenseDataSet = new BarDataSet(expenseEntries, "Expenses");
-        expenseDataSet.setColor(ContextCompat.getColor(requireContext(), R.color.expense_red));
+        // Gradient-like colors for bars
+        int[] barColors = new int[7];
+        int primaryColor = ContextCompat.getColor(requireContext(), R.color.primary);
+        int primaryLight = ContextCompat.getColor(requireContext(), R.color.primary_light);
+        for (int i = 0; i < 7; i++) {
+            barColors[i] = i == 6 ? primaryColor : primaryLight;
+        }
+        dataSet.setColors(barColors);
+        dataSet.setDrawValues(false);
 
-        float groupSpace = 0.2f;
-        float barSpace = 0.05f;
-        float barWidth = 0.35f;
-
-        BarData barData = new BarData(incomeDataSet, expenseDataSet);
-        barData.setBarWidth(barWidth);
+        BarData barData = new BarData(dataSet);
+        barData.setBarWidth(0.6f);
 
         barChart.setData(barData);
-        barChart.groupBars(-0.5f, groupSpace, barSpace);
         barChart.getDescription().setEnabled(false);
         barChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
         barChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(days));
         barChart.getXAxis().setGranularity(1f);
-        barChart.getXAxis().setCenterAxisLabels(true);
+        barChart.getXAxis().setDrawGridLines(false);
+        barChart.getXAxis().setTextColor(Color.GRAY);
+        barChart.getAxisLeft().setDrawGridLines(true);
+        barChart.getAxisLeft().setGridColor(Color.parseColor("#E0E0E0"));
+        barChart.getAxisLeft().setTextColor(Color.GRAY);
         barChart.getAxisRight().setEnabled(false);
-        barChart.getLegend().setEnabled(true);
+        barChart.getLegend().setEnabled(false);
         barChart.setFitBars(true);
-        barChart.animateY(1000);
+        barChart.setDrawGridBackground(false);
+        barChart.animateY(1200);
         barChart.invalidate();
     }
 
