@@ -43,6 +43,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.example.trackexpense.adapters.NotificationAdapter;
+
 public class DashboardFragment extends Fragment {
 
     private ExpenseViewModel expenseViewModel;
@@ -58,6 +60,20 @@ public class DashboardFragment extends Fragment {
     private MaterialCardView btnMenu, btnNotification, cardBalance, cardBudget;
     private View quickAddIncome, quickAddExpense, quickViewAnalytics;
     private View cardContainer;
+
+    // Notification panel views
+    private View notificationOverlay, notificationDimBackground, notificationPanel;
+    private View emptyNotifications;
+    private RecyclerView rvNotifications;
+    private NotificationAdapter notificationAdapter;
+    private TextView tvNotificationBadge;
+    private List<com.example.trackexpense.data.local.Expense> notificationsList = new ArrayList<>();
+    private java.util.Set<Integer> viewedNotificationIds = new java.util.HashSet<>();
+
+    // Handler for notification animation
+    private android.os.Handler notificationHandler;
+    private Runnable notificationAnimationRunnable;
+    private boolean isNotificationPanelOpen = false;
 
     private boolean isShowingBalance = true;
 
@@ -83,6 +99,28 @@ public class DashboardFragment extends Fragment {
         animateBalanceCard();
     }
 
+    @Override
+    public void onDestroyView() {
+        // Cancel any pending animation callbacks to prevent crashes
+        cancelNotificationAnimation();
+
+        // Cancel any running animations
+        if (notificationOverlay != null) {
+            notificationOverlay.animate().cancel();
+        }
+        if (notificationPanel != null) {
+            notificationPanel.animate().cancel();
+        }
+        if (cardBalance != null) {
+            cardBalance.animate().cancel();
+        }
+        if (cardBudget != null) {
+            cardBudget.animate().cancel();
+        }
+
+        super.onDestroyView();
+    }
+
     private void initViews(View view) {
         tvTotalBalance = view.findViewById(R.id.tvTotalBalance);
         tvTotalIncome = view.findViewById(R.id.tvTotalIncome);
@@ -106,6 +144,17 @@ public class DashboardFragment extends Fragment {
         tvBudgetSpent = view.findViewById(R.id.tvBudgetSpent);
         tvDaysLeft = view.findViewById(R.id.tvDaysLeft);
         cardContainer = view.findViewById(R.id.cardContainer);
+
+        // Notification panel views
+        notificationOverlay = view.findViewById(R.id.notificationOverlay);
+        notificationDimBackground = view.findViewById(R.id.notificationDimBackground);
+        notificationPanel = view.findViewById(R.id.notificationPanel);
+        rvNotifications = view.findViewById(R.id.rvNotifications);
+        emptyNotifications = view.findViewById(R.id.emptyNotifications);
+        tvNotificationBadge = view.findViewById(R.id.tvNotificationBadge);
+
+        // Setup notification panel
+        setupNotificationPanel(view);
 
         // Setup swipe gesture on card container
         setupCardSwipeGesture();
@@ -243,10 +292,7 @@ public class DashboardFragment extends Fragment {
             }
         });
 
-        // Notification button
-        btnNotification.setOnClickListener(v -> {
-            Navigation.findNavController(view).navigate(R.id.profileFragment);
-        });
+        // Notification button - handled in setupNotificationPanel()
 
         // Quick actions
         quickAddIncome.setOnClickListener(v -> {
@@ -272,6 +318,7 @@ public class DashboardFragment extends Fragment {
                 updateSummary(expenses);
                 updateCharts(expenses);
                 updateRecentTransactions(expenses);
+                updateNotifications(expenses);
             }
         });
     }
@@ -466,5 +513,172 @@ public class DashboardFragment extends Fragment {
         int count = Math.min(expenses.size(), 5);
         List<Expense> recent = expenses.subList(0, count);
         expenseAdapter.setExpenses(recent);
+    }
+
+    // ===================== NOTIFICATION PANEL METHODS =====================
+
+    private void setupNotificationPanel(View view) {
+        // Setup RecyclerView for notifications
+        notificationAdapter = new NotificationAdapter();
+        String symbol = preferenceManager.getCurrencySymbol();
+        notificationAdapter.setCurrencySymbol(symbol);
+
+        rvNotifications.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvNotifications.setAdapter(notificationAdapter);
+
+        // Setup delete listener
+        notificationAdapter.setOnNotificationDeleteListener((expense, position) -> {
+            notificationAdapter.removeNotification(position);
+            updateNotificationBadge();
+            checkEmptyState();
+        });
+
+        // Close button
+        view.findViewById(R.id.btnCloseNotifications).setOnClickListener(v -> hideNotificationPanel());
+
+        // Dim background click to close
+        notificationDimBackground.setOnClickListener(v -> hideNotificationPanel());
+
+        // Clear all button
+        view.findViewById(R.id.btnClearAll).setOnClickListener(v -> {
+            notificationAdapter.clearAll();
+            updateNotificationBadge();
+            checkEmptyState();
+        });
+
+        // Notification button click
+        btnNotification.setOnClickListener(v -> showNotificationPanel());
+    }
+
+    private void showNotificationPanel() {
+        // Prevent double-opening
+        if (isNotificationPanelOpen)
+            return;
+        isNotificationPanelOpen = true;
+
+        // Cancel any pending animation callbacks
+        cancelNotificationAnimation();
+
+        // Mark all current notifications as viewed
+        for (Expense expense : notificationsList) {
+            viewedNotificationIds.add(expense.getId());
+        }
+        updateNotificationBadge();
+
+        // Clear adapter first
+        if (rvNotifications != null) {
+            rvNotifications.setLayoutAnimation(null);
+        }
+        if (notificationAdapter != null) {
+            notificationAdapter.setNotifications(new java.util.ArrayList<>());
+        }
+
+        // Show overlay
+        if (notificationOverlay != null) {
+            notificationOverlay.setVisibility(View.VISIBLE);
+            notificationOverlay.setAlpha(1f);
+        }
+
+        // Set panel to starting position and animate
+        if (notificationPanel != null) {
+            notificationPanel.setTranslationX(notificationPanel.getWidth());
+            notificationPanel.animate()
+                    .translationX(0)
+                    .setDuration(300)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .start();
+        }
+
+        // Load data after a delay
+        notificationHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        notificationAnimationRunnable = () -> {
+            try {
+                if (isAdded() && isNotificationPanelOpen && notificationAdapter != null && rvNotifications != null) {
+                    if (notificationsList != null && notificationsList.size() > 0) {
+                        android.view.animation.LayoutAnimationController animController = android.view.animation.AnimationUtils
+                                .loadLayoutAnimation(
+                                        requireContext(), R.anim.notification_layout_animation);
+                        rvNotifications.setLayoutAnimation(animController);
+                        notificationAdapter.setNotifications(notificationsList);
+                    }
+                    checkEmptyState();
+                }
+            } catch (Exception ignored) {
+                // Ignore any errors if fragment is detached
+            }
+        };
+        notificationHandler.postDelayed(notificationAnimationRunnable, 350);
+    }
+
+    private void hideNotificationPanel() {
+        // Prevent double-closing
+        if (!isNotificationPanelOpen)
+            return;
+        isNotificationPanelOpen = false;
+
+        // Cancel any pending animation callbacks
+        cancelNotificationAnimation();
+
+        // Animate panel out
+        if (notificationPanel != null) {
+            notificationPanel.animate()
+                    .translationX(notificationPanel.getWidth())
+                    .setDuration(250)
+                    .setInterpolator(new android.view.animation.AccelerateInterpolator())
+                    .start();
+        }
+
+        // Hide overlay after delay
+        if (notificationHandler == null) {
+            notificationHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        }
+        notificationHandler.postDelayed(() -> {
+            try {
+                if (notificationOverlay != null) {
+                    notificationOverlay.setVisibility(View.GONE);
+                }
+            } catch (Exception ignored) {
+            }
+        }, 300);
+    }
+
+    private void cancelNotificationAnimation() {
+        if (notificationHandler != null) {
+            notificationHandler.removeCallbacksAndMessages(null);
+        }
+    }
+
+    private void updateNotificationBadge() {
+        // Count unviewed notifications
+        int unviewedCount = 0;
+        for (Expense expense : notificationsList) {
+            if (!viewedNotificationIds.contains(expense.getId())) {
+                unviewedCount++;
+            }
+        }
+
+        if (unviewedCount > 0) {
+            tvNotificationBadge.setVisibility(View.VISIBLE);
+            tvNotificationBadge.setText(unviewedCount > 99 ? "99+" : String.valueOf(unviewedCount));
+        } else {
+            tvNotificationBadge.setVisibility(View.GONE);
+        }
+    }
+
+    private void checkEmptyState() {
+        if (notificationAdapter.getNotificationCount() == 0) {
+            rvNotifications.setVisibility(View.GONE);
+            emptyNotifications.setVisibility(View.VISIBLE);
+        } else {
+            rvNotifications.setVisibility(View.VISIBLE);
+            emptyNotifications.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateNotifications(List<Expense> expenses) {
+        // Get recent transactions as notifications (e.g., last 20)
+        int count = Math.min(expenses.size(), 20);
+        notificationsList = new ArrayList<>(expenses.subList(0, count));
+        updateNotificationBadge();
     }
 }

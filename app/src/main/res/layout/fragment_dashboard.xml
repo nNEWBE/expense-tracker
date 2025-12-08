@@ -89,33 +89,43 @@
                         </LinearLayout>
 
                         <!-- Notification Icon -->
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/btnNotification"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            app:cardBackgroundColor="#20FFFFFF"
-                            app:cardCornerRadius="14dp"
-                            app:cardElevation="0dp"
-                            app:strokeWidth="0dp">
+                        <FrameLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
 
-                            <ImageView
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:padding="10dp"
-                                android:src="@drawable/ic_nav_notifications"
-                                app:tint="@android:color/white" />
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/btnNotification"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                app:cardBackgroundColor="#20FFFFFF"
+                                app:cardCornerRadius="14dp"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="0dp">
 
-                            <!-- Notification Badge -->
-                            <View
-                                android:id="@+id/notificationBadge"
-                                android:layout_width="10dp"
-                                android:layout_height="10dp"
+                                <ImageView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:padding="10dp"
+                                    android:src="@drawable/ic_nav_notifications"
+                                    app:tint="@android:color/white" />
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Notification Badge with Count -->
+                            <TextView
+                                android:id="@+id/tvNotificationBadge"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
                                 android:layout_gravity="top|end"
-                                android:layout_margin="8dp"
                                 android:background="@drawable/notification_badge"
+                                android:gravity="center"
+                                android:text="0"
+                                android:textColor="@android:color/white"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
                                 android:visibility="gone" />
 
-                        </com.google.android.material.card.MaterialCardView>
+                        </FrameLayout>
 
                     </LinearLayout>
 
@@ -667,5 +677,9 @@
         android:contentDescription="Add"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@color/white" />
+
+    <!-- Notification Panel Overlay -->
+    <include layout="@layout/layout_notification_panel" />
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

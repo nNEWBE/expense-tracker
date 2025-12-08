@@ -82,6 +82,11 @@
     <color name="chart_5">#3B82F6</color>
     <color name="chart_6">#EAB308</color>
     
+    <!-- Text Colors -->
+    <color name="text_primary">#1E1B4B</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="text_hint">#94A3B8</color>
+    
     <!-- Legacy -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
