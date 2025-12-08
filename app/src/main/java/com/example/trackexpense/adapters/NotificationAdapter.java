@@ -183,8 +183,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                     isExpense ? R.color.category_travel_bg : R.color.category_health_bg));
             tvTypeIndicator.setBackground(indicatorBg);
 
-            // Set amount with sign
-            String amount = String.format(Locale.getDefault(), "%s%s%.2f",
+            // Set amount with sign (no decimals)
+            String amount = String.format(Locale.getDefault(), "%s%s%,.0f",
                     isExpense ? "-" : "+",
                     currencySymbol,
                     expense.getAmount());

@@ -110,7 +110,7 @@ public class ProfileFragment extends Fragment {
         tvCurrency.setText(currency + " (" + symbol + ")");
 
         double budget = preferenceManager.getMonthlyBudget();
-        tvBudget.setText(symbol + String.format("%.2f", budget));
+        tvBudget.setText(symbol + String.format("%,.0f", budget));
 
         int themeMode = preferenceManager.getThemeMode();
         tvTheme.setText(getThemeName(themeMode));

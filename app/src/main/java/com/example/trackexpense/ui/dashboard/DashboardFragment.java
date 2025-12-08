@@ -33,7 +33,6 @@ import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -281,9 +280,7 @@ public class DashboardFragment extends Fragment {
     }
 
     private void setupClickListeners(View view) {
-        FloatingActionButton fab = view.findViewById(R.id.fabAddExpense);
-        fab.setOnClickListener(
-                v -> Navigation.findNavController(view).navigate(R.id.action_dashboardFragment_to_addExpenseFragment));
+        // FAB removed - using bottom nav FAB instead
 
         tvSeeAll.setOnClickListener(v -> Navigation.findNavController(view).navigate(R.id.transactionsFragment));
 
@@ -343,9 +340,9 @@ public class DashboardFragment extends Fragment {
         }
 
         double balance = totalIncome - totalExpense;
-        tvTotalBalance.setText(String.format("%s%,.2f", symbol, balance));
-        tvTotalIncome.setText(String.format("%s%,.2f", symbol, totalIncome));
-        tvTotalExpense.setText(String.format("%s%,.2f", symbol, totalExpense));
+        tvTotalBalance.setText(String.format("%s%,.0f", symbol, balance));
+        tvTotalIncome.setText(String.format("%s%,.0f", symbol, totalIncome));
+        tvTotalExpense.setText(String.format("%s%,.0f", symbol, totalExpense));
 
         // Update budget card
         updateBudgetCard(symbol, monthlyExpense);
@@ -358,8 +355,8 @@ public class DashboardFragment extends Fragment {
         if (remaining < 0)
             remaining = 0;
 
-        tvBudgetRemaining.setText(String.format("%s%,.2f", symbol, remaining));
-        tvBudgetSpent.setText(String.format("%s%,.2f", symbol, monthlyExpense));
+        tvBudgetRemaining.setText(String.format("%s%,.0f", symbol, remaining));
+        tvBudgetSpent.setText(String.format("%s%,.0f", symbol, monthlyExpense));
 
         // Calculate days left in month
         Calendar cal = Calendar.getInstance();
@@ -379,7 +376,14 @@ public class DashboardFragment extends Fragment {
             }
         }
         int count = Math.min(filtered.size(), 10); // Show up to 10
+
+        // Apply slide-right animation
+        android.view.animation.LayoutAnimationController animController = android.view.animation.AnimationUtils
+                .loadLayoutAnimation(
+                        requireContext(), R.anim.layout_animation_slide_right);
+        rvRecentTransactions.setLayoutAnimation(animController);
         expenseAdapter.setExpenses(filtered.subList(0, count));
+        rvRecentTransactions.scheduleLayoutAnimation();
     }
 
     private void applyFilter(String filter) {

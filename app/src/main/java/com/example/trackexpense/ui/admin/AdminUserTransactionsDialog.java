@@ -405,7 +405,7 @@ public class AdminUserTransactionsDialog extends DialogFragment {
             public void bind(Expense expense) {
                 tvCategory.setText(expense.getCategory());
 
-                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault());
+                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
                 tvDate.setText(sdf.format(new Date(expense.getDate())));
 
                 if (expense.getNotes() != null && !expense.getNotes().isEmpty()) {
@@ -415,12 +415,12 @@ public class AdminUserTransactionsDialog extends DialogFragment {
                     tvNotes.setVisibility(View.GONE);
                 }
 
-                // Set amount and color
+                // Set amount and color (no decimals)
                 if ("INCOME".equals(expense.getType())) {
-                    tvAmount.setText(String.format("+$%.2f", expense.getAmount()));
+                    tvAmount.setText(String.format("+$%,.0f", expense.getAmount()));
                     tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.income_green));
                 } else {
-                    tvAmount.setText(String.format("-$%.2f", expense.getAmount()));
+                    tvAmount.setText(String.format("-$%,.0f", expense.getAmount()));
                     tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.expense_red));
                 }
 

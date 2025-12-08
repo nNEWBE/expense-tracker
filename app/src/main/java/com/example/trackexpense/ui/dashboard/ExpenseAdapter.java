@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,19 +15,25 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
 import com.example.trackexpense.utils.CategoryHelper;
+import com.google.android.material.button.MaterialButton;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseViewHolder> {
 
     private List<Expense> expenses = new ArrayList<>();
     private OnItemClickListener listener;
     private OnItemLongClickListener longClickListener;
+    private OnEditClickListener editClickListener;
+    private OnDeleteClickListener deleteClickListener;
     private String currencySymbol = "$";
+    private Set<Integer> expandedPositions = new HashSet<>();
 
     @NonNull
     @Override
@@ -38,7 +45,8 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
     @Override
     public void onBindViewHolder(@NonNull ExpenseViewHolder holder, int position) {
         Expense expense = expenses.get(position);
-        holder.bind(expense);
+        boolean isExpanded = expandedPositions.contains(position);
+        holder.bind(expense, isExpanded, position);
     }
 
     @Override
@@ -48,6 +56,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
 
     public void setExpenses(List<Expense> expenses) {
         this.expenses = expenses;
+        this.expandedPositions.clear();
         notifyDataSetChanged();
     }
 
@@ -70,6 +79,14 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
         this.longClickListener = listener;
     }
 
+    public void setOnEditClickListener(OnEditClickListener listener) {
+        this.editClickListener = listener;
+    }
+
+    public void setOnDeleteClickListener(OnDeleteClickListener listener) {
+        this.deleteClickListener = listener;
+    }
+
     public interface OnItemClickListener {
         void onItemClick(Expense expense);
     }
@@ -78,10 +95,20 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
         void onItemLongClick(Expense expense, int position);
     }
 
+    public interface OnEditClickListener {
+        void onEditClick(Expense expense, int position);
+    }
+
+    public interface OnDeleteClickListener {
+        void onDeleteClick(Expense expense, int position);
+    }
+
     class ExpenseViewHolder extends RecyclerView.ViewHolder {
         private View iconBg;
-        private ImageView ivIcon;
-        private TextView tvCategory, tvDate, tvAmount;
+        private ImageView ivIcon, ivExpandIndicator;
+        private TextView tvCategory, tvDate, tvAmount, tvNotes;
+        private LinearLayout expandableSection, notesContainer;
+        private MaterialButton btnEdit, btnDelete;
 
         public ExpenseViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -90,52 +117,109 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
             tvCategory = itemView.findViewById(R.id.tvCategory);
             tvDate = itemView.findViewById(R.id.tvDate);
             tvAmount = itemView.findViewById(R.id.tvAmount);
-
-            itemView.setOnClickListener(v -> {
-                int position = getAdapterPosition();
-                if (listener != null && position != RecyclerView.NO_POSITION) {
-                    listener.onItemClick(expenses.get(position));
-                }
-            });
-
-            itemView.setOnLongClickListener(v -> {
-                int position = getAdapterPosition();
-                if (longClickListener != null && position != RecyclerView.NO_POSITION) {
-                    longClickListener.onItemLongClick(expenses.get(position), position);
-                    return true;
-                }
-                return false;
-            });
+            ivExpandIndicator = itemView.findViewById(R.id.ivExpandIndicator);
+            expandableSection = itemView.findViewById(R.id.expandableSection);
+            notesContainer = itemView.findViewById(R.id.notesContainer);
+            tvNotes = itemView.findViewById(R.id.tvNotes);
+            btnEdit = itemView.findViewById(R.id.btnEdit);
+            btnDelete = itemView.findViewById(R.id.btnDelete);
         }
 
-        public void bind(Expense expense) {
+        public void bind(Expense expense, boolean isExpanded, int position) {
             tvCategory.setText(expense.getCategory());
 
-            // Format date
-            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault());
+            // Format date with AM/PM
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault());
             tvDate.setText(sdf.format(new Date(expense.getDate())));
 
             // Get category info for icon and colors
             CategoryHelper.CategoryInfo categoryInfo = CategoryHelper.getCategoryInfo(expense.getCategory());
+            int categoryColor = ContextCompat.getColor(itemView.getContext(), categoryInfo.colorRes);
 
-            // Set icon
+            // Set icon with category color
             ivIcon.setImageResource(categoryInfo.iconRes);
-            ivIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), android.R.color.white));
+            ivIcon.setColorFilter(categoryColor);
 
-            // Set icon background color
+            // Set icon background with low opacity (15% opacity of category color)
             GradientDrawable bgShape = new GradientDrawable();
             bgShape.setShape(GradientDrawable.OVAL);
-            bgShape.setColor(ContextCompat.getColor(itemView.getContext(), categoryInfo.colorRes));
+            int lowOpacityColor = androidx.core.graphics.ColorUtils.setAlphaComponent(categoryColor, 38);
+            bgShape.setColor(lowOpacityColor);
             iconBg.setBackground(bgShape);
 
-            // Set amount with color based on type
+            // Set amount with color based on type (no decimals)
             if ("INCOME".equals(expense.getType())) {
-                tvAmount.setText(String.format("+%s%.2f", currencySymbol, expense.getAmount()));
+                tvAmount.setText(String.format("+%s%,.0f", currencySymbol, expense.getAmount()));
                 tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.income_green));
             } else {
-                tvAmount.setText(String.format("-%s%.2f", currencySymbol, expense.getAmount()));
+                tvAmount.setText(String.format("-%s%,.0f", currencySymbol, expense.getAmount()));
                 tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.expense_red));
             }
+
+            // Handle expandable section
+            if (expandableSection != null) {
+                expandableSection.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+
+                if (ivExpandIndicator != null) {
+                    ivExpandIndicator.setRotation(isExpanded ? 180f : 0f);
+                }
+
+                // Show notes if available
+                if (notesContainer != null && tvNotes != null) {
+                    String notes = expense.getNotes();
+                    if (notes != null && !notes.trim().isEmpty()) {
+                        notesContainer.setVisibility(View.VISIBLE);
+                        tvNotes.setText(notes);
+                    } else {
+                        notesContainer.setVisibility(View.GONE);
+                    }
+                }
+
+                // Edit button
+                if (btnEdit != null) {
+                    btnEdit.setOnClickListener(v -> {
+                        if (editClickListener != null) {
+                            editClickListener.onEditClick(expense, position);
+                        }
+                    });
+                }
+
+                // Delete button
+                if (btnDelete != null) {
+                    btnDelete.setOnClickListener(v -> {
+                        if (deleteClickListener != null) {
+                            deleteClickListener.onDeleteClick(expense, position);
+                        }
+                    });
+                }
+            }
+
+            // Click to expand/collapse
+            itemView.setOnClickListener(v -> {
+                int adapterPosition = getAdapterPosition();
+                if (adapterPosition != RecyclerView.NO_POSITION) {
+                    if (expandedPositions.contains(adapterPosition)) {
+                        expandedPositions.remove(adapterPosition);
+                    } else {
+                        expandedPositions.add(adapterPosition);
+                    }
+                    notifyItemChanged(adapterPosition);
+
+                    if (listener != null) {
+                        listener.onItemClick(expense);
+                    }
+                }
+            });
+
+            // Long click listener
+            itemView.setOnLongClickListener(v -> {
+                int adapterPosition = getAdapterPosition();
+                if (longClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                    longClickListener.onItemLongClick(expense, adapterPosition);
+                    return true;
+                }
+                return false;
+            });
         }
     }
 }

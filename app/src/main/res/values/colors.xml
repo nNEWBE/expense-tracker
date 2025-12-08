@@ -94,4 +94,7 @@
     <!-- Navigation Colors -->
     <color name="nav_active_color">#1A3A4A</color>
     <color name="nav_inactive_color">#9CA3AF</color>
+    
+    <!-- Chip Filter Colors -->
+    <color name="chip_filter_bg">#F3F4F6</color>
 </resources>

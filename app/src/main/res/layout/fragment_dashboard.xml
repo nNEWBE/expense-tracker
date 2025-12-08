@@ -446,7 +446,7 @@
                 android:layout_marginTop="-24dp"
                 app:cardBackgroundColor="@android:color/white"
                 app:cardCornerRadius="20dp"
-                app:cardElevation="1dp"
+                app:cardElevation="3dp"
                 app:strokeWidth="0dp">
 
                 <LinearLayout
@@ -476,7 +476,7 @@
                         android:letterSpacing="0.05"
                         android:textColor="@android:color/white"
                         app:backgroundTint="@color/primary"
-                        app:cornerRadius="12dp"
+                        app:cornerRadius="20dp"
                         app:elevation="0dp"
                         app:icon="@drawable/ic_nav_analytics"
                         app:iconGravity="textStart"
@@ -500,7 +500,7 @@
                         android:textStyle="bold"
                         android:letterSpacing="0.05"
                         android:textColor="@color/income_green"
-                        app:cornerRadius="12dp"
+                        app:cornerRadius="20dp"
                         app:strokeColor="@color/income_green"
                         app:strokeWidth="1dp"
                         app:elevation="0dp"
@@ -526,7 +526,7 @@
                         android:textStyle="bold"
                         android:letterSpacing="0.05"
                         android:textColor="@color/expense_red"
-                        app:cornerRadius="12dp"
+                        app:cornerRadius="20dp"
                         app:strokeColor="@color/expense_red"
                         app:strokeWidth="1dp"
                         app:elevation="0dp"
@@ -580,16 +580,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAddExpense"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
-        android:backgroundTint="@color/primary"
-        android:contentDescription="Add"
-        app:srcCompat="@android:drawable/ic_input_add"
-        app:tint="@color/white" />
+
 
     <!-- Notification Panel Overlay -->
     <include layout="@layout/layout_notification_panel" />

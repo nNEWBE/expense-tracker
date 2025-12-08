@@ -8,13 +8,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,25 +30,38 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TransactionsFragment extends Fragment {
+
+    private static final int PAGE_SIZE = 15; // Number of transactions per page
 
     private ExpenseViewModel viewModel;
     private PreferenceManager preferenceManager;
     private NotificationHelper notificationHelper;
     private RecyclerView rvTransactions;
     private ExpenseAdapter adapter;
-    private TextInputEditText etSearch;
-    private ChipGroup chipGroupFilter;
-    private TextView tvEmpty;
+    private EditText etSearch;
+    private ChipGroup chipGroupFilter, chipGroupCategory;
+    private TextView tvEmpty, tvTransactionCount;
+    private LinearLayout emptyState;
+    private MaterialButton btnTypeAll, btnTypeIncome, btnTypeExpense, btnLoadMore;
+    private ProgressBar progressLoadMore;
     private List<Expense> allExpenses = new ArrayList<>();
+    private List<Expense> filteredExpenses = new ArrayList<>();
+    private String currentTypeFilter = "ALL"; // ALL, INCOME, EXPENSE
+    private String currentCategoryFilter = "ALL"; // ALL or specific category
+    private int currentPage = 1;
+
+    // Category chip ID to category name mapping
+    private Map<Integer, String> categoryChipMap = new HashMap<>();
 
     @Nullable
     @Override
@@ -63,22 +78,44 @@ public class TransactionsFragment extends Fragment {
         preferenceManager = new PreferenceManager(requireContext());
         notificationHelper = new NotificationHelper(requireContext());
 
+        initCategoryMap();
         initViews(view);
         setupRecyclerView();
         setupSearch();
         setupFilters();
+        setupTypeFilters();
+        setupCategoryFilters();
+        setupPagination();
         observeData();
+    }
+
+    private void initCategoryMap() {
+        categoryChipMap.put(R.id.chipCatAll, "ALL");
+        categoryChipMap.put(R.id.chipCatFood, "Food");
+        categoryChipMap.put(R.id.chipCatTransport, "Transport");
+        categoryChipMap.put(R.id.chipCatShopping, "Shopping");
+        categoryChipMap.put(R.id.chipCatBills, "Bills");
+        categoryChipMap.put(R.id.chipCatHealth, "Health");
+        categoryChipMap.put(R.id.chipCatEntertainment, "Entertainment");
+        categoryChipMap.put(R.id.chipCatSalary, "Salary");
+        categoryChipMap.put(R.id.chipCatOther, "Other");
     }
 
     private void initViews(View view) {
         rvTransactions = view.findViewById(R.id.rvTransactions);
         etSearch = view.findViewById(R.id.etSearch);
         chipGroupFilter = view.findViewById(R.id.chipGroupFilter);
+        chipGroupCategory = view.findViewById(R.id.chipGroupCategory);
         tvEmpty = view.findViewById(R.id.tvEmpty);
+        tvTransactionCount = view.findViewById(R.id.tvTransactionCount);
+        emptyState = view.findViewById(R.id.emptyState);
+        btnLoadMore = view.findViewById(R.id.btnLoadMore);
+        progressLoadMore = view.findViewById(R.id.progressLoadMore);
 
-        ExtendedFloatingActionButton fabAdd = view.findViewById(R.id.fabAdd);
-        fabAdd.setOnClickListener(v -> Navigation.findNavController(view)
-                .navigate(R.id.action_transactionsFragment_to_addExpenseFragment));
+        // Type filter buttons
+        btnTypeAll = view.findViewById(R.id.btnTypeAll);
+        btnTypeIncome = view.findViewById(R.id.btnTypeIncome);
+        btnTypeExpense = view.findViewById(R.id.btnTypeExpense);
     }
 
     private void setupRecyclerView() {
@@ -87,44 +124,122 @@ public class TransactionsFragment extends Fragment {
         rvTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvTransactions.setAdapter(adapter);
 
-        // Click to view details
-        adapter.setOnItemClickListener(expense -> showExpenseDetailsDialog(expense));
+        // Edit click listener
+        adapter.setOnEditClickListener((expense, position) -> showEditDialog(expense));
 
-        // Long click to edit/delete
-        adapter.setOnItemLongClickListener((expense, position) -> showEditDeleteDialog(expense, position));
+        // Delete click listener
+        adapter.setOnDeleteClickListener((expense, position) -> confirmDelete(expense));
     }
 
-    private void showExpenseDetailsDialog(Expense expense) {
-        String symbol = preferenceManager.getCurrencySymbol();
-        String type = expense.getType().equals("INCOME") ? "Income" : "Expense";
-
-        String message = String.format(
-                "Type: %s\nAmount: %s%.2f\nCategory: %s\nNotes: %s",
-                type, symbol, expense.getAmount(), expense.getCategory(),
-                expense.getNotes() != null ? expense.getNotes() : "No notes");
-
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(expense.getCategory())
-                .setMessage(message)
-                .setPositiveButton("Edit", (dialog, which) -> showEditDialog(expense))
-                .setNegativeButton("Delete", (dialog, which) -> confirmDelete(expense))
-                .setNeutralButton("Close", null)
-                .show();
+    private void setupPagination() {
+        if (btnLoadMore != null) {
+            btnLoadMore.setOnClickListener(v -> loadMoreTransactions());
+        }
     }
 
-    private void showEditDeleteDialog(Expense expense, int position) {
-        String[] options = { "Edit", "Delete" };
+    private void loadMoreTransactions() {
+        currentPage++;
+        displayPaginatedResults();
+    }
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Transaction Options")
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0) {
-                        showEditDialog(expense);
-                    } else {
-                        confirmDelete(expense);
-                    }
-                })
-                .show();
+    private void setupCategoryFilters() {
+        if (chipGroupCategory != null) {
+            chipGroupCategory.setOnCheckedStateChangeListener((group, checkedIds) -> {
+                if (!checkedIds.isEmpty()) {
+                    int checkedId = checkedIds.get(0);
+                    currentCategoryFilter = categoryChipMap.getOrDefault(checkedId, "ALL");
+                } else {
+                    currentCategoryFilter = "ALL";
+                }
+                currentPage = 1; // Reset pagination
+                filterExpenses();
+            });
+        }
+    }
+
+    private void setupTypeFilters() {
+        if (btnTypeAll != null) {
+            btnTypeAll.setOnClickListener(v -> {
+                currentTypeFilter = "ALL";
+                currentPage = 1;
+                updateTypeFilterUI();
+                filterExpenses();
+            });
+        }
+
+        if (btnTypeIncome != null) {
+            btnTypeIncome.setOnClickListener(v -> {
+                currentTypeFilter = "INCOME";
+                currentPage = 1;
+                updateTypeFilterUI();
+                filterExpenses();
+            });
+        }
+
+        if (btnTypeExpense != null) {
+            btnTypeExpense.setOnClickListener(v -> {
+                currentTypeFilter = "EXPENSE";
+                currentPage = 1;
+                updateTypeFilterUI();
+                filterExpenses();
+            });
+        }
+
+        // Initialize UI
+        updateTypeFilterUI();
+    }
+
+    private void updateTypeFilterUI() {
+        int primaryColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.primary);
+        int incomeColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.income_green);
+        int expenseColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.expense_red);
+        int whiteColor = androidx.core.content.ContextCompat.getColor(requireContext(), android.R.color.white);
+
+        // Reset all buttons to outlined style
+        if (btnTypeAll != null) {
+            if ("ALL".equals(currentTypeFilter)) {
+                btnTypeAll.setBackgroundTintList(android.content.res.ColorStateList.valueOf(primaryColor));
+                btnTypeAll.setTextColor(whiteColor);
+                btnTypeAll.setIconTint(android.content.res.ColorStateList.valueOf(whiteColor));
+                btnTypeAll.setStrokeWidth(0);
+            } else {
+                btnTypeAll.setBackgroundTintList(android.content.res.ColorStateList.valueOf(whiteColor));
+                btnTypeAll.setTextColor(primaryColor);
+                btnTypeAll.setIconTint(android.content.res.ColorStateList.valueOf(primaryColor));
+                btnTypeAll.setStrokeColor(android.content.res.ColorStateList.valueOf(primaryColor));
+                btnTypeAll.setStrokeWidth(2);
+            }
+        }
+
+        if (btnTypeIncome != null) {
+            if ("INCOME".equals(currentTypeFilter)) {
+                btnTypeIncome.setBackgroundTintList(android.content.res.ColorStateList.valueOf(incomeColor));
+                btnTypeIncome.setTextColor(whiteColor);
+                btnTypeIncome.setIconTint(android.content.res.ColorStateList.valueOf(whiteColor));
+                btnTypeIncome.setStrokeWidth(0);
+            } else {
+                btnTypeIncome.setBackgroundTintList(android.content.res.ColorStateList.valueOf(whiteColor));
+                btnTypeIncome.setTextColor(incomeColor);
+                btnTypeIncome.setIconTint(android.content.res.ColorStateList.valueOf(incomeColor));
+                btnTypeIncome.setStrokeColor(android.content.res.ColorStateList.valueOf(incomeColor));
+                btnTypeIncome.setStrokeWidth(2);
+            }
+        }
+
+        if (btnTypeExpense != null) {
+            if ("EXPENSE".equals(currentTypeFilter)) {
+                btnTypeExpense.setBackgroundTintList(android.content.res.ColorStateList.valueOf(expenseColor));
+                btnTypeExpense.setTextColor(whiteColor);
+                btnTypeExpense.setIconTint(android.content.res.ColorStateList.valueOf(whiteColor));
+                btnTypeExpense.setStrokeWidth(0);
+            } else {
+                btnTypeExpense.setBackgroundTintList(android.content.res.ColorStateList.valueOf(whiteColor));
+                btnTypeExpense.setTextColor(expenseColor);
+                btnTypeExpense.setIconTint(android.content.res.ColorStateList.valueOf(expenseColor));
+                btnTypeExpense.setStrokeColor(android.content.res.ColorStateList.valueOf(expenseColor));
+                btnTypeExpense.setStrokeWidth(2);
+            }
+        }
     }
 
     private void showEditDialog(Expense expense) {
@@ -206,40 +321,63 @@ public class TransactionsFragment extends Fragment {
     }
 
     private void setupSearch() {
-        etSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+        if (etSearch != null) {
+            etSearch.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterExpenses();
-            }
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    currentPage = 1; // Reset pagination on search
+                    filterExpenses();
+                }
 
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
+                @Override
+                public void afterTextChanged(Editable s) {
+                }
+            });
+        }
     }
 
     private void setupFilters() {
-        chipGroupFilter.setOnCheckedStateChangeListener((group, checkedIds) -> filterExpenses());
+        if (chipGroupFilter != null) {
+            chipGroupFilter.setOnCheckedStateChangeListener((group, checkedIds) -> {
+                currentPage = 1; // Reset pagination
+                filterExpenses();
+            });
+        }
     }
 
     private void observeData() {
         viewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
             allExpenses = expenses;
+            currentPage = 1;
             filterExpenses();
         });
     }
 
     private void filterExpenses() {
-        List<Expense> filtered = new ArrayList<>(allExpenses);
+        filteredExpenses = new ArrayList<>(allExpenses);
+
+        // Type filter (Income/Expense)
+        if (!"ALL".equals(currentTypeFilter)) {
+            filteredExpenses = filteredExpenses.stream()
+                    .filter(e -> currentTypeFilter.equals(e.getType()))
+                    .collect(Collectors.toList());
+        }
+
+        // Category filter
+        if (!"ALL".equals(currentCategoryFilter)) {
+            filteredExpenses = filteredExpenses.stream()
+                    .filter(e -> currentCategoryFilter.equalsIgnoreCase(e.getCategory()))
+                    .collect(Collectors.toList());
+        }
 
         // Text search
-        String query = etSearch.getText().toString().toLowerCase();
+        String query = etSearch != null ? etSearch.getText().toString().toLowerCase() : "";
         if (!query.isEmpty()) {
-            filtered = filtered.stream()
+            filteredExpenses = filteredExpenses.stream()
                     .filter(e -> (e.getNotes() != null && e.getNotes().toLowerCase().contains(query)) ||
                             e.getCategory().toLowerCase().contains(query) ||
                             String.valueOf(e.getAmount()).contains(query))
@@ -247,36 +385,79 @@ public class TransactionsFragment extends Fragment {
         }
 
         // Date filter
-        int checkedId = chipGroupFilter.getCheckedChipId();
-        if (checkedId != R.id.chipAll && checkedId != View.NO_ID) {
-            long now = System.currentTimeMillis();
-            Calendar cal = Calendar.getInstance();
+        if (chipGroupFilter != null) {
+            int checkedId = chipGroupFilter.getCheckedChipId();
+            if (checkedId != R.id.chipAll && checkedId != View.NO_ID) {
+                Calendar cal = Calendar.getInstance();
 
-            if (checkedId == R.id.chipToday) {
-                cal.set(Calendar.HOUR_OF_DAY, 0);
-                cal.set(Calendar.MINUTE, 0);
-                cal.set(Calendar.SECOND, 0);
-                long startOfDay = cal.getTimeInMillis();
-                filtered = filtered.stream()
-                        .filter(e -> e.getDate() >= startOfDay)
-                        .collect(Collectors.toList());
-            } else if (checkedId == R.id.chipWeek) {
-                cal.add(Calendar.DAY_OF_YEAR, -7);
-                long weekAgo = cal.getTimeInMillis();
-                filtered = filtered.stream()
-                        .filter(e -> e.getDate() >= weekAgo)
-                        .collect(Collectors.toList());
-            } else if (checkedId == R.id.chipMonth) {
-                cal.set(Calendar.DAY_OF_MONTH, 1);
-                cal.set(Calendar.HOUR_OF_DAY, 0);
-                long startOfMonth = cal.getTimeInMillis();
-                filtered = filtered.stream()
-                        .filter(e -> e.getDate() >= startOfMonth)
-                        .collect(Collectors.toList());
+                if (checkedId == R.id.chipToday) {
+                    cal.set(Calendar.HOUR_OF_DAY, 0);
+                    cal.set(Calendar.MINUTE, 0);
+                    cal.set(Calendar.SECOND, 0);
+                    long startOfDay = cal.getTimeInMillis();
+                    filteredExpenses = filteredExpenses.stream()
+                            .filter(e -> e.getDate() >= startOfDay)
+                            .collect(Collectors.toList());
+                } else if (checkedId == R.id.chipWeek) {
+                    cal.add(Calendar.DAY_OF_YEAR, -7);
+                    long weekAgo = cal.getTimeInMillis();
+                    filteredExpenses = filteredExpenses.stream()
+                            .filter(e -> e.getDate() >= weekAgo)
+                            .collect(Collectors.toList());
+                } else if (checkedId == R.id.chipMonth) {
+                    cal.set(Calendar.DAY_OF_MONTH, 1);
+                    cal.set(Calendar.HOUR_OF_DAY, 0);
+                    long startOfMonth = cal.getTimeInMillis();
+                    filteredExpenses = filteredExpenses.stream()
+                            .filter(e -> e.getDate() >= startOfMonth)
+                            .collect(Collectors.toList());
+                }
             }
         }
 
-        adapter.setExpenses(filtered);
-        tvEmpty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+        // Update transaction count
+        if (tvTransactionCount != null) {
+            int count = filteredExpenses.size();
+            tvTransactionCount.setText(count + " transaction" + (count != 1 ? "s" : ""));
+        }
+
+        displayPaginatedResults();
+    }
+
+    private void displayPaginatedResults() {
+        int totalItems = filteredExpenses.size();
+        int itemsToShow = Math.min(currentPage * PAGE_SIZE, totalItems);
+
+        List<Expense> paginatedList = filteredExpenses.subList(0, itemsToShow);
+
+        // Apply slide-right animation only on first page
+        if (currentPage == 1) {
+            android.view.animation.LayoutAnimationController animController = android.view.animation.AnimationUtils
+                    .loadLayoutAnimation(
+                            requireContext(), R.anim.layout_animation_slide_right);
+            rvTransactions.setLayoutAnimation(animController);
+        }
+
+        adapter.setExpenses(new ArrayList<>(paginatedList));
+
+        if (currentPage == 1) {
+            rvTransactions.scheduleLayoutAnimation();
+        }
+
+        // Show/hide Load More button
+        boolean hasMoreItems = itemsToShow < totalItems;
+        if (btnLoadMore != null) {
+            btnLoadMore.setVisibility(hasMoreItems ? View.VISIBLE : View.GONE);
+            btnLoadMore.setText("Load More (" + (totalItems - itemsToShow) + " remaining)");
+        }
+
+        // Show/hide empty state
+        if (emptyState != null) {
+            emptyState.setVisibility(filteredExpenses.isEmpty() ? View.VISIBLE : View.GONE);
+        }
+        if (tvEmpty != null) {
+            tvEmpty.setVisibility(View.GONE); // Using emptyState instead
+        }
+        rvTransactions.setVisibility(filteredExpenses.isEmpty() ? View.GONE : View.VISIBLE);
     }
 }
