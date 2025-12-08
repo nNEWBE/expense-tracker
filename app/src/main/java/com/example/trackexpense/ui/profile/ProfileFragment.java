@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,10 +40,13 @@ public class ProfileFragment extends Fragment {
     private ExpenseViewModel expenseViewModel;
     private AdminService adminService;
 
-    private TextView tvHeaderName, tvName, tvEmail, tvCurrency, tvBudget, tvTheme;
+    private TextView tvHeaderName, tvHeaderEmail, tvName, tvEmail, tvCurrency, tvBudget, tvTheme;
+    private TextView tvTotalTransactions, tvThisMonth, tvBudgetUsed;
     private Chip chipGuestMode;
     private LinearLayout layoutAdmin;
-    private View dividerAdmin;
+    private FrameLayout headerLayout;
+    private com.google.android.material.card.MaterialCardView cardStats, cardAccount, cardPreferences;
+    private ImageView btnMenu;
 
     @Nullable
     @Override
@@ -62,10 +67,13 @@ public class ProfileFragment extends Fragment {
         loadUserData();
         setupClickListeners(view);
         checkAdminAccess();
+        observeData();
+        runEntranceAnimations();
     }
 
     private void initViews(View view) {
         tvHeaderName = view.findViewById(R.id.tvHeaderName);
+        tvHeaderEmail = view.findViewById(R.id.tvHeaderEmail);
         tvName = view.findViewById(R.id.tvName);
         tvEmail = view.findViewById(R.id.tvEmail);
         tvCurrency = view.findViewById(R.id.tvCurrency);
@@ -73,35 +81,185 @@ public class ProfileFragment extends Fragment {
         tvTheme = view.findViewById(R.id.tvTheme);
         chipGuestMode = view.findViewById(R.id.chipGuestMode);
         layoutAdmin = view.findViewById(R.id.layoutAdmin);
-        dividerAdmin = view.findViewById(R.id.dividerAdmin);
+
+        // Stats views
+        tvTotalTransactions = view.findViewById(R.id.tvTotalTransactions);
+        tvThisMonth = view.findViewById(R.id.tvThisMonth);
+        tvBudgetUsed = view.findViewById(R.id.tvBudgetUsed);
+
+        // Animation views
+        headerLayout = view.findViewById(R.id.headerLayout);
+        cardStats = view.findViewById(R.id.cardStats);
+        cardAccount = view.findViewById(R.id.cardAccount);
+        cardPreferences = view.findViewById(R.id.cardPreferences);
+
+        // Menu button
+        btnMenu = view.findViewById(R.id.btnMenu);
+        if (btnMenu != null) {
+            btnMenu.setOnClickListener(v -> {
+                if (getActivity() instanceof com.example.trackexpense.MainActivity) {
+                    ((com.example.trackexpense.MainActivity) getActivity()).openDrawer();
+                }
+            });
+        }
+    }
+
+    private void runEntranceAnimations() {
+        try {
+            android.view.animation.Animation slideDown = android.view.animation.AnimationUtils
+                    .loadAnimation(requireContext(), R.anim.slide_down);
+            android.view.animation.Animation slideUp = android.view.animation.AnimationUtils
+                    .loadAnimation(requireContext(), R.anim.slide_up);
+
+            if (headerLayout != null)
+                headerLayout.startAnimation(slideDown);
+
+            com.google.android.material.card.MaterialCardView[] cards = { cardStats, cardAccount, cardPreferences };
+            for (int i = 0; i < cards.length; i++) {
+                if (cards[i] != null) {
+                    final com.google.android.material.card.MaterialCardView card = cards[i];
+                    card.setVisibility(View.INVISIBLE);
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        if (card != null && isAdded()) {
+                            card.setVisibility(View.VISIBLE);
+                            android.view.animation.Animation anim = android.view.animation.AnimationUtils
+                                    .loadAnimation(requireContext(), R.anim.slide_up);
+                            card.startAnimation(anim);
+                        }
+                    }, 100 + (i * 100));
+                }
+            }
+        } catch (Exception e) {
+            if (cardStats != null)
+                cardStats.setVisibility(View.VISIBLE);
+            if (cardAccount != null)
+                cardAccount.setVisibility(View.VISIBLE);
+            if (cardPreferences != null)
+                cardPreferences.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void observeData() {
+        expenseViewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
+            if (expenses != null) {
+                updateStats(expenses);
+            }
+        });
+    }
+
+    private void updateStats(java.util.List<com.example.trackexpense.data.local.Expense> expenses) {
+        // Total transactions
+        int totalCount = expenses.size();
+        animateCounter(tvTotalTransactions, 0, totalCount);
+
+        // This month transactions
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.set(java.util.Calendar.DAY_OF_MONTH, 1);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        long monthStart = cal.getTimeInMillis();
+
+        int thisMonthCount = 0;
+        double monthlyExpense = 0;
+        for (com.example.trackexpense.data.local.Expense e : expenses) {
+            if (e.getDate() >= monthStart) {
+                thisMonthCount++;
+                if ("EXPENSE".equals(e.getType())) {
+                    monthlyExpense += e.getAmount();
+                }
+            }
+        }
+        animateCounter(tvThisMonth, 0, thisMonthCount);
+
+        // Budget used percentage
+        double budget = preferenceManager.getMonthlyBudget();
+        int budgetPercent = budget > 0 ? (int) ((monthlyExpense / budget) * 100) : 0;
+        if (budgetPercent > 100)
+            budgetPercent = 100;
+        animatePercentage(tvBudgetUsed, 0, budgetPercent);
+    }
+
+    private void animateCounter(TextView textView, int start, int end) {
+        if (textView == null)
+            return;
+        android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofInt(start, end);
+        animator.setDuration(1200);
+        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        animator.addUpdateListener(animation -> {
+            if (textView != null && isAdded()) {
+                int value = (int) animation.getAnimatedValue();
+                textView.setText(String.valueOf(value));
+            }
+        });
+        animator.start();
+    }
+
+    private void animatePercentage(TextView textView, int start, int end) {
+        if (textView == null)
+            return;
+        android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofInt(start, end);
+        animator.setDuration(1200);
+        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        animator.addUpdateListener(animation -> {
+            if (textView != null && isAdded()) {
+                int value = (int) animation.getAnimatedValue();
+                textView.setText(value + "%");
+            }
+        });
+        animator.start();
     }
 
     private void loadUserData() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         MaterialButton btnLogout = getView().findViewById(R.id.btnLogout);
-        MaterialButton btnDeleteAccount = getView().findViewById(R.id.btnDeleteAccount);
+        LinearLayout layoutDeleteAccount = getView().findViewById(R.id.layoutDeleteAccount);
 
         if (user != null) {
-            String displayName = user.getDisplayName() != null ? user.getDisplayName() : "User";
+            // Get display name with fallback
+            String displayName = user.getDisplayName();
+            if (displayName == null || displayName.trim().isEmpty()) {
+                displayName = "No Name Provided";
+            }
+
+            // Get email with fallback
+            String email = user.getEmail();
+            if (email == null || email.trim().isEmpty()) {
+                email = "No Email Provided";
+            }
+
             tvHeaderName.setText(displayName);
+            if (tvHeaderEmail != null)
+                tvHeaderEmail.setText(email);
             tvName.setText(displayName);
-            tvEmail.setText(user.getEmail());
+            tvEmail.setText(email);
             chipGuestMode.setVisibility(View.GONE);
 
             // Show Logout for logged in users
-            btnLogout.setText("Logout");
+            btnLogout.setText("Sign Out");
             btnLogout.setIconResource(R.drawable.ic_logout);
-            btnDeleteAccount.setVisibility(View.VISIBLE);
+
+            // Show delete account in preferences for logged in users
+            if (layoutDeleteAccount != null) {
+                layoutDeleteAccount.setVisibility(View.VISIBLE);
+                layoutDeleteAccount.setOnClickListener(v -> showDeleteAccountDialog());
+            }
         } else {
             tvHeaderName.setText("Guest User");
+            if (tvHeaderEmail != null)
+                tvHeaderEmail.setText("Sign in for more features");
             tvName.setText("Guest User");
-            tvEmail.setText("No account");
+            tvEmail.setText("Not signed in");
             chipGuestMode.setVisibility(View.VISIBLE);
 
             // Show Login for guest users
             btnLogout.setText("Login / Register");
             btnLogout.setIconResource(R.drawable.ic_person);
-            btnDeleteAccount.setVisibility(View.GONE);
+
+            // Hide delete account for guests
+            if (layoutDeleteAccount != null) {
+                layoutDeleteAccount.setVisibility(View.GONE);
+            }
         }
 
         // Load preferences
@@ -117,15 +275,13 @@ public class ProfileFragment extends Fragment {
     }
 
     private void checkAdminAccess() {
-        if (layoutAdmin != null && dividerAdmin != null) {
+        if (layoutAdmin != null) {
             layoutAdmin.setVisibility(View.GONE);
-            dividerAdmin.setVisibility(View.GONE);
 
             adminService.checkAdminStatus(isAdmin -> {
                 if (isAdmin && getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         layoutAdmin.setVisibility(View.VISIBLE);
-                        dividerAdmin.setVisibility(View.VISIBLE);
                     });
                 }
             });
@@ -156,9 +312,6 @@ public class ProfileFragment extends Fragment {
                 startActivity(intent);
             }
         });
-
-        MaterialButton btnDeleteAccount = view.findViewById(R.id.btnDeleteAccount);
-        btnDeleteAccount.setOnClickListener(v -> showDeleteAccountDialog());
     }
 
     private void showCurrencyDialog() {

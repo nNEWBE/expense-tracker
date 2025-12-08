@@ -340,12 +340,32 @@ public class DashboardFragment extends Fragment {
         }
 
         double balance = totalIncome - totalExpense;
-        tvTotalBalance.setText(String.format("%s%,.0f", symbol, balance));
-        tvTotalIncome.setText(String.format("%s%,.0f", symbol, totalIncome));
-        tvTotalExpense.setText(String.format("%s%,.0f", symbol, totalExpense));
+
+        // Animate counters
+        animateCounter(tvTotalBalance, 0, balance, symbol);
+        animateCounter(tvTotalIncome, 0, totalIncome, symbol);
+        animateCounter(tvTotalExpense, 0, totalExpense, symbol);
 
         // Update budget card
         updateBudgetCard(symbol, monthlyExpense);
+    }
+
+    private void animateCounter(TextView textView, double start, double end, String symbol) {
+        if (textView == null)
+            return;
+
+        android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofFloat((float) start, (float) end);
+        animator.setDuration(1500);
+        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+
+        animator.addUpdateListener(animation -> {
+            if (textView != null && isAdded()) {
+                float value = (float) animation.getAnimatedValue();
+                textView.setText(String.format("%s%,.0f", symbol, value));
+            }
+        });
+
+        animator.start();
     }
 
     private void updateBudgetCard(String symbol, double monthlyExpense) {
@@ -355,15 +375,36 @@ public class DashboardFragment extends Fragment {
         if (remaining < 0)
             remaining = 0;
 
-        tvBudgetRemaining.setText(String.format("%s%,.0f", symbol, remaining));
-        tvBudgetSpent.setText(String.format("%s%,.0f", symbol, monthlyExpense));
+        // Animate budget values
+        animateCounter(tvBudgetRemaining, 0, remaining, symbol);
+        animateCounter(tvBudgetSpent, 0, monthlyExpense, symbol);
 
         // Calculate days left in month
         Calendar cal = Calendar.getInstance();
         int currentDay = cal.get(Calendar.DAY_OF_MONTH);
         int totalDays = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
         int daysLeft = totalDays - currentDay;
-        tvDaysLeft.setText(String.valueOf(daysLeft));
+
+        // Animate days left
+        animateDaysCounter(tvDaysLeft, 0, daysLeft);
+    }
+
+    private void animateDaysCounter(TextView textView, int start, int end) {
+        if (textView == null)
+            return;
+
+        android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofInt(start, end);
+        animator.setDuration(1200);
+        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+
+        animator.addUpdateListener(animation -> {
+            if (textView != null && isAdded()) {
+                int value = (int) animation.getAnimatedValue();
+                textView.setText(String.valueOf(value));
+            }
+        });
+
+        animator.start();
     }
 
     private void updateRecentTransactions() {

@@ -1,10 +1,21 @@
 package com.example.trackexpense.ui.analytics;
 
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,8 +23,10 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
+import com.example.trackexpense.utils.CategoryHelper;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.viewmodel.ExpenseViewModel;
 import com.github.mikephil.charting.charts.BarChart;
@@ -30,10 +43,12 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.formatter.PercentFormatter;
+import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +60,14 @@ public class AnalyticsFragment extends Fragment {
     private PieChart pieChart;
     private BarChart barChart;
     private LineChart lineChart;
+
+    // New views
+    private TextView tvTotalIncome, tvTotalExpense, tvBalance;
+    private TextView tvIncomePercent, tvExpensePercent;
+    private LinearLayout categoryProgressContainer;
+    private FrameLayout headerLayout;
+    private MaterialCardView cardDonut, cardCategories, cardWeekly, cardMonthly;
+    private ImageView btnMenu;
 
     @Nullable
     @Override
@@ -60,19 +83,305 @@ public class AnalyticsFragment extends Fragment {
         expenseViewModel = new ViewModelProvider(requireActivity()).get(ExpenseViewModel.class);
         preferenceManager = new PreferenceManager(requireContext());
 
+        initViews(view);
+        setupClickListeners();
+        observeData();
+        runEntranceAnimations();
+    }
+
+    private void initViews(View view) {
         pieChart = view.findViewById(R.id.pieChart);
         barChart = view.findViewById(R.id.barChart);
         lineChart = view.findViewById(R.id.lineChart);
 
-        observeData();
+        // Header views
+        headerLayout = view.findViewById(R.id.headerLayout);
+        tvTotalIncome = view.findViewById(R.id.tvTotalIncome);
+        tvTotalExpense = view.findViewById(R.id.tvTotalExpense);
+        tvBalance = view.findViewById(R.id.tvBalance);
+        btnMenu = view.findViewById(R.id.btnMenu);
+
+        // Donut card views
+        cardDonut = view.findViewById(R.id.cardDonut);
+        tvIncomePercent = view.findViewById(R.id.tvIncomePercent);
+        tvExpensePercent = view.findViewById(R.id.tvExpensePercent);
+
+        // Other cards
+        cardCategories = view.findViewById(R.id.cardCategories);
+        cardWeekly = view.findViewById(R.id.cardWeekly);
+        cardMonthly = view.findViewById(R.id.cardMonthly);
+        categoryProgressContainer = view.findViewById(R.id.categoryProgressContainer);
+    }
+
+    private void setupClickListeners() {
+        if (btnMenu != null) {
+            btnMenu.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).openDrawer();
+                }
+            });
+        }
+    }
+
+    private void runEntranceAnimations() {
+        try {
+            Animation slideDown = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_down);
+            Animation slideUp = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_up);
+
+            if (headerLayout != null) {
+                headerLayout.startAnimation(slideDown);
+            }
+
+            // Animate cards with staggered delay
+            View[] cards = { cardDonut, cardCategories, cardWeekly, cardMonthly };
+            for (int i = 0; i < cards.length; i++) {
+                if (cards[i] != null) {
+                    final View card = cards[i];
+                    card.setVisibility(View.INVISIBLE);
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        if (card != null && isAdded()) {
+                            card.setVisibility(View.VISIBLE);
+                            Animation anim = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_up);
+                            card.startAnimation(anim);
+                        }
+                    }, 100 + (i * 100));
+                }
+            }
+        } catch (Exception e) {
+            // Make all visible on error
+            if (cardDonut != null)
+                cardDonut.setVisibility(View.VISIBLE);
+            if (cardCategories != null)
+                cardCategories.setVisibility(View.VISIBLE);
+            if (cardWeekly != null)
+                cardWeekly.setVisibility(View.VISIBLE);
+            if (cardMonthly != null)
+                cardMonthly.setVisibility(View.VISIBLE);
+        }
     }
 
     private void observeData() {
         expenseViewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
             if (expenses != null) {
+                updateSummary(expenses);
                 updateCharts(expenses);
+                updateCategoryProgress(expenses);
             }
         });
+    }
+
+    private void updateSummary(List<Expense> expenses) {
+        double totalIncome = 0;
+        double totalExpense = 0;
+
+        for (Expense e : expenses) {
+            if ("INCOME".equals(e.getType())) {
+                totalIncome += e.getAmount();
+            } else {
+                totalExpense += e.getAmount();
+            }
+        }
+
+        double balance = totalIncome - totalExpense;
+        String symbol = preferenceManager.getCurrencySymbol();
+
+        // Animate the counter values
+        animateCounter(tvTotalIncome, 0, totalIncome, symbol);
+        animateCounter(tvTotalExpense, 0, totalExpense, symbol);
+        animateCounter(tvBalance, 0, balance, symbol);
+
+        // Update percentages with animation
+        double total = totalIncome + totalExpense;
+        if (total > 0) {
+            int incomePercent = (int) ((totalIncome / total) * 100);
+            int expensePercent = 100 - incomePercent;
+
+            animatePercentage(tvIncomePercent, 0, incomePercent);
+            animatePercentage(tvExpensePercent, 0, expensePercent);
+        }
+    }
+
+    private void animateCounter(TextView textView, double start, double end, String symbol) {
+        if (textView == null)
+            return;
+
+        android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofFloat((float) start, (float) end);
+        animator.setDuration(1500);
+        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+
+        animator.addUpdateListener(animation -> {
+            if (textView != null && isAdded()) {
+                float value = (float) animation.getAnimatedValue();
+                textView.setText(symbol + formatAmount(value));
+            }
+        });
+
+        animator.start();
+    }
+
+    private void animatePercentage(TextView textView, int start, int end) {
+        if (textView == null)
+            return;
+
+        android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofInt(start, end);
+        animator.setDuration(1200);
+        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+
+        animator.addUpdateListener(animation -> {
+            if (textView != null && isAdded()) {
+                int value = (int) animation.getAnimatedValue();
+                textView.setText(value + "%");
+            }
+        });
+
+        animator.start();
+    }
+
+    private String formatAmount(double amount) {
+        if (amount >= 1000000) {
+            return String.format("%.1fM", amount / 1000000);
+        } else if (amount >= 1000) {
+            return String.format("%.1fK", amount / 1000);
+        } else {
+            return String.format("%.0f", amount);
+        }
+    }
+
+    private void updateCategoryProgress(List<Expense> expenses) {
+        if (categoryProgressContainer == null)
+            return;
+        categoryProgressContainer.removeAllViews();
+
+        // Calculate category totals for expenses only
+        Map<String, Double> categoryMap = new HashMap<>();
+        double totalExpense = 0;
+
+        for (Expense e : expenses) {
+            if ("EXPENSE".equals(e.getType())) {
+                String cat = e.getCategory();
+                double current = categoryMap.getOrDefault(cat, 0.0);
+                categoryMap.put(cat, current + e.getAmount());
+                totalExpense += e.getAmount();
+            }
+        }
+
+        if (categoryMap.isEmpty())
+            return;
+
+        // Sort by amount descending
+        List<Map.Entry<String, Double>> sortedCategories = new ArrayList<>(categoryMap.entrySet());
+        Collections.sort(sortedCategories, (a, b) -> Double.compare(b.getValue(), a.getValue()));
+
+        // Show top 5 categories
+        int count = Math.min(5, sortedCategories.size());
+        for (int i = 0; i < count; i++) {
+            Map.Entry<String, Double> entry = sortedCategories.get(i);
+            addCategoryProgressBar(entry.getKey(), entry.getValue(), totalExpense);
+        }
+    }
+
+    private void addCategoryProgressBar(String category, double amount, double total) {
+        LinearLayout itemLayout = new LinearLayout(requireContext());
+        itemLayout.setOrientation(LinearLayout.VERTICAL);
+        itemLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        itemLayout.setPadding(0, 0, 0, dpToPx(12));
+
+        // Top row: category name and percentage
+        LinearLayout topRow = new LinearLayout(requireContext());
+        topRow.setOrientation(LinearLayout.HORIZONTAL);
+        topRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        // Category indicator dot
+        View dot = new View(requireContext());
+        int dotSize = dpToPx(8);
+        LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(dotSize, dotSize);
+        dot.setLayoutParams(dotParams);
+
+        CategoryHelper.CategoryInfo info = CategoryHelper.getCategoryInfo(category);
+        GradientDrawable dotBg = new GradientDrawable();
+        dotBg.setShape(GradientDrawable.OVAL);
+        dotBg.setColor(ContextCompat.getColor(requireContext(), info.colorRes));
+        dot.setBackground(dotBg);
+
+        // Category name
+        TextView tvName = new TextView(requireContext());
+        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        nameParams.setMarginStart(dpToPx(8));
+        tvName.setLayoutParams(nameParams);
+        tvName.setText(category);
+        tvName.setTextColor(ContextCompat.getColor(requireContext(), R.color.on_background_light));
+        tvName.setTextSize(13);
+
+        // Percentage
+        int percent = (int) ((amount / total) * 100);
+        TextView tvPercent = new TextView(requireContext());
+        tvPercent.setText(percent + "%");
+        tvPercent.setTextColor(ContextCompat.getColor(requireContext(), info.colorRes));
+        tvPercent.setTextSize(13);
+
+        topRow.addView(dot);
+        topRow.addView(tvName);
+        topRow.addView(tvPercent);
+
+        // Progress bar
+        ProgressBar progressBar = new ProgressBar(requireContext(), null,
+                android.R.attr.progressBarStyleHorizontal);
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(6));
+        progressParams.topMargin = dpToPx(6);
+        progressBar.setLayoutParams(progressParams);
+        progressBar.setMax(100);
+        progressBar.setProgress(percent);
+
+        // Set progress bar color
+        GradientDrawable progressBg = new GradientDrawable();
+        progressBg.setCornerRadius(dpToPx(3));
+        progressBg.setColor(Color.parseColor("#F3F4F6"));
+        progressBar.setProgressDrawable(createProgressDrawable(info.colorRes));
+
+        itemLayout.addView(topRow);
+        itemLayout.addView(progressBar);
+
+        categoryProgressContainer.addView(itemLayout);
+    }
+
+    private android.graphics.drawable.Drawable createProgressDrawable(int colorRes) {
+        android.graphics.drawable.LayerDrawable layerDrawable = new android.graphics.drawable.LayerDrawable(
+                new android.graphics.drawable.Drawable[] {
+                        createRoundedDrawable(Color.parseColor("#F3F4F6")),
+                        createRoundedDrawable(ContextCompat.getColor(requireContext(), colorRes))
+                });
+        layerDrawable.setId(0, android.R.id.background);
+        layerDrawable.setId(1, android.R.id.progress);
+
+        android.graphics.drawable.ClipDrawable clip = new android.graphics.drawable.ClipDrawable(
+                createRoundedDrawable(ContextCompat.getColor(requireContext(), colorRes)),
+                Gravity.START, android.graphics.drawable.ClipDrawable.HORIZONTAL);
+
+        android.graphics.drawable.LayerDrawable result = new android.graphics.drawable.LayerDrawable(
+                new android.graphics.drawable.Drawable[] {
+                        createRoundedDrawable(Color.parseColor("#F3F4F6")),
+                        clip
+                });
+        result.setId(0, android.R.id.background);
+        result.setId(1, android.R.id.progress);
+
+        return result;
+    }
+
+    private GradientDrawable createRoundedDrawable(int color) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setCornerRadius(dpToPx(3));
+        drawable.setColor(color);
+        return drawable;
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
     private void updateCharts(List<Expense> expenses) {
@@ -82,130 +391,63 @@ public class AnalyticsFragment extends Fragment {
     }
 
     private void updatePieChart(List<Expense> expenses) {
-        Map<String, Float> categoryMap = new HashMap<>();
+        double totalIncome = 0;
+        double totalExpense = 0;
+
         for (Expense e : expenses) {
-            if ("EXPENSE".equals(e.getType())) {
-                String cat = e.getCategory();
-                float current = categoryMap.getOrDefault(cat, 0f);
-                categoryMap.put(cat, current + (float) e.getAmount());
+            if ("INCOME".equals(e.getType())) {
+                totalIncome += e.getAmount();
+            } else {
+                totalExpense += e.getAmount();
             }
         }
 
         List<PieEntry> pieEntries = new ArrayList<>();
-        for (Map.Entry<String, Float> entry : categoryMap.entrySet()) {
-            pieEntries.add(new PieEntry(entry.getValue(), entry.getKey()));
+        if (totalIncome > 0) {
+            pieEntries.add(new PieEntry((float) totalIncome, "Income"));
+        }
+        if (totalExpense > 0) {
+            pieEntries.add(new PieEntry((float) totalExpense, "Expense"));
         }
 
         if (pieEntries.isEmpty()) {
-            pieChart.setNoDataText("No expense data yet");
+            pieChart.setNoDataText("No data yet");
             pieChart.setNoDataTextColor(Color.GRAY);
             pieChart.invalidate();
             return;
         }
 
         int[] colors = {
-                ContextCompat.getColor(requireContext(), R.color.category_food),
-                ContextCompat.getColor(requireContext(), R.color.category_transport),
-                ContextCompat.getColor(requireContext(), R.color.category_shopping),
-                ContextCompat.getColor(requireContext(), R.color.category_entertainment),
-                ContextCompat.getColor(requireContext(), R.color.category_health),
-                ContextCompat.getColor(requireContext(), R.color.category_bills),
-                ContextCompat.getColor(requireContext(), R.color.category_education),
-                ContextCompat.getColor(requireContext(), R.color.category_travel)
+                ContextCompat.getColor(requireContext(), R.color.income_green),
+                ContextCompat.getColor(requireContext(), R.color.expense_red)
         };
 
         PieDataSet dataSet = new PieDataSet(pieEntries, "");
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(11f);
-        dataSet.setSliceSpace(4f);
-        dataSet.setSelectionShift(8f);
-        dataSet.setValueFormatter(new PercentFormatter(pieChart));
+        dataSet.setValueTextSize(0f);
+        dataSet.setSliceSpace(3f);
+        dataSet.setSelectionShift(5f);
+        dataSet.setDrawValues(false);
 
         PieData pieData = new PieData(dataSet);
         pieChart.setData(pieData);
         pieChart.setUsePercentValues(true);
         pieChart.getDescription().setEnabled(false);
-        pieChart.setHoleRadius(58f);
-        pieChart.setTransparentCircleRadius(62f);
+        pieChart.setHoleRadius(70f);
+        pieChart.setTransparentCircleRadius(75f);
         pieChart.setTransparentCircleColor(Color.WHITE);
-        pieChart.setTransparentCircleAlpha(110);
-        pieChart.setCenterText("Spending");
-        pieChart.setCenterTextSize(14f);
-        pieChart.setCenterTextColor(ContextCompat.getColor(requireContext(), R.color.primary_dark));
-        pieChart.setEntryLabelColor(Color.WHITE);
-        pieChart.setEntryLabelTextSize(10f);
+        pieChart.setTransparentCircleAlpha(50);
+        pieChart.setDrawCenterText(false);
+        pieChart.setEntryLabelColor(Color.TRANSPARENT);
         pieChart.getLegend().setEnabled(false);
         pieChart.setDrawEntryLabels(false);
-        pieChart.animateY(1200);
+        pieChart.setRotationEnabled(false);
+        pieChart.animateY(1000);
         pieChart.invalidate();
     }
 
     private void updateBarChart(List<Expense> expenses) {
-        Calendar cal = Calendar.getInstance();
-        String[] days = new String[7];
-        float[] expenseAmounts = new float[7];
-
-        for (int i = 6; i >= 0; i--) {
-            Calendar dayCal = (Calendar) cal.clone();
-            dayCal.add(Calendar.DAY_OF_YEAR, i - 6);
-
-            String[] dayNames = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-            days[6 - i] = dayNames[dayCal.get(Calendar.DAY_OF_WEEK) - 1];
-
-            dayCal.set(Calendar.HOUR_OF_DAY, 0);
-            dayCal.set(Calendar.MINUTE, 0);
-            dayCal.set(Calendar.SECOND, 0);
-            long dayStart = dayCal.getTimeInMillis();
-            dayCal.add(Calendar.DAY_OF_YEAR, 1);
-            long dayEnd = dayCal.getTimeInMillis();
-
-            for (Expense e : expenses) {
-                if (e.getDate() >= dayStart && e.getDate() < dayEnd) {
-                    if ("EXPENSE".equals(e.getType())) {
-                        expenseAmounts[6 - i] += e.getAmount();
-                    }
-                }
-            }
-        }
-
-        List<BarEntry> barEntries = new ArrayList<>();
-        for (int i = 0; i < 7; i++) {
-            barEntries.add(new BarEntry(i, expenseAmounts[i]));
-        }
-
-        BarDataSet dataSet = new BarDataSet(barEntries, "");
-        int[] barColors = new int[7];
-        int primaryColor = ContextCompat.getColor(requireContext(), R.color.primary);
-        int primaryLight = ContextCompat.getColor(requireContext(), R.color.primary_light);
-        for (int i = 0; i < 7; i++) {
-            barColors[i] = i == 6 ? primaryColor : primaryLight;
-        }
-        dataSet.setColors(barColors);
-        dataSet.setDrawValues(false);
-
-        BarData barData = new BarData(dataSet);
-        barData.setBarWidth(0.6f);
-
-        barChart.setData(barData);
-        barChart.getDescription().setEnabled(false);
-        barChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
-        barChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(days));
-        barChart.getXAxis().setGranularity(1f);
-        barChart.getXAxis().setDrawGridLines(false);
-        barChart.getXAxis().setTextColor(Color.GRAY);
-        barChart.getAxisLeft().setDrawGridLines(true);
-        barChart.getAxisLeft().setGridColor(Color.parseColor("#E0E0E0"));
-        barChart.getAxisLeft().setTextColor(Color.GRAY);
-        barChart.getAxisRight().setEnabled(false);
-        barChart.getLegend().setEnabled(false);
-        barChart.setFitBars(true);
-        barChart.setDrawGridBackground(false);
-        barChart.animateY(1200);
-        barChart.invalidate();
-    }
-
-    private void updateLineChart(List<Expense> expenses) {
         Calendar cal = Calendar.getInstance();
         String[] days = new String[7];
         float[] expenseAmounts = new float[7];
@@ -236,6 +478,79 @@ public class AnalyticsFragment extends Fragment {
             }
         }
 
+        List<BarEntry> expenseEntries = new ArrayList<>();
+        List<BarEntry> incomeEntries = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            expenseEntries.add(new BarEntry(i, expenseAmounts[i]));
+            incomeEntries.add(new BarEntry(i, incomeAmounts[i]));
+        }
+
+        BarDataSet expenseSet = new BarDataSet(expenseEntries, "Expense");
+        expenseSet.setColor(ContextCompat.getColor(requireContext(), R.color.expense_red));
+        expenseSet.setDrawValues(false);
+
+        BarDataSet incomeSet = new BarDataSet(incomeEntries, "Income");
+        incomeSet.setColor(ContextCompat.getColor(requireContext(), R.color.income_green));
+        incomeSet.setDrawValues(false);
+
+        BarData barData = new BarData(incomeSet, expenseSet);
+        float groupSpace = 0.3f;
+        float barSpace = 0.05f;
+        float barWidth = 0.3f;
+        barData.setBarWidth(barWidth);
+
+        barChart.setData(barData);
+        barChart.getDescription().setEnabled(false);
+        barChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
+        barChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(days));
+        barChart.getXAxis().setGranularity(1f);
+        barChart.getXAxis().setDrawGridLines(false);
+        barChart.getXAxis().setTextColor(Color.GRAY);
+        barChart.getXAxis().setCenterAxisLabels(true);
+        barChart.getAxisLeft().setDrawGridLines(true);
+        barChart.getAxisLeft().setGridColor(Color.parseColor("#F3F4F6"));
+        barChart.getAxisLeft().setTextColor(Color.GRAY);
+        barChart.getAxisLeft().setAxisMinimum(0f);
+        barChart.getAxisRight().setEnabled(false);
+        barChart.getLegend().setEnabled(false);
+        barChart.setFitBars(false);
+        barChart.setDrawGridBackground(false);
+        barChart.groupBars(0f, groupSpace, barSpace);
+        barChart.animateY(1000);
+        barChart.invalidate();
+    }
+
+    private void updateLineChart(List<Expense> expenses) {
+        Calendar cal = Calendar.getInstance();
+        String[] days = new String[7];
+        float[] expenseAmounts = new float[7];
+        float[] incomeAmounts = new float[7];
+
+        for (int i = 6; i >= 0; i--) {
+            Calendar dayCal = (Calendar) cal.clone();
+            dayCal.add(Calendar.DAY_OF_YEAR, i - 6);
+
+            String[] dayNames = { "S", "M", "T", "W", "T", "F", "S" };
+            days[6 - i] = dayNames[dayCal.get(Calendar.DAY_OF_WEEK) - 1];
+
+            dayCal.set(Calendar.HOUR_OF_DAY, 0);
+            dayCal.set(Calendar.MINUTE, 0);
+            dayCal.set(Calendar.SECOND, 0);
+            long dayStart = dayCal.getTimeInMillis();
+            dayCal.add(Calendar.DAY_OF_YEAR, 1);
+            long dayEnd = dayCal.getTimeInMillis();
+
+            for (Expense e : expenses) {
+                if (e.getDate() >= dayStart && e.getDate() < dayEnd) {
+                    if ("EXPENSE".equals(e.getType())) {
+                        expenseAmounts[6 - i] += e.getAmount();
+                    } else {
+                        incomeAmounts[6 - i] += e.getAmount();
+                    }
+                }
+            }
+        }
+
         List<Entry> expenseEntries = new ArrayList<>();
         List<Entry> incomeEntries = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
@@ -246,18 +561,24 @@ public class AnalyticsFragment extends Fragment {
         LineDataSet expenseSet = new LineDataSet(expenseEntries, "Expense");
         expenseSet.setColor(ContextCompat.getColor(requireContext(), R.color.expense_red));
         expenseSet.setCircleColor(ContextCompat.getColor(requireContext(), R.color.expense_red));
-        expenseSet.setLineWidth(2f);
+        expenseSet.setLineWidth(2.5f);
         expenseSet.setCircleRadius(4f);
         expenseSet.setDrawValues(false);
         expenseSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        expenseSet.setDrawFilled(true);
+        expenseSet.setFillColor(ContextCompat.getColor(requireContext(), R.color.expense_red));
+        expenseSet.setFillAlpha(20);
 
         LineDataSet incomeSet = new LineDataSet(incomeEntries, "Income");
         incomeSet.setColor(ContextCompat.getColor(requireContext(), R.color.income_green));
         incomeSet.setCircleColor(ContextCompat.getColor(requireContext(), R.color.income_green));
-        incomeSet.setLineWidth(2f);
+        incomeSet.setLineWidth(2.5f);
         incomeSet.setCircleRadius(4f);
         incomeSet.setDrawValues(false);
         incomeSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        incomeSet.setDrawFilled(true);
+        incomeSet.setFillColor(ContextCompat.getColor(requireContext(), R.color.income_green));
+        incomeSet.setFillAlpha(20);
 
         LineData lineData = new LineData(incomeSet, expenseSet);
         lineChart.setData(lineData);
@@ -269,12 +590,16 @@ public class AnalyticsFragment extends Fragment {
         lineChart.getXAxis().setDrawGridLines(false);
         lineChart.getXAxis().setTextColor(Color.GRAY);
         lineChart.getAxisLeft().setDrawGridLines(true);
-        lineChart.getAxisLeft().setGridColor(Color.parseColor("#E0E0E0"));
+        lineChart.getAxisLeft().setGridColor(Color.parseColor("#F3F4F6"));
         lineChart.getAxisLeft().setTextColor(Color.GRAY);
+        lineChart.getAxisLeft().setAxisMinimum(0f);
         lineChart.getAxisRight().setEnabled(false);
-        lineChart.getLegend().setTextColor(Color.GRAY);
+        lineChart.getLegend().setEnabled(false);
         lineChart.setDrawGridBackground(false);
-        lineChart.animateY(1200);
+        lineChart.setTouchEnabled(true);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(false);
+        lineChart.animateY(1000);
         lineChart.invalidate();
     }
 }

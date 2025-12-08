@@ -89,15 +89,17 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
             tvCategoryName.setText(category);
 
             CategoryHelper.CategoryInfo info = CategoryHelper.getCategoryInfo(category);
+            int categoryColor = ContextCompat.getColor(itemView.getContext(), info.colorRes);
 
-            // Set icon
+            // Set icon with category color
             ivIcon.setImageResource(info.iconRes);
-            ivIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), android.R.color.white));
+            ivIcon.setColorFilter(categoryColor);
 
-            // Set background color
+            // Set background with low opacity (15% of category color)
             GradientDrawable bgShape = new GradientDrawable();
             bgShape.setShape(GradientDrawable.OVAL);
-            bgShape.setColor(ContextCompat.getColor(itemView.getContext(), info.colorRes));
+            int lowOpacityColor = androidx.core.graphics.ColorUtils.setAlphaComponent(categoryColor, 38);
+            bgShape.setColor(lowOpacityColor);
             iconBg.setBackground(bgShape);
 
             // Selection state

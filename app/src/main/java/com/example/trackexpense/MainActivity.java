@@ -165,6 +165,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             // Handle center FAB click to navigate to add expense
             fabAdd.setOnClickListener(v -> {
+                // Don't navigate if already on Add page
+                if (navController.getCurrentDestination() != null &&
+                        navController.getCurrentDestination().getId() == R.id.addExpenseFragment) {
+                    return;
+                }
+
                 androidx.navigation.NavOptions navOptions = new androidx.navigation.NavOptions.Builder()
                         .setEnterAnim(R.anim.nav_fade_in)
                         .setExitAnim(R.anim.nav_fade_out)
