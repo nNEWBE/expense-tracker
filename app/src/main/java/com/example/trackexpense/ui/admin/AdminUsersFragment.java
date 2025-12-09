@@ -24,7 +24,9 @@ import com.example.trackexpense.data.model.User;
 import com.example.trackexpense.data.remote.AdminService;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.example.trackexpense.utils.BeautifulNotification;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -208,25 +210,49 @@ public class AdminUsersFragment extends Fragment {
     }
 
     private void confirmDeleteUser(User user) {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Delete User")
-                .setMessage("Are you sure you want to delete " + user.getEmail()
-                        + "?\n\nThis will permanently delete:\n• User account\n• All transactions\n• All data")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    adminService.deleteUser(user.getId(), new AdminService.OnCompleteListener() {
-                        @Override
-                        public void onSuccess() {
-                            Snackbar.make(requireView(), "User deleted successfully", Snackbar.LENGTH_SHORT).show();
-                        }
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_delete_user, null);
 
-                        @Override
-                        public void onFailure(Exception e) {
-                            Snackbar.make(requireView(), "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
-                        }
-                    });
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        TextView tvUserInitial = dialogView.findViewById(R.id.tvUserInitial);
+        TextView tvUserName = dialogView.findViewById(R.id.tvUserName);
+        TextView tvUserEmail = dialogView.findViewById(R.id.tvUserEmail);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelDelete);
+        MaterialButton btnDelete = dialogView.findViewById(R.id.btnConfirmDelete);
+
+        // Set user info
+        String displayName = user.getDisplayName() != null && !user.getDisplayName().isEmpty()
+                ? user.getDisplayName()
+                : "User";
+        tvUserName.setText(displayName);
+        tvUserEmail.setText(user.getEmail());
+        tvUserInitial.setText(displayName.substring(0, 1).toUpperCase());
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnDelete.setOnClickListener(v -> {
+            btnDelete.setEnabled(false);
+
+            // Delete user from Firestore and related data
+            adminService.deleteUser(user.getId(), new AdminService.OnCompleteListener() {
+                @Override
+                public void onSuccess() {
+                    dialog.dismiss();
+                    BeautifulNotification.showSuccess(requireActivity(), "User deleted successfully!");
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    dialog.dismiss();
+                    BeautifulNotification.showError(requireActivity(), "Failed to delete user: " + e.getMessage());
+                }
+            });
+        });
+
+        dialog.show();
     }
 
     // Adapter

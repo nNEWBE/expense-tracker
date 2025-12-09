@@ -156,12 +156,11 @@
             android:orientation="horizontal"
             android:padding="14dp">
 
-            <TextView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:gravity="center"
-                android:text="💡"
-                android:textSize="16sp" />
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_lightbulb"
+                app:tint="@color/income_green" />
 
             <TextView
                 android:layout_width="0dp"

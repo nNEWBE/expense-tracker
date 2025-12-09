@@ -430,18 +430,28 @@ public class ProfileFragment extends Fragment {
     }
 
     private void logout() {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Logout")
-                .setMessage("Are you sure you want to logout?")
-                .setPositiveButton("Logout", (dialog, which) -> {
-                    FirebaseAuth.getInstance().signOut();
-                    Intent intent = new Intent(requireContext(), WelcomeActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    intent.putExtra("SHOW_LOGOUT_MESSAGE", true);
-                    startActivity(intent);
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_logout, null);
+
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelLogout);
+        com.google.android.material.button.MaterialButton btnLogout = dialogView.findViewById(R.id.btnConfirmLogout);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnLogout.setOnClickListener(v -> {
+            dialog.dismiss();
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(requireContext(), WelcomeActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.putExtra("SHOW_LOGOUT_MESSAGE", true);
+            startActivity(intent);
+        });
+
+        dialog.show();
     }
 
     private void showDeleteAccountDialog() {
@@ -451,40 +461,45 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Delete Account")
-                .setMessage("⚠️ WARNING: This action is PERMANENT and cannot be undone!\n\n" +
-                        "Deleting your account will:\n" +
-                        "• Remove all your transaction data\n" +
-                        "• Delete your profile information\n" +
-                        "• Sign you out immediately\n\n" +
-                        "Are you absolutely sure?")
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setPositiveButton("Delete Forever", (dialog, which) -> {
-                    showFinalDeleteConfirmation(user);
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_delete_account, null);
 
-    private void showFinalDeleteConfirmation(FirebaseUser user) {
-        TextInputEditText input = new TextInputEditText(requireContext());
-        input.setHint("Type DELETE to confirm");
+        com.google.android.material.textfield.TextInputEditText etConfirm = dialogView
+                .findViewById(R.id.etConfirmDelete);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelDelete);
+        com.google.android.material.button.MaterialButton btnDelete = dialogView.findViewById(R.id.btnConfirmDelete);
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Final Confirmation")
-                .setMessage("Type DELETE to permanently delete your account.")
-                .setView(input)
-                .setPositiveButton("Confirm", (dialog, which) -> {
-                    String confirmation = input.getText() != null ? input.getText().toString().trim() : "";
-                    if ("DELETE".equals(confirmation)) {
-                        deleteAccount(user);
-                    } else {
-                        Toast.makeText(requireContext(), "Incorrect confirmation text", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        androidx.appcompat.app.AlertDialog dialog = new com.google.android.material.dialog.MaterialAlertDialogBuilder(
+                requireContext())
+                .setView(dialogView)
+                .create();
+
+        // Enable delete button only when "DELETE" is typed
+        etConfirm.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                btnDelete.setEnabled("DELETE".equals(s.toString().trim()));
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+            }
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnDelete.setOnClickListener(v -> {
+            btnDelete.setEnabled(false);
+            btnDelete.setText("Deleting...");
+            deleteAccount(user);
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private void deleteAccount(FirebaseUser user) {
@@ -500,16 +515,15 @@ public class ProfileFragment extends Fragment {
                     user.delete()
                             .addOnCompleteListener(deleteTask -> {
                                 if (deleteTask.isSuccessful()) {
-                                    Toast.makeText(requireContext(), "Account deleted successfully",
-                                            Toast.LENGTH_SHORT).show();
+                                    BeautifulNotification.showSuccess(requireActivity(),
+                                            "Account deleted successfully!");
                                     Intent intent = new Intent(requireContext(), WelcomeActivity.class);
                                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                     startActivity(intent);
                                 } else {
                                     // User may need to re-authenticate
-                                    Toast.makeText(requireContext(),
-                                            "Failed to delete account. Please re-login and try again.",
-                                            Toast.LENGTH_LONG).show();
+                                    BeautifulNotification.showError(requireActivity(),
+                                            "Failed to delete account. Please re-login and try again.");
                                 }
                             });
                 });

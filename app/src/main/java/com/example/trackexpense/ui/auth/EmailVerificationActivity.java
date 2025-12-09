@@ -277,24 +277,21 @@ public class EmailVerificationActivity extends AppCompatActivity {
         if (currentUser == null)
             return;
 
-        // Update display name
+        // Update display name in Firebase Auth
         UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                 .setDisplayName(userName)
                 .build();
 
         currentUser.updateProfile(profileUpdates).addOnCompleteListener(task -> {
-            // Save to Firestore
+            // Update only isVerified field in Firestore (don't overwrite existing data)
             FirebaseFirestore db = FirebaseFirestore.getInstance();
-            Map<String, Object> userData = new HashMap<>();
-            userData.put("uid", currentUser.getUid());
-            userData.put("name", userName);
-            userData.put("email", currentUser.getEmail());
-            userData.put("emailVerified", true);
-            userData.put("createdAt", System.currentTimeMillis());
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("isVerified", true);
+            updates.put("displayName", userName);
 
             db.collection("users")
                     .document(currentUser.getUid())
-                    .set(userData)
+                    .update(updates)
                     .addOnSuccessListener(aVoid -> {
                         BeautifulNotification.showSuccess(EmailVerificationActivity.this,
                                 "Account verified successfully!");
@@ -305,7 +302,7 @@ public class EmailVerificationActivity extends AppCompatActivity {
                         }, 1500);
                     })
                     .addOnFailureListener(e -> {
-                        // Even if Firestore save fails, proceed to main
+                        // Even if Firestore update fails, proceed to main
                         // Data can be synced later
                         navigateToMain();
                     });

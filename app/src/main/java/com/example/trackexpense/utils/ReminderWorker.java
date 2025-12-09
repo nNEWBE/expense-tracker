@@ -36,7 +36,7 @@ public class ReminderWorker extends Worker {
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), channelId)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.app_logo)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
