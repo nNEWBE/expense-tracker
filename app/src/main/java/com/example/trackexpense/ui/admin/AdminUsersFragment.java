@@ -117,8 +117,11 @@ public class AdminUsersFragment extends Fragment {
         if (chipAll != null) {
             if ("ALL".equals(currentFilter)) {
                 chipAll.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.primary));
+                chipAll.setStrokeWidth(0);
             } else {
-                chipAll.setCardBackgroundColor(Color.parseColor("#F1F5F9"));
+                chipAll.setCardBackgroundColor(Color.WHITE);
+                chipAll.setStrokeColor(Color.parseColor("#E2E8F0"));
+                chipAll.setStrokeWidth((int) (1 * getResources().getDisplayMetrics().density));
             }
         }
         // Verified chip
@@ -201,9 +204,25 @@ public class AdminUsersFragment extends Fragment {
         // Create custom popup window with icons
         View popupView = LayoutInflater.from(requireContext()).inflate(R.layout.popup_user_actions, null);
 
-        PopupWindow popupWindow = new PopupWindow(popupView,
+        // Get current user ID to check if this is the logged-in admin
+        String currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null
+                ? com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid()
+                : "";
+        boolean isCurrentUser = user.getId() != null && user.getId().equals(currentUserId);
+
+        // Wrap content in ScrollView for better accessibility
+        android.widget.ScrollView scrollView = new android.widget.ScrollView(requireContext());
+        scrollView.addView(popupView);
+
+        // Set max height for popup (for bottom users)
+        int maxHeight = (int) (300 * getResources().getDisplayMetrics().density);
+        scrollView.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        PopupWindow popupWindow = new PopupWindow(scrollView,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
+                maxHeight,
                 true);
 
         popupWindow.setElevation(16f);
@@ -220,6 +239,16 @@ public class AdminUsersFragment extends Fragment {
         ImageView ivBlock = popupView.findViewById(R.id.ivBlockUser);
         TextView tvAdmin = popupView.findViewById(R.id.tvToggleAdmin);
         ImageView ivAdmin = popupView.findViewById(R.id.ivToggleAdmin);
+
+        // Hide dangerous options for current logged-in admin
+        if (isCurrentUser) {
+            if (itemBlock != null)
+                itemBlock.setVisibility(View.GONE);
+            if (itemAdmin != null)
+                itemAdmin.setVisibility(View.GONE);
+            if (itemDelete != null)
+                itemDelete.setVisibility(View.GONE);
+        }
 
         // Update block/unblock text
         if (tvBlock != null) {
@@ -272,7 +301,17 @@ public class AdminUsersFragment extends Fragment {
             });
         }
 
-        popupWindow.showAsDropDown(anchor, 0, 0, Gravity.END);
+        // Show popup above anchor if near bottom of screen
+        int[] location = new int[2];
+        anchor.getLocationOnScreen(location);
+        int screenHeight = getResources().getDisplayMetrics().heightPixels;
+
+        if (location[1] > screenHeight / 2) {
+            // Near bottom, show above
+            popupWindow.showAsDropDown(anchor, -200, -maxHeight - anchor.getHeight(), Gravity.END);
+        } else {
+            popupWindow.showAsDropDown(anchor, 0, 0, Gravity.END);
+        }
     }
 
     private void showEditUsernameDialog(User user) {
