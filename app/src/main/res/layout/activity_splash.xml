@@ -110,60 +110,80 @@
 
     </LinearLayout>
 
-    <!-- Currency Pulse Ring Loading Animation -->
+    <!-- Stunning Triple Arc Spinner -->
     <FrameLayout
         android:id="@+id/loadingContainer"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="45dp"
+        android:layout_marginBottom="40dp"
         android:alpha="0">
 
-        <!-- Outer expanding ring 1 -->
+        <!-- Outer glow effect -->
         <View
-            android:id="@+id/ringOuter1"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:id="@+id/outerGlow"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
             android:layout_gravity="center"
-            android:background="@drawable/loading_ring_teal"
-            android:alpha="0" />
+            android:background="@drawable/loader_outer_glow"
+            android:alpha="0.4" />
 
-        <!-- Outer expanding ring 2 -->
-        <View
-            android:id="@+id/ringOuter2"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+        <!-- Rotating arc 1 (Outermost, slowest) -->
+        <ImageView
+            android:id="@+id/arc1"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
             android:layout_gravity="center"
-            android:background="@drawable/loading_ring_teal"
-            android:alpha="0" />
+            android:src="@drawable/loader_arc_1" />
 
-        <!-- Main breathing ring -->
-        <View
-            android:id="@+id/ringMain"
+        <!-- Rotating arc 2 (Middle, medium speed, opposite direction) -->
+        <ImageView
+            android:id="@+id/arc2"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_gravity="center"
+            android:src="@drawable/loader_arc_2" />
+
+        <!-- Rotating arc 3 (Inner, fastest) -->
+        <ImageView
+            android:id="@+id/arc3"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_gravity="center"
-            android:background="@drawable/loading_ring_solid" />
+            android:src="@drawable/loader_arc_3" />
 
-        <!-- Currency symbol container -->
-        <FrameLayout
-            android:id="@+id/currencyContainer"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+        <!-- Central glowing orb -->
+        <View
+            android:id="@+id/centerOrb"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_gravity="center"
-            android:background="@drawable/currency_bg_circle">
+            android:background="@drawable/loader_center_orb" />
 
-            <TextView
-                android:id="@+id/tvCurrencySymbol"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="৳"
-                android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+        <!-- Sparkle particles -->
+        <View
+            android:id="@+id/sparkle1"
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:layout_gravity="center"
+            android:background="@drawable/loader_sparkle"
+            android:alpha="0" />
 
-        </FrameLayout>
+        <View
+            android:id="@+id/sparkle2"
+            android:layout_width="4dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center"
+            android:background="@drawable/loader_sparkle"
+            android:alpha="0" />
+
+        <View
+            android:id="@+id/sparkle3"
+            android:layout_width="5dp"
+            android:layout_height="5dp"
+            android:layout_gravity="center"
+            android:background="@drawable/loader_sparkle"
+            android:alpha="0" />
 
     </FrameLayout>
 
