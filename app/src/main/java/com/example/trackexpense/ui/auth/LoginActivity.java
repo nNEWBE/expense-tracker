@@ -272,26 +272,8 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            // Check if email is verified
-                            if (!user.isEmailVerified()) {
-                                showLoading(false);
-                                // Email not verified - send to verification screen
-                                user.sendEmailVerification().addOnCompleteListener(emailTask -> {
-                                    Intent intent = new Intent(this, EmailVerificationActivity.class);
-                                    intent.putExtra("USER_NAME", user.getDisplayName());
-                                    startActivity(intent);
-                                    finish();
-                                });
-                                BeautifulNotification.showWarning(this, "Please verify your email to continue.");
-                                return;
-                            }
-
-                            // Email is verified - proceed to main
-                            saveUserToFirestore();
-                            new PreferenceManager(this).setGuestMode(false);
-                            BeautifulNotification.showSuccess(this, "Welcome back! You've successfully signed in.");
-                            // Navigate after a short delay to show the notification
-                            new Handler(Looper.getMainLooper()).postDelayed(this::goToMain, 1500);
+                            // First check if user is blocked in Firestore
+                            checkIfUserBlocked(user);
                         }
                     } else {
                         showLoading(false);
@@ -300,6 +282,56 @@ public class LoginActivity extends AppCompatActivity {
                         BeautifulNotification.showError(this, error);
                     }
                 });
+    }
+
+    private void checkIfUserBlocked(FirebaseUser user) {
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(user.getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Boolean isBlocked = documentSnapshot.getBoolean("isBlocked");
+                        if (isBlocked != null && isBlocked) {
+                            // User is blocked - sign out and show error
+                            mAuth.signOut();
+                            showLoading(false);
+                            BeautifulNotification.showError(this,
+                                    "Your account has been blocked. Please contact support for assistance.");
+                            return;
+                        }
+                    }
+                    // User is not blocked - continue with login flow
+                    proceedWithLogin(user);
+                })
+                .addOnFailureListener(e -> {
+                    // If we can't check blocked status, proceed with login
+                    // (user might be new and not in Firestore yet)
+                    proceedWithLogin(user);
+                });
+    }
+
+    private void proceedWithLogin(FirebaseUser user) {
+        // Check if email is verified
+        if (!user.isEmailVerified()) {
+            showLoading(false);
+            // Email not verified - send to verification screen
+            user.sendEmailVerification().addOnCompleteListener(emailTask -> {
+                Intent intent = new Intent(this, EmailVerificationActivity.class);
+                intent.putExtra("USER_NAME", user.getDisplayName());
+                startActivity(intent);
+                finish();
+            });
+            BeautifulNotification.showWarning(this, "Please verify your email to continue.");
+            return;
+        }
+
+        // Email is verified - proceed to main
+        saveUserToFirestore();
+        new PreferenceManager(this).setGuestMode(false);
+        BeautifulNotification.showSuccess(this, "Welcome back! You've successfully signed in.");
+        // Navigate after a short delay to show the notification
+        new Handler(Looper.getMainLooper()).postDelayed(this::goToMain, 1500);
     }
 
     private void saveUserToFirestore() {
