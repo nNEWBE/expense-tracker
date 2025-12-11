@@ -78,14 +78,14 @@
             android:layout_height="64dp"
             android:alpha="0.5"
             android:src="@drawable/ic_nav_transaction_outline"
-            app:tint="#9CA3AF" />
+            app:tint="@color/gray_400" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:text="No transactions yet"
-            android:textColor="#9CA3AF"
+            android:textColor="@color/gray_400"
             android:textSize="15sp" />
     </LinearLayout>
 

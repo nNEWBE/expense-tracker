@@ -69,6 +69,10 @@ public class AnalyticsFragment extends Fragment {
     private MaterialCardView cardDonut, cardCategories, cardWeekly, cardMonthly;
     private ImageView btnMenu;
 
+    // Skeleton loading
+    private View skeletonView;
+    private boolean isFirstLoad = true;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -83,10 +87,72 @@ public class AnalyticsFragment extends Fragment {
         expenseViewModel = new ViewModelProvider(requireActivity()).get(ExpenseViewModel.class);
         preferenceManager = new PreferenceManager(requireContext());
 
+        // Check if data is already available (cached)
+        List<com.example.trackexpense.data.local.Expense> cachedData = expenseViewModel.getAllExpenses().getValue();
+        if (cachedData == null || cachedData.isEmpty()) {
+            isFirstLoad = true;
+            showSkeletonLoading(view);
+        } else {
+            isFirstLoad = false;
+        }
+
         initViews(view);
         setupClickListeners();
         observeData();
-        runEntranceAnimations();
+    }
+
+    /**
+     * Show skeleton loading placeholder while data loads.
+     */
+    /**
+     * Show skeleton loading placeholder while data loads.
+     */
+    private void showSkeletonLoading(View rootView) {
+        if (getActivity() == null)
+            return;
+
+        if (rootView instanceof ViewGroup) {
+            skeletonView = LayoutInflater.from(requireContext())
+                    .inflate(R.layout.skeleton_analytics, (ViewGroup) rootView, false);
+
+            // Ensure skeleton overlaps everything
+            skeletonView.setElevation(100f);
+
+            ((ViewGroup) rootView).addView(skeletonView);
+        }
+    }
+
+    /**
+     * Hide skeleton loading with smooth fade animation.
+     */
+    /**
+     * Hide skeleton loading with smooth fade animation.
+     */
+    private void hideSkeletonLoading(Runnable onAnimationEndAction) {
+        if (skeletonView == null) {
+            if (onAnimationEndAction != null) {
+                onAnimationEndAction.run();
+            }
+            return;
+        }
+
+        skeletonView.animate()
+                .alpha(0f)
+                .setDuration(400)
+                .setInterpolator(new android.view.animation.AccelerateInterpolator())
+                .setListener(new android.animation.AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(android.animation.Animator animation) {
+                        if (skeletonView != null && skeletonView.getParent() != null) {
+                            ((ViewGroup) skeletonView.getParent()).removeView(skeletonView);
+                            skeletonView = null;
+                        }
+                        if (onAnimationEndAction != null) {
+                            onAnimationEndAction.run();
+                        }
+                    }
+                })
+                .start();
     }
 
     private void initViews(View view) {
@@ -123,49 +189,22 @@ public class AnalyticsFragment extends Fragment {
         }
     }
 
-    private void runEntranceAnimations() {
-        try {
-            Animation slideDown = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_down);
-            Animation slideUp = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_up);
-
-            if (headerLayout != null) {
-                headerLayout.startAnimation(slideDown);
-            }
-
-            // Animate cards with staggered delay
-            View[] cards = { cardDonut, cardCategories, cardWeekly, cardMonthly };
-            for (int i = 0; i < cards.length; i++) {
-                if (cards[i] != null) {
-                    final View card = cards[i];
-                    card.setVisibility(View.INVISIBLE);
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        if (card != null && isAdded()) {
-                            card.setVisibility(View.VISIBLE);
-                            Animation anim = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_up);
-                            card.startAnimation(anim);
-                        }
-                    }, 100 + (i * 100));
-                }
-            }
-        } catch (Exception e) {
-            // Make all visible on error
-            if (cardDonut != null)
-                cardDonut.setVisibility(View.VISIBLE);
-            if (cardCategories != null)
-                cardCategories.setVisibility(View.VISIBLE);
-            if (cardWeekly != null)
-                cardWeekly.setVisibility(View.VISIBLE);
-            if (cardMonthly != null)
-                cardMonthly.setVisibility(View.VISIBLE);
-        }
-    }
-
     private void observeData() {
         expenseViewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
             if (expenses != null) {
-                updateSummary(expenses);
-                updateCharts(expenses);
-                updateCategoryProgress(expenses);
+                if (isFirstLoad && skeletonView != null) {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        hideSkeletonLoading(() -> {
+                            updateSummary(expenses);
+                            updateCharts(expenses);
+                            updateCategoryProgress(expenses);
+                        });
+                    }, 500);
+                } else {
+                    updateSummary(expenses);
+                    updateCharts(expenses);
+                    updateCategoryProgress(expenses);
+                }
             }
         });
     }

@@ -27,7 +27,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
                 android:src="@drawable/ic_arrow_back"
-                app:tint="#333333" />
+                app:tint="@color/gray_800" />
 
             <!-- Illustration Container -->
             <FrameLayout
@@ -54,7 +54,7 @@
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="90dp"
                         android:layout_height="130dp"
-                        app:cardBackgroundColor="#4F46E5"
+                        app:cardBackgroundColor="@color/indigo_600"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="8dp">
 
@@ -89,7 +89,7 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_marginTop="-20dp"
-                        app:cardBackgroundColor="#10B981"
+                        app:cardBackgroundColor="@color/income_green"
                         app:cardCornerRadius="20dp"
                         app:cardElevation="4dp">
 
@@ -134,7 +134,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="+880 1XX XXX XXXX"
-                android:textColor="#4F46E5"
+                android:textColor="@color/indigo_600"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -245,7 +245,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Resend OTP"
-                    android:textColor="#4F46E5"
+                    android:textColor="@color/indigo_600"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
@@ -258,7 +258,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="Resend available in 60s"
-                android:textColor="#9CA3AF"
+                android:textColor="@color/nav_active_color"
                 android:textSize="12sp"
                 android:visibility="visible" />
 
@@ -279,7 +279,7 @@
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"
-                app:backgroundTint="#4F46E5"
+                app:backgroundTint="@color/indigo_600"
                 app:cornerRadius="28dp" />
 
             <!-- Progress -->
@@ -290,7 +290,7 @@
                 android:layout_marginBottom="16dp"
                 android:indeterminate="true"
                 android:visibility="gone"
-                app:indicatorColor="#4F46E5" />
+                app:indicatorColor="@color/indigo_600" />
 
         </LinearLayout>
     </ScrollView>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Skeleton for a single category progress bar -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Category name -->
+        <com.example.trackexpense.ui.components.ShimmerView
+            android:layout_width="80dp"
+            android:layout_height="14dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Amount -->
+        <com.example.trackexpense.ui.components.ShimmerView
+            android:layout_width="60dp"
+            android:layout_height="14dp" />
+
+    </LinearLayout>
+
+    <!-- Progress bar -->
+    <com.example.trackexpense.ui.components.ShimmerView
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>

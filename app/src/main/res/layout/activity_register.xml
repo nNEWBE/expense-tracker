@@ -73,7 +73,7 @@
                     android:layout_gravity="center"
                     android:alpha="0"
                     android:text="Get Started"
-                    android:textColor="#1A3A4A"
+                    android:textColor="@color/nav_active_color"
                     android:textSize="26sp"
                     android:textStyle="bold" />
 
@@ -85,7 +85,7 @@
                     android:layout_marginTop="32dp"
                     android:alpha="0"
                     android:text="Full Name"
-                    android:textColor="#888888"
+                    android:textColor="@color/gray_neutral"
                     android:textSize="14sp" />
 
                 <LinearLayout
@@ -101,7 +101,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_person"
-                        app:tint="#888888" />
+                        app:tint="@color/gray_neutral" />
 
                     <EditText
                         android:id="@+id/etName"
@@ -123,7 +123,7 @@
                     android:layout_marginTop="20dp"
                     android:alpha="0"
                     android:text="Email"
-                    android:textColor="#888888"
+                    android:textColor="@color/gray_neutral"
                     android:textSize="14sp" />
 
                 <LinearLayout
@@ -139,7 +139,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_email"
-                        app:tint="#888888" />
+                        app:tint="@color/gray_neutral" />
 
                     <EditText
                         android:id="@+id/etEmail"
@@ -161,7 +161,7 @@
                     android:layout_marginTop="20dp"
                     android:alpha="0"
                     android:text="Password"
-                    android:textColor="#888888"
+                    android:textColor="@color/gray_neutral"
                     android:textSize="14sp" />
 
                 <LinearLayout
@@ -177,7 +177,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_lock"
-                        app:tint="#888888" />
+                        app:tint="@color/gray_neutral" />
 
                     <EditText
                         android:id="@+id/etPassword"
@@ -195,7 +195,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@android:drawable/ic_menu_view"
-                        app:tint="#888888" />
+                        app:tint="@color/gray_neutral" />
 
                 </LinearLayout>
 
@@ -206,7 +206,7 @@
                     android:layout_height="56dp"
                     android:layout_marginTop="32dp"
                     android:alpha="0"
-                    android:backgroundTint="#1A3A4A"
+                    android:backgroundTint="@color/nav_active_color"
                     android:text="SIGN UP"
                     android:textAllCaps="true"
                     android:textColor="@android:color/white"
@@ -222,7 +222,7 @@
                     android:layout_marginTop="16dp"
                     android:indeterminate="true"
                     android:visibility="gone"
-                    app:indicatorColor="#1A3A4A" />
+                    app:indicatorColor="@color/nav_active_color" />
 
                 <!-- Already have account -->
                 <LinearLayout
@@ -238,7 +238,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Already have an account? "
-                        android:textColor="#888888"
+                        android:textColor="@color/gray_neutral"
                         android:textSize="14sp" />
 
                     <TextView
@@ -246,7 +246,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Sign in"
-                        android:textColor="#1A3A4A"
+                        android:textColor="@color/nav_active_color"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -266,21 +266,21 @@
                         android:layout_width="0dp"
                         android:layout_height="1dp"
                         android:layout_weight="1"
-                        android:background="#E0E0E0" />
+                        android:background="@color/skeleton_base_darker" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="16dp"
                         android:text="Or"
-                        android:textColor="#888888"
+                        android:textColor="@color/gray_neutral"
                         android:textSize="14sp" />
 
                     <View
                         android:layout_width="0dp"
                         android:layout_height="1dp"
                         android:layout_weight="1"
-                        android:background="#E0E0E0" />
+                        android:background="@color/skeleton_base_darker" />
 
                 </LinearLayout>
 
@@ -294,13 +294,13 @@
                     android:alpha="0"
                     android:text="Continue as Guest"
                     android:textAllCaps="false"
-                    android:textColor="#1A3A4A"
+                    android:textColor="@color/nav_active_color"
                     android:textSize="14sp"
                     app:cornerRadius="24dp"
                     app:icon="@drawable/ic_person"
                     app:iconGravity="textStart"
-                    app:iconTint="#1A3A4A"
-                    app:strokeColor="#E0E0E0" />
+                    app:iconTint="@color/nav_active_color"
+                    app:strokeColor="@color/skeleton_base_darker" />
 
                 <!-- Back Link -->
                 <TextView
@@ -312,7 +312,7 @@
                     android:alpha="0"
                     android:padding="8dp"
                     android:text="← Back"
-                    android:textColor="#888888"
+                    android:textColor="@color/gray_neutral"
                     android:textSize="14sp" />
 
             </LinearLayout>

@@ -51,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Update your transaction details"
-                android:textColor="#6B7280"
+                android:textColor="@color/gray_500"
                 android:textSize="13sp" />
         </LinearLayout>
 
@@ -83,7 +83,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            app:cardBackgroundColor="#F9FAFB"
+            app:cardBackgroundColor="@color/gray_50"
             app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp">
@@ -277,13 +277,13 @@
                 android:layout_weight="1"
                 android:text="Cancel"
                 android:textAllCaps="false"
-                android:textColor="#6B7280"
+                android:textColor="@color/gray_500"
                 app:cornerRadius="14dp"
                 app:icon="@drawable/ic_close"
                 app:iconGravity="textStart"
                 app:iconPadding="8dp"
-                app:iconTint="#6B7280"
-                app:strokeColor="#E5E7EB"
+                app:iconTint="@color/gray_500"
+                app:strokeColor="@color/gray_200"
                 app:strokeWidth="1.5dp" />
 
             <com.google.android.material.button.MaterialButton

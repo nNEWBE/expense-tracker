@@ -82,60 +82,6 @@ public class AdminActivity extends AppCompatActivity {
 
         // Load stats
         loadStats();
-
-        // Run entrance animations
-        runEntranceAnimations();
-    }
-
-    private void runEntranceAnimations() {
-        try {
-            Animation slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down);
-            Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up);
-            Animation scaleUp = AnimationUtils.loadAnimation(this, R.anim.scale_up);
-
-            // Header slides down
-            if (headerLayout != null) {
-                headerLayout.startAnimation(slideDown);
-            }
-
-            // Stats cards scale up with stagger
-            if (cardUsers != null) {
-                cardUsers.setVisibility(View.INVISIBLE);
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    cardUsers.setVisibility(View.VISIBLE);
-                    Animation anim = AnimationUtils.loadAnimation(this, R.anim.scale_up);
-                    cardUsers.startAnimation(anim);
-                }, 200);
-            }
-
-            if (cardCategories != null) {
-                cardCategories.setVisibility(View.INVISIBLE);
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    cardCategories.setVisibility(View.VISIBLE);
-                    Animation anim = AnimationUtils.loadAnimation(this, R.anim.scale_up);
-                    cardCategories.startAnimation(anim);
-                }, 350);
-            }
-
-            // Tab card slides up
-            if (tabCard != null) {
-                tabCard.setVisibility(View.INVISIBLE);
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    tabCard.setVisibility(View.VISIBLE);
-                    Animation anim = AnimationUtils.loadAnimation(this, R.anim.slide_up);
-                    tabCard.startAnimation(anim);
-                }, 400);
-            }
-
-        } catch (Exception e) {
-            // Ensure visibility if animations fail
-            if (cardUsers != null)
-                cardUsers.setVisibility(View.VISIBLE);
-            if (cardCategories != null)
-                cardCategories.setVisibility(View.VISIBLE);
-            if (tabCard != null)
-                tabCard.setVisibility(View.VISIBLE);
-        }
     }
 
     private void loadStats() {

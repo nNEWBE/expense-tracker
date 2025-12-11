@@ -27,6 +27,7 @@
         <!-- Component styles -->
         <item name="bottomNavigationStyle">@style/Widget.TrackExpense.BottomNavigation.Dark</item>
         <item name="materialCardViewStyle">@style/Widget.TrackExpense.CardView.Dark</item>
+        <item name="android:windowAnimationStyle">@null</item>
     </style>
 
     <!-- Bottom Navigation Style -->

@@ -68,11 +68,6 @@ public class AdminUsersFragment extends Fragment {
         adapter = new UserAdapter();
         rvUsers.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvUsers.setAdapter(adapter);
-
-        // Add item animation
-        android.view.animation.LayoutAnimationController controller = android.view.animation.AnimationUtils
-                .loadLayoutAnimation(requireContext(), R.anim.layout_animation_fall_down);
-        rvUsers.setLayoutAnimation(controller);
     }
 
     private void setupSearch() {

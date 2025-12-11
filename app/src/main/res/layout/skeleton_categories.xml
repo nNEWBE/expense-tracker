@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Skeleton layout for category grid using LinearLayout -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Row 1 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- Category item 1 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="56dp"
+                android:layout_height="10dp"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <!-- Category item 2 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="48dp"
+                android:layout_height="10dp"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <!-- Category item 3 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="60dp"
+                android:layout_height="10dp"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <!-- Category item 4 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="44dp"
+                android:layout_height="10dp"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Row 2 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- Category item 5 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="52dp"
+                android:layout_height="10dp"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <!-- Category item 6 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="40dp"
+                android:layout_height="10dp"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <!-- Category item 7 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="54dp"
+                android:layout_height="10dp"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <!-- Category item 8 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
+
+            <com.example.trackexpense.ui.components.ShimmerView
+                android:layout_width="46dp"
+                android:layout_height="10dp"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

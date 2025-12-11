@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modern low opacity circle background for transaction icons -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <!-- Using 15% opacity of primary color for subtle effect -->
-    <solid android:color="#261A3A4A" />
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <corners android:radius="12dp" />
+    <solid android:color="#598897" />
 </shape>

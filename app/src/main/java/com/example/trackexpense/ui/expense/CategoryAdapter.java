@@ -4,6 +4,8 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -12,17 +14,90 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.trackexpense.R;
+import com.example.trackexpense.data.model.Category;
 import com.example.trackexpense.utils.CategoryHelper;
 import com.google.android.material.card.MaterialCardView;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Adapter for displaying categories in a RecyclerView.
+ * Supports both static String arrays (legacy) and dynamic Category objects from
+ * Firestore.
+ */
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
 
-    private String[] categories;
+    private List<Category> categories = new ArrayList<>();
+    private String[] legacyCategories; // For backward compatibility
+    private boolean usingLegacyMode = false;
     private int selectedPosition = -1;
     private OnCategorySelectedListener listener;
 
+    // Animation tracking
+    private int lastAnimatedPosition = -1;
+    private boolean animationsEnabled = true;
+    private static final int STAGGER_DELAY_MS = 50; // Delay between each item animation
+
+    /**
+     * Constructor for dynamic Category list (from Firestore).
+     */
+    public CategoryAdapter(List<Category> categories) {
+        this.categories = categories != null ? categories : new ArrayList<>();
+        this.usingLegacyMode = false;
+    }
+
+    /**
+     * Constructor for static String array (legacy mode).
+     */
     public CategoryAdapter(String[] categories) {
-        this.categories = categories;
+        this.legacyCategories = categories;
+        this.usingLegacyMode = true;
+
+        // Convert to Category objects for consistent handling
+        if (categories != null) {
+            this.categories = new ArrayList<>();
+            for (String name : categories) {
+                Category cat = new Category();
+                cat.setName(name);
+                cat.setIconName("ic_" + name.toLowerCase().replace(" ", "_"));
+                this.categories.add(cat);
+            }
+        }
+    }
+
+    /**
+     * Update the categories list.
+     */
+    public void setCategories(List<Category> categories) {
+        this.categories = categories != null ? categories : new ArrayList<>();
+        this.usingLegacyMode = false;
+        this.selectedPosition = -1;
+        this.lastAnimatedPosition = -1; // Reset animation tracking
+        this.animationsEnabled = true;
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Update categories from string array (legacy mode).
+     */
+    public void setCategories(String[] categories) {
+        this.legacyCategories = categories;
+        this.usingLegacyMode = true;
+        this.selectedPosition = -1;
+        this.lastAnimatedPosition = -1; // Reset animation tracking
+        this.animationsEnabled = true;
+
+        if (categories != null) {
+            this.categories = new ArrayList<>();
+            for (String name : categories) {
+                Category cat = new Category();
+                cat.setName(name);
+                cat.setIconName("ic_" + name.toLowerCase().replace(" ", "_"));
+                this.categories.add(cat);
+            }
+        }
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -34,12 +109,24 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
 
     @Override
     public void onBindViewHolder(@NonNull CategoryViewHolder holder, int position) {
-        holder.bind(categories[position], position == selectedPosition);
+        if (position < categories.size()) {
+            holder.bind(categories.get(position), position == selectedPosition);
+
+            // Apply staggered fade-up animation
+            if (animationsEnabled && position > lastAnimatedPosition) {
+                // Animation removed
+                lastAnimatedPosition = position;
+            }
+        }
     }
+
+    /**
+     * Run staggered entrance animation for each item.
+     */
 
     @Override
     public int getItemCount() {
-        return categories.length;
+        return categories.size();
     }
 
     public void setOnCategorySelectedListener(OnCategorySelectedListener listener) {
@@ -47,8 +134,15 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     }
 
     public String getSelectedCategory() {
-        if (selectedPosition >= 0 && selectedPosition < categories.length) {
-            return categories[selectedPosition];
+        if (selectedPosition >= 0 && selectedPosition < categories.size()) {
+            return categories.get(selectedPosition).getName();
+        }
+        return null;
+    }
+
+    public Category getSelectedCategoryObject() {
+        if (selectedPosition >= 0 && selectedPosition < categories.size()) {
+            return categories.get(selectedPosition);
         }
         return null;
     }
@@ -79,20 +173,34 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
                 }
                 notifyItemChanged(selectedPosition);
 
-                if (listener != null && selectedPosition != RecyclerView.NO_POSITION) {
-                    listener.onCategorySelected(categories[selectedPosition]);
+                if (listener != null && selectedPosition != RecyclerView.NO_POSITION
+                        && selectedPosition < categories.size()) {
+                    listener.onCategorySelected(categories.get(selectedPosition).getName());
                 }
             });
         }
 
-        public void bind(String category, boolean isSelected) {
-            tvCategoryName.setText(category);
+        public void bind(Category category, boolean isSelected) {
+            tvCategoryName.setText(category.getName());
 
-            CategoryHelper.CategoryInfo info = CategoryHelper.getCategoryInfo(category);
-            int categoryColor = ContextCompat.getColor(itemView.getContext(), info.colorRes);
+            // Get icon and color from Category object
+            int iconRes = category.getIconResource();
+            int categoryColor;
+
+            // Use colorHex from Firestore if available, otherwise fall back to resource
+            if (category.getColorHex() != null && !category.getColorHex().isEmpty()) {
+                categoryColor = category.getColorInt();
+            } else if (category.getColorResource() != 0) {
+                categoryColor = ContextCompat.getColor(itemView.getContext(), category.getColorResource());
+            } else {
+                // Fallback to CategoryHelper for legacy support
+                CategoryHelper.CategoryInfo info = CategoryHelper.getCategoryInfo(category.getName());
+                iconRes = info.iconRes;
+                categoryColor = ContextCompat.getColor(itemView.getContext(), info.colorRes);
+            }
 
             // Set icon with category color
-            ivIcon.setImageResource(info.iconRes);
+            ivIcon.setImageResource(iconRes);
             ivIcon.setColorFilter(categoryColor);
 
             // Set background with low opacity (15% of category color)

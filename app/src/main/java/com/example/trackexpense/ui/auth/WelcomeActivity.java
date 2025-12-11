@@ -79,12 +79,10 @@ public class WelcomeActivity extends AppCompatActivity {
 
         btnLogin.setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
         btnRegister.setOnClickListener(v -> {
             startActivity(new Intent(this, RegisterActivity.class));
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
         ((TextView) btnGuest).setOnClickListener(v -> {

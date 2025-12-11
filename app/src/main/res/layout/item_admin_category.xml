@@ -11,7 +11,7 @@
     app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="20dp"
     app:cardElevation="0dp"
-    app:strokeColor="#F3F4F6"
+    app:strokeColor="@color/gray_100"
     app:strokeWidth="1.5dp">
 
     <LinearLayout
@@ -128,10 +128,10 @@
                 android:layout_marginEnd="8dp"
                 android:clickable="true"
                 android:focusable="true"
-                app:cardBackgroundColor="#F0FDF4"
+                app:cardBackgroundColor="@color/green_50"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
-                app:rippleColor="#C6F6D5"
+                app:rippleColor="@color/green_200"
                 app:strokeWidth="0dp">
 
                 <ImageView
@@ -150,10 +150,10 @@
                 android:layout_height="40dp"
                 android:clickable="true"
                 android:focusable="true"
-                app:cardBackgroundColor="#FEF2F2"
+                app:cardBackgroundColor="@color/red_50"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
-                app:rippleColor="#FECACA"
+                app:rippleColor="@color/red_200"
                 app:strokeWidth="0dp">
 
                 <ImageView
@@ -161,7 +161,7 @@
                     android:layout_height="18dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_delete"
-                    app:tint="#EF4444" />
+                    app:tint="@color/red_500" />
 
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

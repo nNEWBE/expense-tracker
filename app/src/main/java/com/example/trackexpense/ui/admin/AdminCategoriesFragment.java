@@ -103,11 +103,6 @@ public class AdminCategoriesFragment extends Fragment {
         adapter = new CategoryAdapter();
         rvCategories.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvCategories.setAdapter(adapter);
-
-        // Add item animation
-        android.view.animation.LayoutAnimationController controller = android.view.animation.AnimationUtils
-                .loadLayoutAnimation(requireContext(), R.anim.layout_animation_fall_down);
-        rvCategories.setLayoutAnimation(controller);
     }
 
     private void setupSearch() {

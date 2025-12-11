@@ -48,6 +48,10 @@ public class ProfileFragment extends Fragment {
     private com.google.android.material.card.MaterialCardView cardStats, cardAccount, cardPreferences;
     private ImageView btnMenu;
 
+    // Skeleton loading
+    private View skeletonView;
+    private boolean isFirstLoad = true;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -63,12 +67,75 @@ public class ProfileFragment extends Fragment {
         expenseViewModel = new ViewModelProvider(this).get(ExpenseViewModel.class);
         adminService = AdminService.getInstance();
 
+        // Check if data is already available (cached)
+        java.util.List<com.example.trackexpense.data.local.Expense> cachedData = expenseViewModel.getAllExpenses()
+                .getValue();
+        if (cachedData == null || cachedData.isEmpty()) {
+            isFirstLoad = true;
+            showSkeletonLoading(view);
+        } else {
+            isFirstLoad = false;
+        }
+
         initViews(view);
         loadUserData();
         setupClickListeners(view);
         checkAdminAccess();
         observeData();
-        runEntranceAnimations();
+    }
+
+    /**
+     * Show skeleton loading placeholder while data loads.
+     */
+    /**
+     * Show skeleton loading placeholder while data loads.
+     */
+    private void showSkeletonLoading(View rootView) {
+        if (getActivity() == null)
+            return;
+
+        if (rootView instanceof ViewGroup) {
+            skeletonView = LayoutInflater.from(requireContext())
+                    .inflate(R.layout.skeleton_profile, (ViewGroup) rootView, false);
+
+            // Ensure skeleton overlaps everything
+            skeletonView.setElevation(100f);
+
+            ((ViewGroup) rootView).addView(skeletonView);
+        }
+    }
+
+    /**
+     * Hide skeleton loading with smooth fade animation.
+     */
+    /**
+     * Hide skeleton loading with smooth fade animation.
+     */
+    private void hideSkeletonLoading(Runnable onAnimationEndAction) {
+        if (skeletonView == null) {
+            if (onAnimationEndAction != null) {
+                onAnimationEndAction.run();
+            }
+            return;
+        }
+
+        skeletonView.animate()
+                .alpha(0f)
+                .setDuration(400)
+                .setInterpolator(new android.view.animation.AccelerateInterpolator())
+                .setListener(new android.animation.AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(android.animation.Animator animation) {
+                        if (skeletonView != null && skeletonView.getParent() != null) {
+                            ((ViewGroup) skeletonView.getParent()).removeView(skeletonView);
+                            skeletonView = null;
+                        }
+                        if (onAnimationEndAction != null) {
+                            onAnimationEndAction.run();
+                        }
+                    }
+                })
+                .start();
     }
 
     private void initViews(View view) {
@@ -104,45 +171,18 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    private void runEntranceAnimations() {
-        try {
-            android.view.animation.Animation slideDown = android.view.animation.AnimationUtils
-                    .loadAnimation(requireContext(), R.anim.slide_down);
-            android.view.animation.Animation slideUp = android.view.animation.AnimationUtils
-                    .loadAnimation(requireContext(), R.anim.slide_up);
-
-            if (headerLayout != null)
-                headerLayout.startAnimation(slideDown);
-
-            com.google.android.material.card.MaterialCardView[] cards = { cardStats, cardAccount, cardPreferences };
-            for (int i = 0; i < cards.length; i++) {
-                if (cards[i] != null) {
-                    final com.google.android.material.card.MaterialCardView card = cards[i];
-                    card.setVisibility(View.INVISIBLE);
-                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                        if (card != null && isAdded()) {
-                            card.setVisibility(View.VISIBLE);
-                            android.view.animation.Animation anim = android.view.animation.AnimationUtils
-                                    .loadAnimation(requireContext(), R.anim.slide_up);
-                            card.startAnimation(anim);
-                        }
-                    }, 100 + (i * 100));
-                }
-            }
-        } catch (Exception e) {
-            if (cardStats != null)
-                cardStats.setVisibility(View.VISIBLE);
-            if (cardAccount != null)
-                cardAccount.setVisibility(View.VISIBLE);
-            if (cardPreferences != null)
-                cardPreferences.setVisibility(View.VISIBLE);
-        }
-    }
-
     private void observeData() {
         expenseViewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
             if (expenses != null) {
-                updateStats(expenses);
+                if (isFirstLoad && skeletonView != null) {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        hideSkeletonLoading(() -> {
+                            updateStats(expenses);
+                        });
+                    }, 500);
+                } else {
+                    updateStats(expenses);
+                }
             }
         });
     }

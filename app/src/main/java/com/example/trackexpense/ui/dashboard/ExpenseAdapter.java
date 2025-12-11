@@ -1,5 +1,7 @@
 package com.example.trackexpense.ui.dashboard;
 
+import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,15 +16,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
+import com.example.trackexpense.data.model.Category;
 import com.example.trackexpense.utils.CategoryHelper;
+import com.example.trackexpense.utils.PreferenceManager;
 import com.google.android.material.button.MaterialButton;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseViewHolder> {
@@ -35,10 +41,21 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
     private String currencySymbol = "$";
     private Set<Integer> expandedPositions = new HashSet<>();
 
+    // Category cache for dynamic icons/colors from Firestore
+    private Map<String, Category> categoryCache = new HashMap<>();
+    private PreferenceManager preferenceManager;
+
     @NonNull
     @Override
     public ExpenseViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_expense, parent, false);
+
+        // Initialize category cache on first view creation
+        if (preferenceManager == null) {
+            preferenceManager = new PreferenceManager(parent.getContext());
+            loadCategoryCache();
+        }
+
         return new ExpenseViewHolder(view);
     }
 
@@ -87,6 +104,47 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
         this.deleteClickListener = listener;
     }
 
+    /**
+     * Load category data from cache for dynamic icons and colors.
+     */
+    private void loadCategoryCache() {
+        categoryCache.clear();
+
+        // Load expense categories
+        String expenseData = preferenceManager.getCachedExpenseCategories();
+        parseCacheData(expenseData, "EXPENSE");
+
+        // Load income categories
+        String incomeData = preferenceManager.getCachedIncomeCategories();
+        parseCacheData(incomeData, "INCOME");
+    }
+
+    /**
+     * Parse cache data string into Category objects.
+     */
+    private void parseCacheData(String data, String type) {
+        if (data == null || data.isEmpty())
+            return;
+
+        String[] items = data.split(";");
+        for (int i = 0; i < items.length; i++) {
+            String[] parts = items[i].split("\\|");
+            if (parts.length >= 3) {
+                Category cat = new Category(parts[0], type, parts[1], parts[2], i, true);
+                categoryCache.put(parts[0].toLowerCase(), cat);
+            }
+        }
+    }
+
+    /**
+     * Get category from cache or create fallback.
+     */
+    private Category getCachedCategory(String categoryName) {
+        if (categoryName == null)
+            return null;
+        return categoryCache.get(categoryName.toLowerCase());
+    }
+
     public interface OnItemClickListener {
         void onItemClick(Expense expense);
     }
@@ -132,12 +190,36 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
             SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault());
             tvDate.setText(sdf.format(new Date(expense.getDate())));
 
-            // Get category info for icon and colors
-            CategoryHelper.CategoryInfo categoryInfo = CategoryHelper.getCategoryInfo(expense.getCategory());
-            int categoryColor = ContextCompat.getColor(itemView.getContext(), categoryInfo.colorRes);
+            // Get category info - try cached Firestore data first, then fallback to
+            // CategoryHelper
+            int iconRes;
+            int categoryColor;
+
+            Category cachedCategory = getCachedCategory(expense.getCategory());
+            if (cachedCategory != null) {
+                // Use cached category from Firestore
+                iconRes = cachedCategory.getIconResource();
+
+                // Use colorHex if available, otherwise use color resource
+                if (cachedCategory.getColorHex() != null && !cachedCategory.getColorHex().isEmpty()) {
+                    try {
+                        categoryColor = Color.parseColor(cachedCategory.getColorHex());
+                    } catch (Exception e) {
+                        categoryColor = ContextCompat.getColor(itemView.getContext(),
+                                cachedCategory.getColorResource());
+                    }
+                } else {
+                    categoryColor = ContextCompat.getColor(itemView.getContext(), cachedCategory.getColorResource());
+                }
+            } else {
+                // Fallback to CategoryHelper for legacy support
+                CategoryHelper.CategoryInfo categoryInfo = CategoryHelper.getCategoryInfo(expense.getCategory());
+                iconRes = categoryInfo.iconRes;
+                categoryColor = ContextCompat.getColor(itemView.getContext(), categoryInfo.colorRes);
+            }
 
             // Set icon with category color
-            ivIcon.setImageResource(categoryInfo.iconRes);
+            ivIcon.setImageResource(iconRes);
             ivIcon.setColorFilter(categoryColor);
 
             // Set icon background with low opacity (15% opacity of category color)

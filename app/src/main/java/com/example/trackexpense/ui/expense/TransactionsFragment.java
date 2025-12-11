@@ -63,6 +63,10 @@ public class TransactionsFragment extends Fragment {
     // Category chip ID to category name mapping
     private Map<Integer, String> categoryChipMap = new HashMap<>();
 
+    // Skeleton loading
+    private View skeletonView;
+    private boolean isFirstLoad = true;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -78,6 +82,15 @@ public class TransactionsFragment extends Fragment {
         preferenceManager = new PreferenceManager(requireContext());
         notificationHelper = new NotificationHelper(requireContext());
 
+        // Check if data is already available (cached)
+        List<com.example.trackexpense.data.local.Expense> cachedData = viewModel.getAllExpenses().getValue();
+        if (cachedData == null || cachedData.isEmpty()) {
+            isFirstLoad = true;
+            showSkeletonLoading(view);
+        } else {
+            isFirstLoad = false;
+        }
+
         initCategoryMap();
         initViews(view);
         setupRecyclerView();
@@ -87,6 +100,48 @@ public class TransactionsFragment extends Fragment {
         setupCategoryFilters();
         setupPagination();
         observeData();
+    }
+
+    /**
+     * Show skeleton loading placeholder while data loads.
+     */
+    private void showSkeletonLoading(View rootView) {
+        if (rootView instanceof ViewGroup) {
+            skeletonView = LayoutInflater.from(requireContext())
+                    .inflate(R.layout.skeleton_transactions, (ViewGroup) rootView, false);
+            ((ViewGroup) rootView).addView(skeletonView);
+            skeletonView.setElevation(100f);
+        }
+    }
+
+    /**
+     * Hide skeleton loading with smooth fade animation.
+     */
+    private void hideSkeletonLoading(Runnable onAnimationEndAction) {
+        if (skeletonView == null) {
+            if (onAnimationEndAction != null)
+                onAnimationEndAction.run();
+            return;
+        }
+
+        isFirstLoad = false;
+
+        skeletonView.animate()
+                .alpha(0f)
+                .setDuration(400)
+                .setListener(new android.animation.AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(android.animation.Animator animation) {
+                        if (skeletonView != null && skeletonView.getParent() != null) {
+                            ((ViewGroup) skeletonView.getParent()).removeView(skeletonView);
+                            skeletonView = null;
+                        }
+                        if (onAnimationEndAction != null) {
+                            onAnimationEndAction.run();
+                        }
+                    }
+                })
+                .start();
     }
 
     private void initCategoryMap() {
@@ -353,7 +408,16 @@ public class TransactionsFragment extends Fragment {
         viewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
             allExpenses = expenses;
             currentPage = 1;
-            filterExpenses();
+
+            if (isFirstLoad && skeletonView != null) {
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    hideSkeletonLoading(() -> {
+                        filterExpenses();
+                    });
+                }, 500);
+            } else {
+                filterExpenses();
+            }
         });
     }
 
@@ -430,19 +494,7 @@ public class TransactionsFragment extends Fragment {
 
         List<Expense> paginatedList = filteredExpenses.subList(0, itemsToShow);
 
-        // Apply slide-right animation only on first page
-        if (currentPage == 1) {
-            android.view.animation.LayoutAnimationController animController = android.view.animation.AnimationUtils
-                    .loadLayoutAnimation(
-                            requireContext(), R.anim.layout_animation_slide_right);
-            rvTransactions.setLayoutAnimation(animController);
-        }
-
         adapter.setExpenses(new ArrayList<>(paginatedList));
-
-        if (currentPage == 1) {
-            rvTransactions.scheduleLayoutAnimation();
-        }
 
         // Show/hide Load More button
         boolean hasMoreItems = itemsToShow < totalItems;

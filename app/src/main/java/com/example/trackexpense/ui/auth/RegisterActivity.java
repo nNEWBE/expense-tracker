@@ -222,13 +222,11 @@ public class RegisterActivity extends AppCompatActivity {
 
         findViewById(R.id.tvLogin).setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
             finish();
         });
 
         findViewById(R.id.tvBack).setOnClickListener(v -> {
             startActivity(new Intent(this, WelcomeActivity.class));
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
             finish();
         });
 
@@ -367,7 +365,6 @@ public class RegisterActivity extends AppCompatActivity {
         Intent intent = new Intent(this, EmailVerificationActivity.class);
         intent.putExtra("USER_NAME", name);
         startActivity(intent);
-        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         finish();
     }
 
@@ -391,7 +388,6 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         startActivity(new Intent(this, WelcomeActivity.class));
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
         finish();
     }
 }

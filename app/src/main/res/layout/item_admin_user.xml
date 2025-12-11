@@ -106,7 +106,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:text="user@email.com"
-                android:textColor="#9CA3AF"
+                android:textColor="@color/gray_400"
                 android:textSize="12sp" />
         </LinearLayout>
 
@@ -115,7 +115,7 @@
             android:id="@+id/btnMore"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            app:cardBackgroundColor="#F3F4F6"
+            app:cardBackgroundColor="@color/gray_100"
             app:cardCornerRadius="10dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp">
@@ -125,7 +125,7 @@
                 android:layout_height="18dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_more_vert"
-                app:tint="#6B7280" />
+                app:tint="@color/gray_500" />
 
         </com.google.android.material.card.MaterialCardView>
 

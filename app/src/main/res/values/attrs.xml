@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ShimmerView">
+        <attr name="shimmer_baseColor" format="color" />
+        <attr name="shimmer_highlightColor" format="color" />
+        <attr name="shimmer_isCircle" format="boolean" />
+        <attr name="shimmer_cornerRadius" format="dimension" />
+        <attr name="shimmerDuration" format="integer" />
+    </declare-styleable>
+</resources>

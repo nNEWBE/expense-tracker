@@ -28,6 +28,7 @@
         <!-- Component styles -->
         <item name="bottomNavigationStyle">@style/Widget.TrackExpense.BottomNavigation</item>
         <item name="materialCardViewStyle">@style/Widget.TrackExpense.CardView</item>
+        <item name="android:windowAnimationStyle">@null</item>
     </style>
 
     <!-- Dark Theme -->
@@ -58,12 +59,13 @@
         <!-- Component styles -->
         <item name="bottomNavigationStyle">@style/Widget.TrackExpense.BottomNavigation.Dark</item>
         <item name="materialCardViewStyle">@style/Widget.TrackExpense.CardView.Dark</item>
+        <item name="android:windowAnimationStyle">@null</item>
     </style>
 
     <style name="Theme.TrackExpense.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#1A3A4A</item>
+        <item name="windowSplashScreenBackground">@color/nav_active_color</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/app_logo</item>
-        <item name="windowSplashScreenIconBackgroundColor">#1A3A4A</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/nav_active_color</item>
         <item name="postSplashScreenTheme">@style/Theme.TrackExpense</item>
     </style>
 
@@ -90,7 +92,7 @@
     </style>
 
     <style name="Widget.TrackExpense.BottomNavigation.ActiveIndicator.Dark" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">#30B5A4FF</item>
+        <item name="android:color">@color/violet_30_alpha</item>
     </style>
 
     <!-- Card Style - Light -->
@@ -125,7 +127,7 @@
 
     <!-- Modern Bottom Nav Indicator -->
     <style name="App.BottomNavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">#201A3A4A</item>
+        <item name="android:color">@color/nav_active_color_20_alpha</item>
         <item name="android:width">64dp</item>
         <item name="android:height">32dp</item>
     </style>
@@ -165,7 +167,33 @@
         <item name="android:windowSoftInputMode">adjustResize</item>
     </style>
 
+    <style name="Widget.TrackExpense.Chip.QuickAmount" parent="android:Widget.TextView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:background">@drawable/bg_chip_neutral</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingHorizontal">16dp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
     <style name="BottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
         <item name="android:background">@android:color/transparent</item>
     </style>
+
+    <!-- Quick Amount Card Style -->
+    <style name="Widget.TrackExpense.QuickAmountCard" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardBackgroundColor">@color/surface_light</item>
+        <item name="cardCornerRadius">21dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="strokeColor">@color/black_12_alpha</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:layout_marginEnd">10dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+    </style>
+
 </resources>

@@ -15,7 +15,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:strokeWidth="1.5dp"
-        app:strokeColor="#3B87CEEB">
+        app:strokeColor="@color/sky_blue_23_alpha">
 
         <com.google.android.material.imageview.ShapeableImageView
             android:layout_width="60dp"
@@ -31,7 +31,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Expense Tracker"
-        android:textColor="#FFFFFF"
+        android:textColor="@android:color/white"
         android:textSize="24sp"
         android:textStyle="bold" />
 
@@ -42,7 +42,7 @@
         android:layout_marginTop="4dp"
         android:alpha="0.9"
         android:text="Smart Money Management"
-        android:textColor="#FFFFFF"
+        android:textColor="@android:color/white"
         android:textSize="14sp" />
 
     <!-- User Info Container -->
@@ -76,7 +76,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="User Name"
-                android:textColor="#FFFFFF"
+                android:textColor="@android:color/white"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -89,7 +89,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="user@email.com"
-                android:textColor="#FFFFFF"
+                android:textColor="@android:color/white"
                 android:textSize="12sp" />
 
         </LinearLayout>
@@ -99,7 +99,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_nav_settings"
-            app:tint="#FFFFFF" />
+            app:tint="@android:color/white" />
 
     </LinearLayout>
 

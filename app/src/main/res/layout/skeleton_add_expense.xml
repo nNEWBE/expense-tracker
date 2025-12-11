@@ -1,0 +1,599 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Professional skeleton layout for add expense page -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_light">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Header skeleton with gradient -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="260dp"
+                    android:background="@drawable/bg_transaction_header" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="80dp">
+
+                    <!-- Top Bar skeleton -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.example.trackexpense.ui.components.ShimmerView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            app:shimmer_baseColor="@color/skeleton_header_base"
+                            app:shimmer_highlightColor="@color/skeleton_header_highlight"
+                            app:shimmer_cornerRadius="22dp"
+                            app:shimmerDuration="1800" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="130dp"
+                                android:layout_height="22dp"
+                                app:shimmer_baseColor="@color/skeleton_header_base"
+                                app:shimmer_highlightColor="@color/skeleton_header_highlight"
+                                app:shimmer_cornerRadius="6dp"
+                                app:shimmerDuration="1800" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="170dp"
+                                android:layout_height="14dp"
+                                android:layout_marginTop="6dp"
+                                app:shimmer_baseColor="@color/skeleton_header_base_alt"
+                                app:shimmer_highlightColor="@color/skeleton_header_highlight_alt"
+                                app:shimmer_cornerRadius="6dp"
+                                app:shimmerDuration="1800" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Transaction Type Toggle skeleton -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="28dp"
+                        android:orientation="horizontal">
+
+                        <!-- Income Card skeleton -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10dp"
+                            android:layout_weight="1"
+                            app:cardBackgroundColor="@color/skeleton_card_income"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:orientation="horizontal"
+                                android:paddingVertical="18dp"
+                                android:paddingHorizontal="12dp">
+
+                                <com.example.trackexpense.ui.components.ShimmerView
+                                    android:layout_width="36dp"
+                                    android:layout_height="36dp"
+                                    app:shimmer_baseColor="@color/skeleton_header_base"
+                                    app:shimmer_highlightColor="@color/skeleton_header_highlight"
+                                    app:shimmer_cornerRadius="18dp"
+                                    app:shimmerDuration="1800" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="12dp"
+                                    android:orientation="vertical">
+
+                                    <com.example.trackexpense.ui.components.ShimmerView
+                                        android:layout_width="58dp"
+                                        android:layout_height="16dp"
+                                        app:shimmer_baseColor="@color/skeleton_header_base"
+                                        app:shimmer_highlightColor="@color/skeleton_header_highlight"
+                                        app:shimmer_cornerRadius="6dp"
+                                        app:shimmerDuration="1800" />
+
+                                    <com.example.trackexpense.ui.components.ShimmerView
+                                        android:layout_width="50dp"
+                                        android:layout_height="12dp"
+                                        android:layout_marginTop="4dp"
+                                        app:shimmer_baseColor="@color/skeleton_header_base_alt"
+                                        app:shimmer_highlightColor="@color/skeleton_header_highlight_alt"
+                                        app:shimmer_cornerRadius="6dp"
+                                        app:shimmerDuration="1800" />
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Expense Card skeleton -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            app:cardBackgroundColor="@color/skeleton_header_base"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:orientation="horizontal"
+                                android:paddingVertical="18dp"
+                                android:paddingHorizontal="12dp">
+
+                                <com.example.trackexpense.ui.components.ShimmerView
+                                    android:layout_width="36dp"
+                                    android:layout_height="36dp"
+                                    app:shimmer_baseColor="@color/skeleton_header_base"
+                                    app:shimmer_highlightColor="@color/skeleton_header_highlight"
+                                    app:shimmer_cornerRadius="18dp"
+                                    app:shimmerDuration="1800" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="12dp"
+                                    android:orientation="vertical">
+
+                                    <com.example.trackexpense.ui.components.ShimmerView
+                                        android:layout_width="62dp"
+                                        android:layout_height="16dp"
+                                        app:shimmer_baseColor="@color/skeleton_header_base"
+                                        app:shimmer_highlightColor="@color/skeleton_header_highlight"
+                                        app:shimmer_cornerRadius="6dp"
+                                        app:shimmerDuration="1800" />
+
+                                    <com.example.trackexpense.ui.components.ShimmerView
+                                        android:layout_width="56dp"
+                                        android:layout_height="12dp"
+                                        android:layout_marginTop="4dp"
+                                        app:shimmer_baseColor="@color/skeleton_header_base_alt"
+                                        app:shimmer_highlightColor="@color/skeleton_header_highlight_alt"
+                                        app:shimmer_cornerRadius="6dp"
+                                        app:shimmerDuration="1800" />
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+            <!-- Amount Card skeleton -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="-50dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="24dp"
+                    android:paddingTop="28dp"
+                    android:paddingBottom="24dp">
+
+                    <!-- Amount label skeleton -->
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="100dp"
+                        android:layout_height="28dp"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="14dp"
+                        app:shimmerDuration="1800" />
+
+                    <!-- Amount input skeleton -->
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="180dp"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="16dp"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="8dp"
+                        app:shimmerDuration="1800" />
+
+                    <!-- Quick amount chips skeleton -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:orientation="horizontal">
+
+                        <com.example.trackexpense.ui.components.ShimmerView
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            app:shimmer_baseColor="@color/skeleton_base"
+                            app:shimmer_highlightColor="@color/skeleton_highlight"
+                            app:shimmer_cornerRadius="12dp"
+                            app:shimmerDuration="1800" />
+
+                        <com.example.trackexpense.ui.components.ShimmerView
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginHorizontal="6dp"
+                            android:layout_weight="1"
+                            app:shimmer_baseColor="@color/skeleton_base"
+                            app:shimmer_highlightColor="@color/skeleton_highlight"
+                            app:shimmer_cornerRadius="12dp"
+                            app:shimmerDuration="1800" />
+
+                        <com.example.trackexpense.ui.components.ShimmerView
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginHorizontal="6dp"
+                            android:layout_weight="1"
+                            app:shimmer_baseColor="@color/skeleton_base"
+                            app:shimmer_highlightColor="@color/skeleton_highlight"
+                            app:shimmer_cornerRadius="12dp"
+                            app:shimmerDuration="1800" />
+
+                        <com.example.trackexpense.ui.components.ShimmerView
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            app:shimmer_baseColor="@color/skeleton_base"
+                            app:shimmer_highlightColor="@color/skeleton_highlight"
+                            app:shimmer_cornerRadius="12dp"
+                            app:shimmerDuration="1800" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Form Section skeleton -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="28dp"
+                android:paddingBottom="100dp">
+
+                <!-- Category Section Header skeleton -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="20dp"
+                        android:background="@color/skeleton_base_darker" />
+
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="120dp"
+                        android:layout_height="18dp"
+                        android:layout_marginStart="12dp"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="6dp"
+                        app:shimmerDuration="1800" />
+
+                </LinearLayout>
+
+                <!-- Category Grid skeleton -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="12dp"
+                        app:shimmerDuration="1800" />
+
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_marginHorizontal="8dp"
+                        android:layout_weight="1"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="12dp"
+                        app:shimmerDuration="1800" />
+
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_marginHorizontal="8dp"
+                        android:layout_weight="1"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="12dp"
+                        app:shimmerDuration="1800" />
+
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="12dp"
+                        app:shimmerDuration="1800" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="12dp"
+                        app:shimmerDuration="1800" />
+
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_marginHorizontal="8dp"
+                        android:layout_weight="1"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="12dp"
+                        app:shimmerDuration="1800" />
+
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_marginHorizontal="8dp"
+                        android:layout_weight="1"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="12dp"
+                        app:shimmerDuration="1800" />
+
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="12dp"
+                        app:shimmerDuration="1800" />
+
+                </LinearLayout>
+
+                <!-- Details Section Header skeleton -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="28dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="20dp"
+                        android:background="@color/skeleton_base_darker" />
+
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="150dp"
+                        android:layout_height="18dp"
+                        android:layout_marginStart="12dp"
+                        app:shimmer_baseColor="@color/skeleton_base"
+                        app:shimmer_highlightColor="@color/skeleton_highlight"
+                        app:shimmer_cornerRadius="6dp"
+                        app:shimmerDuration="1800" />
+
+                </LinearLayout>
+
+                <!-- Details Card skeleton -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <!-- Date row skeleton -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingVertical="14dp">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                app:shimmer_baseColor="@color/skeleton_base"
+                                app:shimmer_highlightColor="@color/skeleton_highlight"
+                                app:shimmer_cornerRadius="14dp"
+                                app:shimmerDuration="1800" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <com.example.trackexpense.ui.components.ShimmerView
+                                    android:layout_width="40dp"
+                                    android:layout_height="13dp"
+                                    app:shimmer_baseColor="@color/skeleton_base"
+                                    app:shimmer_highlightColor="@color/skeleton_highlight"
+                                    app:shimmer_cornerRadius="6dp"
+                                    app:shimmerDuration="1800" />
+
+                                <com.example.trackexpense.ui.components.ShimmerView
+                                    android:layout_width="80dp"
+                                    android:layout_height="18dp"
+                                    android:layout_marginTop="6dp"
+                                    app:shimmer_baseColor="@color/skeleton_base"
+                                    app:shimmer_highlightColor="@color/skeleton_highlight"
+                                    app:shimmer_cornerRadius="6dp"
+                                    app:shimmerDuration="1800" />
+
+                            </LinearLayout>
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                app:shimmer_baseColor="@color/skeleton_base"
+                                app:shimmer_highlightColor="@color/skeleton_highlight"
+                                app:shimmer_cornerRadius="16dp"
+                                app:shimmerDuration="1800" />
+
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="64dp"
+                            android:background="@color/gray_100" />
+
+                        <!-- Notes row skeleton -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingVertical="14dp">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                app:shimmer_baseColor="@color/skeleton_base"
+                                app:shimmer_highlightColor="@color/skeleton_highlight"
+                                app:shimmer_cornerRadius="14dp"
+                                app:shimmerDuration="1800" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <com.example.trackexpense.ui.components.ShimmerView
+                                    android:layout_width="48dp"
+                                    android:layout_height="13dp"
+                                    app:shimmer_baseColor="@color/skeleton_base"
+                                    app:shimmer_highlightColor="@color/skeleton_highlight"
+                                    app:shimmer_cornerRadius="6dp"
+                                    app:shimmerDuration="1800" />
+
+                                <com.example.trackexpense.ui.components.ShimmerView
+                                    android:layout_width="140dp"
+                                    android:layout_height="18dp"
+                                    android:layout_marginTop="6dp"
+                                    app:shimmer_baseColor="@color/skeleton_base"
+                                    app:shimmer_highlightColor="@color/skeleton_highlight"
+                                    app:shimmer_cornerRadius="6dp"
+                                    app:shimmerDuration="1800" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Save button skeleton -->
+                <com.example.trackexpense.ui.components.ShimmerView
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="28dp"
+                    app:shimmer_baseColor="@color/skeleton_base"
+                    app:shimmer_highlightColor="@color/skeleton_highlight"
+                    app:shimmer_cornerRadius="20dp"
+                    app:shimmerDuration="1800" />
+
+                <!-- Hint text skeleton -->
+                <com.example.trackexpense.ui.components.ShimmerView
+                    android:layout_width="240dp"
+                    android:layout_height="14dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="12dp"
+                    app:shimmer_baseColor="@color/skeleton_base"
+                    app:shimmer_highlightColor="@color/skeleton_highlight"
+                    app:shimmer_cornerRadius="7dp"
+                    app:shimmerDuration="1800" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</FrameLayout>

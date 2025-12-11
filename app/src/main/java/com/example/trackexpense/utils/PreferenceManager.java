@@ -146,4 +146,62 @@ public class PreferenceManager {
     public long getLastBackupTime() {
         return sharedPreferences.getLong(KEY_LAST_BACKUP, 0);
     }
+
+    // Category Caching for Guest Users
+    private static final String KEY_CACHED_EXPENSE_CATEGORIES = "cached_expense_categories";
+    private static final String KEY_CACHED_INCOME_CATEGORIES = "cached_income_categories";
+    private static final String KEY_CATEGORIES_CACHE_TIME = "categories_cache_time";
+
+    /**
+     * Cache expense categories as JSON string.
+     * Format: "name1|iconName1|colorHex1;name2|iconName2|colorHex2;..."
+     */
+    public void cacheExpenseCategories(String categoriesData) {
+        sharedPreferences.edit()
+                .putString(KEY_CACHED_EXPENSE_CATEGORIES, categoriesData)
+                .putLong(KEY_CATEGORIES_CACHE_TIME, System.currentTimeMillis())
+                .apply();
+    }
+
+    /**
+     * Get cached expense categories.
+     */
+    public String getCachedExpenseCategories() {
+        return sharedPreferences.getString(KEY_CACHED_EXPENSE_CATEGORIES, "");
+    }
+
+    /**
+     * Cache income categories as JSON string.
+     */
+    public void cacheIncomeCategories(String categoriesData) {
+        sharedPreferences.edit()
+                .putString(KEY_CACHED_INCOME_CATEGORIES, categoriesData)
+                .putLong(KEY_CATEGORIES_CACHE_TIME, System.currentTimeMillis())
+                .apply();
+    }
+
+    /**
+     * Get cached income categories.
+     */
+    public String getCachedIncomeCategories() {
+        return sharedPreferences.getString(KEY_CACHED_INCOME_CATEGORIES, "");
+    }
+
+    /**
+     * Check if categories cache is valid (less than 24 hours old).
+     */
+    public boolean isCategoriesCacheValid() {
+        long cacheTime = sharedPreferences.getLong(KEY_CATEGORIES_CACHE_TIME, 0);
+        long oneDayMs = 24 * 60 * 60 * 1000; // 24 hours
+        return (System.currentTimeMillis() - cacheTime) < oneDayMs;
+    }
+
+    /**
+     * Check if categories are cached.
+     */
+    public boolean hasCachedCategories() {
+        String expense = getCachedExpenseCategories();
+        String income = getCachedIncomeCategories();
+        return !expense.isEmpty() && !income.isEmpty();
+    }
 }

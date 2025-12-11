@@ -194,7 +194,6 @@ public class EmailVerificationActivity extends AppCompatActivity {
             Intent intent = new Intent(this, LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
             finish();
         });
     }
@@ -313,7 +312,6 @@ public class EmailVerificationActivity extends AppCompatActivity {
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
-        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         finish();
     }
 
@@ -405,7 +403,6 @@ public class EmailVerificationActivity extends AppCompatActivity {
                     Intent intent = new Intent(this, WelcomeActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
-                    overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
                     finish();
                 })
                 .show();

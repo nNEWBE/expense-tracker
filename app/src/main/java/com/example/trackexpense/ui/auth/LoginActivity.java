@@ -221,7 +221,6 @@ public class LoginActivity extends AppCompatActivity {
 
         findViewById(R.id.tvRegister).setOnClickListener(v -> {
             startActivity(new Intent(this, RegisterActivity.class));
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             finish();
         });
 
@@ -229,7 +228,6 @@ public class LoginActivity extends AppCompatActivity {
 
         findViewById(R.id.tvBack).setOnClickListener(v -> {
             startActivity(new Intent(this, WelcomeActivity.class));
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
             finish();
         });
 
@@ -282,7 +280,6 @@ public class LoginActivity extends AppCompatActivity {
                                     Intent intent = new Intent(this, EmailVerificationActivity.class);
                                     intent.putExtra("USER_NAME", user.getDisplayName());
                                     startActivity(intent);
-                                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                                     finish();
                                 });
                                 BeautifulNotification.showWarning(this, "Please verify your email to continue.");
@@ -403,7 +400,6 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         startActivity(new Intent(this, WelcomeActivity.class));
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
         finish();
     }
 }

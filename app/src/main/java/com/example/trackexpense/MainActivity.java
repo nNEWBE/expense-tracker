@@ -228,25 +228,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     return;
                 }
 
-                androidx.navigation.NavOptions navOptions = new androidx.navigation.NavOptions.Builder()
-                        .setEnterAnim(R.anim.nav_fade_in)
-                        .setExitAnim(R.anim.nav_fade_out)
-                        .setPopEnterAnim(R.anim.nav_pop_enter)
-                        .setPopExitAnim(R.anim.nav_pop_exit)
-                        .build();
-                navController.navigate(R.id.addExpenseFragment, null, navOptions);
+                navController.navigate(R.id.addExpenseFragment);
             });
 
             // Set up click listeners for custom nav items - only navigate if not already
-            // there, with beautiful page transition animations
+            // there
             navDashboard.setOnClickListener(v -> {
                 if (navController.getCurrentDestination() != null &&
                         navController.getCurrentDestination().getId() != R.id.dashboardFragment) {
                     androidx.navigation.NavOptions navOptions = new androidx.navigation.NavOptions.Builder()
-                            .setEnterAnim(R.anim.nav_fade_in)
-                            .setExitAnim(R.anim.nav_fade_out)
-                            .setPopEnterAnim(R.anim.nav_pop_enter)
-                            .setPopExitAnim(R.anim.nav_pop_exit)
                             .setPopUpTo(R.id.dashboardFragment, true)
                             .build();
                     navController.navigate(R.id.dashboardFragment, null, navOptions);
@@ -256,39 +246,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             navTransaction.setOnClickListener(v -> {
                 if (navController.getCurrentDestination() != null &&
                         navController.getCurrentDestination().getId() != R.id.transactionsFragment) {
-                    androidx.navigation.NavOptions navOptions = new androidx.navigation.NavOptions.Builder()
-                            .setEnterAnim(R.anim.nav_fade_in)
-                            .setExitAnim(R.anim.nav_fade_out)
-                            .setPopEnterAnim(R.anim.nav_pop_enter)
-                            .setPopExitAnim(R.anim.nav_pop_exit)
-                            .build();
-                    navController.navigate(R.id.transactionsFragment, null, navOptions);
+                    navController.navigate(R.id.transactionsFragment);
                 }
             });
 
             navAnalytics.setOnClickListener(v -> {
                 if (navController.getCurrentDestination() != null &&
                         navController.getCurrentDestination().getId() != R.id.analyticsFragment) {
-                    androidx.navigation.NavOptions navOptions = new androidx.navigation.NavOptions.Builder()
-                            .setEnterAnim(R.anim.nav_fade_in)
-                            .setExitAnim(R.anim.nav_fade_out)
-                            .setPopEnterAnim(R.anim.nav_pop_enter)
-                            .setPopExitAnim(R.anim.nav_pop_exit)
-                            .build();
-                    navController.navigate(R.id.analyticsFragment, null, navOptions);
+                    navController.navigate(R.id.analyticsFragment);
                 }
             });
 
             navProfile.setOnClickListener(v -> {
                 if (navController.getCurrentDestination() != null &&
                         navController.getCurrentDestination().getId() != R.id.profileFragment) {
-                    androidx.navigation.NavOptions navOptions = new androidx.navigation.NavOptions.Builder()
-                            .setEnterAnim(R.anim.nav_fade_in)
-                            .setExitAnim(R.anim.nav_fade_out)
-                            .setPopEnterAnim(R.anim.nav_pop_enter)
-                            .setPopExitAnim(R.anim.nav_pop_exit)
-                            .build();
-                    navController.navigate(R.id.profileFragment, null, navOptions);
+                    navController.navigate(R.id.profileFragment);
                 }
             });
 

@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Professional skeleton layout for profile page -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_light">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Professional Header skeleton -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/dashboard_header_bg">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="20dp"
+                    android:paddingBottom="70dp">
+
+                    <!-- Top Bar skeleton -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <!-- Icon skeleton with card bg -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            app:cardBackgroundColor="@color/skeleton_card_bg_transparent"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center"
+                                app:shimmer_baseColor="@color/skeleton_header_base"
+                                app:shimmer_highlightColor="@color/skeleton_header_highlight" />
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="100dp"
+                                android:layout_height="22dp"
+                                app:shimmer_baseColor="@color/skeleton_header_base_light"
+                                app:shimmer_highlightColor="@color/skeleton_header_highlight_light" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="140dp"
+                                android:layout_height="14dp"
+                                android:layout_marginTop="6dp"
+                                app:shimmer_baseColor="@color/skeleton_header_base"
+                                app:shimmer_highlightColor="@color/skeleton_header_highlight" />
+
+                        </LinearLayout>
+
+                        <com.example.trackexpense.ui.components.ShimmerView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            app:shimmer_baseColor="@color/skeleton_header_base_alt"
+                            app:shimmer_highlightColor="@color/skeleton_header_highlight_alt"
+                            app:shimmer_cornerRadius="20dp" />
+
+                    </LinearLayout>
+
+                    <!-- Avatar skeleton -->
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:layout_marginTop="24dp"
+                        app:shimmer_baseColor="@color/skeleton_header_base"
+                        app:shimmer_highlightColor="@color/skeleton_header_highlight"
+                        app:shimmer_isCircle="true" />
+
+                    <!-- Name skeleton -->
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="150dp"
+                        android:layout_height="22dp"
+                        android:layout_marginTop="16dp"
+                        app:shimmer_baseColor="@color/skeleton_header_base_light"
+                        app:shimmer_highlightColor="@color/skeleton_header_highlight_light" />
+
+                    <!-- Email skeleton -->
+                    <com.example.trackexpense.ui.components.ShimmerView
+                        android:layout_width="190dp"
+                        android:layout_height="16dp"
+                        android:layout_marginTop="8dp"
+                        app:shimmer_baseColor="@color/skeleton_header_base"
+                        app:shimmer_highlightColor="@color/skeleton_header_highlight" />
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+            <!-- Content Cards -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="-50dp"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingBottom="100dp">
+
+                <!-- Quick Stats Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="6dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="24dp"
+                        android:weightSum="3">
+
+                        <!-- Transactions stat -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="44dp"
+                                android:layout_height="28dp" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="72dp"
+                                android:layout_height="13dp"
+                                android:layout_marginTop="8dp" />
+
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="48dp"
+                            android:layout_gravity="center"
+                            android:background="@color/skeleton_divider" />
+
+                        <!-- This Month stat -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="44dp"
+                                android:layout_height="28dp" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="68dp"
+                                android:layout_height="13dp"
+                                android:layout_marginTop="8dp" />
+
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="48dp"
+                            android:layout_gravity="center"
+                            android:background="@color/skeleton_divider" />
+
+                        <!-- Budget Used stat -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="48dp"
+                                android:layout_height="28dp" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="76dp"
+                                android:layout_height="13dp"
+                                android:layout_marginTop="8dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Account Settings Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="4dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <!-- Section title -->
+                        <com.example.trackexpense.ui.components.ShimmerView
+                            android:layout_width="60dp"
+                            android:layout_height="14dp" />
+
+                        <!-- Setting item 1 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <com.example.trackexpense.ui.components.ShimmerView
+                                    android:layout_width="100dp"
+                                    android:layout_height="15dp" />
+
+                                <com.example.trackexpense.ui.components.ShimmerView
+                                    android:layout_width="140dp"
+                                    android:layout_height="13dp"
+                                    android:layout_marginTop="6dp" />
+
+                            </LinearLayout>
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp" />
+
+                        </LinearLayout>
+
+                        <!-- Setting item 2 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <com.example.trackexpense.ui.components.ShimmerView
+                                    android:layout_width="110dp"
+                                    android:layout_height="15dp" />
+
+                                <com.example.trackexpense.ui.components.ShimmerView
+                                    android:layout_width="160dp"
+                                    android:layout_height="13dp"
+                                    android:layout_marginTop="6dp" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Preferences Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="4dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <!-- Section title -->
+                        <com.example.trackexpense.ui.components.ShimmerView
+                            android:layout_width="85dp"
+                            android:layout_height="14dp" />
+
+                        <!-- Preference item 1 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="80dp"
+                                android:layout_height="15dp"
+                                android:layout_marginStart="16dp" />
+
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="60dp"
+                                android:layout_height="13dp" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginStart="10dp" />
+
+                        </LinearLayout>
+
+                        <!-- Preference item 2 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="110dp"
+                                android:layout_height="15dp"
+                                android:layout_marginStart="16dp" />
+
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="50dp"
+                                android:layout_height="13dp" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginStart="10dp" />
+
+                        </LinearLayout>
+
+                        <!-- Preference item 3 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="90dp"
+                                android:layout_height="15dp"
+                                android:layout_marginStart="16dp" />
+
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="55dp"
+                                android:layout_height="13dp" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginStart="10dp" />
+
+                        </LinearLayout>
+
+                        <!-- Preference item 4 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="120dp"
+                                android:layout_height="15dp"
+                                android:layout_marginStart="16dp" />
+
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <com.example.trackexpense.ui.components.ShimmerView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Logout button skeleton -->
+                <com.example.trackexpense.ui.components.ShimmerView
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="24dp" />
+
+                <!-- Version skeleton -->
+                <com.example.trackexpense.ui.components.ShimmerView
+                    android:layout_width="80dp"
+                    android:layout_height="14dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="28dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</FrameLayout>

@@ -19,7 +19,7 @@
             app:cardBackgroundColor="@color/white"
             app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
-            app:strokeColor="#F3F4F6"
+            app:strokeColor="@color/gray_100"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -33,7 +33,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@drawable/ic_search"
-                    app:tint="#9CA3AF" />
+                    app:tint="@color/gray_400" />
 
                 <EditText
                     android:id="@+id/etSearch"
@@ -46,7 +46,7 @@
                     android:imeOptions="actionSearch"
                     android:inputType="text"
                     android:textColor="@color/on_background_light"
-                    android:textColorHint="#9CA3AF"
+                    android:textColorHint="@color/gray_400"
                     android:textSize="14sp" />
 
             </LinearLayout>
@@ -114,7 +114,7 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp"
             android:text="0 Categories"
-            android:textColor="#6B7280"
+            android:textColor="@color/gray_500"
             android:textSize="13sp"
             android:textStyle="bold" />
 

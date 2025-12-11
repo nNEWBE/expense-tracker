@@ -157,7 +157,7 @@
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:contentDescription="Add Transaction"
-                app:backgroundTint="#1A3A4A"
+                app:backgroundTint="@color/nav_active_color"
                 app:elevation="16dp"
                 app:fabCustomSize="60dp"
                 app:layout_constraintBottom_toBottomOf="@id/bottom_nav_container"

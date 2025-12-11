@@ -31,7 +31,7 @@
             android:layout_height="36dp"
             android:layout_gravity="center"
             android:src="@drawable/ic_exit"
-            app:tint="#EF4444" />
+            app:tint="@color/red_500" />
 
     </FrameLayout>
 
@@ -54,7 +54,7 @@
         android:layout_marginTop="8dp"
         android:gravity="center"
         android:text="Are you sure you want to exit?\nYour data is safely saved."
-        android:textColor="#6B7280"
+        android:textColor="@color/gray_500"
         android:textSize="14sp" />
 
     <!-- Buttons -->
@@ -78,7 +78,7 @@
             android:textColor="@color/on_background_light"
             android:textSize="15sp"
             app:cornerRadius="14dp"
-            app:strokeColor="#E5E7EB"
+            app:strokeColor="@color/gray_200"
             app:strokeWidth="1.5dp" />
 
         <!-- Exit Button -->
@@ -88,7 +88,7 @@
             android:layout_height="52dp"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:backgroundTint="#EF4444"
+            android:backgroundTint="@color/red_500"
             android:text="Exit"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
