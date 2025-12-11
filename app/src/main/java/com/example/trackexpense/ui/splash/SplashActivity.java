@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.os.Looper;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,10 +30,15 @@ import com.google.firebase.auth.FirebaseAuth;
 public class SplashActivity extends AppCompatActivity {
 
     private MaterialCardView logoCard;
-    private View tvAppName, tvTagline, waveContainer, tvLoading;
-    private View bar1, bar2, bar3, bar4, bar5;
+    private View tvAppName, tvTagline, orbitContainer, tvLoading;
+    private View orbitDot1, orbitDot2, orbitDot3, centerGlow;
     private View sphere1, sphere2, sphere3, sphere4, sphere5;
     private boolean isAnimating = true;
+
+    // Orbit parameters
+    private static final float ORBIT_RADIUS_1 = 22f; // dp
+    private static final float ORBIT_RADIUS_2 = 18f;
+    private static final float ORBIT_RADIUS_3 = 14f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,15 +60,14 @@ public class SplashActivity extends AppCompatActivity {
         logoCard = findViewById(R.id.logoCard);
         tvAppName = findViewById(R.id.tvAppName);
         tvTagline = findViewById(R.id.tvTagline);
-        waveContainer = findViewById(R.id.waveContainer);
+        orbitContainer = findViewById(R.id.orbitContainer);
         tvLoading = findViewById(R.id.tvLoading);
 
-        // Wave bars
-        bar1 = findViewById(R.id.bar1);
-        bar2 = findViewById(R.id.bar2);
-        bar3 = findViewById(R.id.bar3);
-        bar4 = findViewById(R.id.bar4);
-        bar5 = findViewById(R.id.bar5);
+        // Orbit dots
+        orbitDot1 = findViewById(R.id.orbitDot1);
+        orbitDot2 = findViewById(R.id.orbitDot2);
+        orbitDot3 = findViewById(R.id.orbitDot3);
+        centerGlow = findViewById(R.id.centerGlow);
 
         // Spheres
         sphere1 = findViewById(R.id.sphere1);
@@ -121,51 +127,93 @@ public class SplashActivity extends AppCompatActivity {
         tagAnimSet.setStartDelay(900);
         tagAnimSet.start();
 
-        // Fade in wave container and loading text
-        ObjectAnimator waveAlpha = ObjectAnimator.ofFloat(waveContainer, "alpha", 0f, 1f);
-        waveAlpha.setDuration(400);
-        waveAlpha.setStartDelay(1100);
-        waveAlpha.start();
+        // Fade in orbit container and loading text
+        ObjectAnimator orbitAlpha = ObjectAnimator.ofFloat(orbitContainer, "alpha", 0f, 1f);
+        orbitAlpha.setDuration(400);
+        orbitAlpha.setStartDelay(1100);
+        orbitAlpha.start();
 
         ObjectAnimator loadingTextAlpha = ObjectAnimator.ofFloat(tvLoading, "alpha", 0f, 1f);
         loadingTextAlpha.setDuration(300);
         loadingTextAlpha.setStartDelay(1200);
         loadingTextAlpha.start();
 
-        // Start wave animation
-        new Handler(Looper.getMainLooper()).postDelayed(this::startWaveAnimation, 1100);
+        // Start orbiting animation
+        new Handler(Looper.getMainLooper()).postDelayed(this::startOrbitAnimation, 1100);
 
         // Start logo pulse after initial animation
         new Handler(Looper.getMainLooper()).postDelayed(this::startLogoPulse, 1000);
+
+        // Start center glow pulse
+        new Handler(Looper.getMainLooper()).postDelayed(this::startCenterGlowPulse, 1100);
 
         // Navigate after animations complete
         new Handler(Looper.getMainLooper()).postDelayed(this::navigateToNextScreen, 3000);
     }
 
-    private void startWaveAnimation() {
-        View[] bars = { bar1, bar2, bar3, bar4, bar5 };
-        int[] delays = { 0, 80, 160, 240, 320 };
+    private void startOrbitAnimation() {
+        float density = getResources().getDisplayMetrics().density;
 
-        for (int i = 0; i < bars.length; i++) {
-            animateWaveBar(bars[i], delays[i], i);
-        }
+        // Orbit dot 1 - Outer orbit, slower
+        startOrbitingDot(orbitDot1, ORBIT_RADIUS_1 * density, 1800, 0);
+
+        // Orbit dot 2 - Middle orbit, medium speed, offset start
+        startOrbitingDot(orbitDot2, ORBIT_RADIUS_2 * density, 1400, 120);
+
+        // Orbit dot 3 - Inner orbit, faster, different offset
+        startOrbitingDot(orbitDot3, ORBIT_RADIUS_3 * density, 1100, 240);
     }
 
-    private void animateWaveBar(View bar, int delay, int index) {
-        ObjectAnimator scaleAnim = ObjectAnimator.ofFloat(bar, "scaleY", 0.4f, 1.8f, 0.4f);
-        scaleAnim.setDuration(600 + (index * 50));
-        scaleAnim.setStartDelay(delay);
-        scaleAnim.setInterpolator(new AccelerateDecelerateInterpolator());
-        scaleAnim.setRepeatCount(ValueAnimator.INFINITE);
-        scaleAnim.start();
+    private void startOrbitingDot(View dot, float radius, int duration, float startAngle) {
+        ValueAnimator orbitAnimator = ValueAnimator.ofFloat(startAngle, startAngle + 360f);
+        orbitAnimator.setDuration(duration);
+        orbitAnimator.setInterpolator(new LinearInterpolator());
+        orbitAnimator.setRepeatCount(ValueAnimator.INFINITE);
 
-        // Alpha pulse effect
-        ObjectAnimator alphaAnim = ObjectAnimator.ofFloat(bar, "alpha", 0.6f, 1f, 0.6f);
-        alphaAnim.setDuration(600 + (index * 50));
-        alphaAnim.setStartDelay(delay);
-        alphaAnim.setInterpolator(new AccelerateDecelerateInterpolator());
-        alphaAnim.setRepeatCount(ValueAnimator.INFINITE);
-        alphaAnim.start();
+        orbitAnimator.addUpdateListener(animation -> {
+            if (!isAnimating)
+                return;
+
+            float angle = (float) animation.getAnimatedValue();
+            double radians = Math.toRadians(angle);
+
+            float x = (float) (Math.cos(radians) * radius);
+            float y = (float) (Math.sin(radians) * radius);
+
+            dot.setTranslationX(x);
+            dot.setTranslationY(y);
+
+            // Add subtle alpha variation based on position (fade when at top)
+            float alphaMod = (float) ((Math.sin(radians) + 1) / 2 * 0.3 + 0.7);
+            dot.setAlpha(alphaMod);
+
+            // Add subtle scale variation (larger when closer/bottom)
+            float scaleMod = (float) ((Math.sin(radians) + 1) / 2 * 0.2 + 0.9);
+            dot.setScaleX(scaleMod);
+            dot.setScaleY(scaleMod);
+        });
+
+        orbitAnimator.start();
+    }
+
+    private void startCenterGlowPulse() {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(centerGlow, "scaleX", 1f, 1.5f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(centerGlow, "scaleY", 1f, 1.5f, 1f);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(centerGlow, "alpha", 0.6f, 1f, 0.6f);
+
+        AnimatorSet pulseSet = new AnimatorSet();
+        pulseSet.playTogether(scaleX, scaleY, alpha);
+        pulseSet.setDuration(1500);
+        pulseSet.setInterpolator(new AccelerateDecelerateInterpolator());
+        pulseSet.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (isAnimating) {
+                    pulseSet.start();
+                }
+            }
+        });
+        pulseSet.start();
     }
 
     private void animateSpheres() {
@@ -243,7 +291,6 @@ public class SplashActivity extends AppCompatActivity {
         }
 
         startActivity(intent);
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         finish();
     }
 }

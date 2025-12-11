@@ -71,7 +71,7 @@
             android:layout_width="140dp"
             android:layout_height="140dp"
             android:alpha="0"
-            app:cardBackgroundColor="#2D5A6A"
+            app:cardBackgroundColor="@color/dark_teal_bg"
             app:cardCornerRadius="28dp"
             app:cardElevation="12dp"
             app:strokeWidth="0dp">
@@ -110,53 +110,48 @@
 
     </LinearLayout>
 
-    <!-- Wave Loading Bars -->
-    <LinearLayout
-        android:id="@+id/waveContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
+    <!-- Orbiting Dots Loading Animation -->
+    <FrameLayout
+        android:id="@+id/orbitContainer"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="50dp"
-        android:alpha="0"
-        android:gravity="center"
-        android:orientation="horizontal">
+        android:layout_marginBottom="45dp"
+        android:alpha="0">
 
+        <!-- Center glow -->
         <View
-            android:id="@+id/bar1"
-            android:layout_width="6dp"
-            android:layout_height="20dp"
-            android:layout_marginHorizontal="3dp"
-            android:background="@drawable/loading_bar_teal" />
+            android:id="@+id/centerGlow"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center"
+            android:background="@drawable/orbit_center_glow" />
 
+        <!-- Orbiting dot 1 -->
         <View
-            android:id="@+id/bar2"
-            android:layout_width="6dp"
-            android:layout_height="20dp"
-            android:layout_marginHorizontal="3dp"
-            android:background="@drawable/loading_bar_teal" />
+            android:id="@+id/orbitDot1"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_gravity="center"
+            android:background="@drawable/orbit_dot_primary" />
 
+        <!-- Orbiting dot 2 -->
         <View
-            android:id="@+id/bar3"
-            android:layout_width="6dp"
-            android:layout_height="20dp"
-            android:layout_marginHorizontal="3dp"
-            android:background="@drawable/loading_bar_teal" />
+            android:id="@+id/orbitDot2"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_gravity="center"
+            android:background="@drawable/orbit_dot_secondary" />
 
+        <!-- Orbiting dot 3 -->
         <View
-            android:id="@+id/bar4"
+            android:id="@+id/orbitDot3"
             android:layout_width="6dp"
-            android:layout_height="20dp"
-            android:layout_marginHorizontal="3dp"
-            android:background="@drawable/loading_bar_teal" />
+            android:layout_height="6dp"
+            android:layout_gravity="center"
+            android:background="@drawable/orbit_dot_tertiary" />
 
-        <View
-            android:id="@+id/bar5"
-            android:layout_width="6dp"
-            android:layout_height="20dp"
-            android:layout_marginHorizontal="3dp"
-            android:background="@drawable/loading_bar_teal" />
-
-    </LinearLayout>
+    </FrameLayout>
 
     <!-- Loading Text -->
     <TextView
