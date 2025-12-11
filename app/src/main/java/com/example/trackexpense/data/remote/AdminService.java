@@ -143,23 +143,62 @@ public class AdminService {
     }
 
     public void deleteUser(String userId, OnCompleteListener listener) {
+        // Call Cloud Function to delete user from Firebase Authentication
+        // The Cloud Function will handle Auth deletion using Admin SDK
+        com.google.firebase.functions.FirebaseFunctions functions = com.google.firebase.functions.FirebaseFunctions
+                .getInstance();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", userId);
+
+        functions.getHttpsCallable("deleteUser")
+                .call(data)
+                .addOnSuccessListener(result -> {
+                    Log.d(TAG, "Cloud Function deleted user from Auth");
+                    // Now delete Firestore data
+                    deleteUserFirestoreData(userId, listener);
+                })
+                .addOnFailureListener(e -> {
+                    Log.w(TAG, "Cloud Function failed, deleting Firestore data only: " + e.getMessage());
+                    // If Cloud Function fails (maybe not deployed), still delete Firestore data
+                    deleteUserFirestoreData(userId, listener);
+                });
+    }
+
+    private void deleteUserFirestoreData(String userId, OnCompleteListener listener) {
         // First delete all user's expenses
         db.collection("users").document(userId).collection("expenses")
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(expenseSnapshot -> {
                     // Delete each expense
-                    for (var doc : querySnapshot.getDocuments()) {
+                    for (var doc : expenseSnapshot.getDocuments()) {
                         doc.getReference().delete();
                     }
 
-                    // Then delete the user document
-                    db.collection("users").document(userId)
-                            .delete()
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "User deleted");
-                                listener.onSuccess();
+                    // Delete all user's notifications
+                    db.collection("users").document(userId).collection("notifications")
+                            .get()
+                            .addOnSuccessListener(notifSnapshot -> {
+                                for (var doc : notifSnapshot.getDocuments()) {
+                                    doc.getReference().delete();
+                                }
+
+                                // Finally delete the user document
+                                db.collection("users").document(userId)
+                                        .delete()
+                                        .addOnSuccessListener(aVoid -> {
+                                            Log.d(TAG, "User Firestore data deleted");
+                                            listener.onSuccess();
+                                        })
+                                        .addOnFailureListener(listener::onFailure);
                             })
-                            .addOnFailureListener(listener::onFailure);
+                            .addOnFailureListener(e -> {
+                                // Continue with user deletion even if notifications fail
+                                db.collection("users").document(userId)
+                                        .delete()
+                                        .addOnSuccessListener(aVoid -> listener.onSuccess())
+                                        .addOnFailureListener(listener::onFailure);
+                            });
                 })
                 .addOnFailureListener(listener::onFailure);
     }
