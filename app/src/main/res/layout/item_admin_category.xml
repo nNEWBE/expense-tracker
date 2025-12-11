@@ -21,30 +21,30 @@
         android:orientation="horizontal"
         android:padding="16dp">
 
-        <!-- Category Icon with gradient ring -->
+        <!-- Category Icon with low opacity bg -->
         <FrameLayout
-            android:layout_width="56dp"
-            android:layout_height="56dp">
+            android:layout_width="52dp"
+            android:layout_height="52dp">
 
-            <!-- Outer ring -->
+            <!-- Low opacity outer ring -->
             <View
                 android:id="@+id/iconRing"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@drawable/circle_ring" />
+                android:background="@drawable/circle_ring_light" />
 
-            <!-- Inner icon background -->
+            <!-- Inner icon background with low opacity -->
             <View
                 android:id="@+id/iconBg"
-                android:layout_width="46dp"
-                android:layout_height="46dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
                 android:layout_gravity="center"
                 android:background="@drawable/circle_background" />
 
             <ImageView
                 android:id="@+id/ivIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_food"
                 app:tint="@android:color/white" />

@@ -240,7 +240,7 @@ public class AdminUsersFragment extends Fragment {
         TextView tvAdmin = popupView.findViewById(R.id.tvToggleAdmin);
         ImageView ivAdmin = popupView.findViewById(R.id.ivToggleAdmin);
 
-        // Hide dangerous options for current logged-in admin
+        // Hide dangerous options and divider for current logged-in admin
         if (isCurrentUser) {
             if (itemBlock != null)
                 itemBlock.setVisibility(View.GONE);
@@ -248,6 +248,10 @@ public class AdminUsersFragment extends Fragment {
                 itemAdmin.setVisibility(View.GONE);
             if (itemDelete != null)
                 itemDelete.setVisibility(View.GONE);
+            // Also hide divider
+            View divider = popupView.findViewById(R.id.divider);
+            if (divider != null)
+                divider.setVisibility(View.GONE);
         }
 
         // Update block/unblock text
@@ -466,10 +470,8 @@ public class AdminUsersFragment extends Fragment {
         }
 
         class UserViewHolder extends RecyclerView.ViewHolder {
-            TextView tvInitial, tvName, tvEmail;
-            Chip chipBlocked, chipAdmin;
-            View btnMore;
-            View avatarBg;
+            TextView tvInitial, tvName, tvEmail, chipBlocked, chipAdmin;
+            View btnMore, avatarBg, adminIndicator, blockedIndicator;
             ImageView ivVerified;
 
             public UserViewHolder(@NonNull View itemView) {
@@ -482,6 +484,8 @@ public class AdminUsersFragment extends Fragment {
                 btnMore = itemView.findViewById(R.id.btnMore);
                 avatarBg = itemView.findViewById(R.id.avatarBg);
                 ivVerified = itemView.findViewById(R.id.ivVerified);
+                adminIndicator = itemView.findViewById(R.id.adminIndicator);
+                blockedIndicator = itemView.findViewById(R.id.blockedIndicator);
             }
 
             public void bind(User user) {
@@ -496,32 +500,36 @@ public class AdminUsersFragment extends Fragment {
                     tvInitial.setText(name.substring(0, 1).toUpperCase());
                 }
 
-                // Set avatar color based on status
-                int avatarColor;
-                if (user.isBlocked()) {
-                    avatarColor = ContextCompat.getColor(itemView.getContext(), R.color.expense_red);
-                } else if (user.isAdmin()) {
-                    avatarColor = ContextCompat.getColor(itemView.getContext(), R.color.primary);
-                } else {
-                    // Use hash-based color for normal users
-                    int[] colors = { R.color.category_food, R.color.category_transport,
-                            R.color.category_shopping, R.color.category_entertainment,
-                            R.color.category_health, R.color.primary };
-                    int colorIndex = Math.abs((user.getEmail() != null ? user.getEmail().hashCode() : 0))
-                            % colors.length;
-                    avatarColor = ContextCompat.getColor(itemView.getContext(), colors[colorIndex]);
-                }
+                // Set avatar color - use hash-based color with low opacity feel
+                int[] colors = { R.color.category_food, R.color.category_transport,
+                        R.color.category_shopping, R.color.category_entertainment,
+                        R.color.category_health, R.color.primary };
+                int colorIndex = Math.abs((user.getEmail() != null ? user.getEmail().hashCode() : 0))
+                        % colors.length;
+                int avatarColor = ContextCompat.getColor(itemView.getContext(), colors[colorIndex]);
 
                 GradientDrawable bg = new GradientDrawable();
                 bg.setShape(GradientDrawable.OVAL);
                 bg.setColor(avatarColor);
                 avatarBg.setBackground(bg);
 
-                // Show badges
-                chipBlocked.setVisibility(user.isBlocked() ? View.VISIBLE : View.GONE);
-                chipAdmin.setVisibility(user.isAdmin() ? View.VISIBLE : View.GONE);
+                // Show text badges
+                if (chipBlocked != null) {
+                    chipBlocked.setVisibility(user.isBlocked() ? View.VISIBLE : View.GONE);
+                }
+                if (chipAdmin != null) {
+                    chipAdmin.setVisibility(user.isAdmin() ? View.VISIBLE : View.GONE);
+                }
 
-                // Show verified badge
+                // Show avatar indicators
+                if (adminIndicator != null) {
+                    adminIndicator.setVisibility(user.isAdmin() && !user.isBlocked() ? View.VISIBLE : View.GONE);
+                }
+                if (blockedIndicator != null) {
+                    blockedIndicator.setVisibility(user.isBlocked() ? View.VISIBLE : View.GONE);
+                }
+
+                // Show verified badge (Meta-style)
                 if (ivVerified != null) {
                     ivVerified.setVisibility(user.isVerified() ? View.VISIBLE : View.GONE);
                 }
