@@ -40,6 +40,8 @@ public class AdminUsersFragment extends Fragment {
     private RecyclerView rvUsers;
     private EditText etSearch;
     private TextView tvUserCount;
+    private TextView tvActiveUsers;
+    private TextView tvBlockedUsers;
     private UserAdapter adapter;
     private List<User> allUsers = new ArrayList<>();
 
@@ -57,6 +59,8 @@ public class AdminUsersFragment extends Fragment {
 
         etSearch = view.findViewById(R.id.etSearch);
         tvUserCount = view.findViewById(R.id.tvUserCount);
+        tvActiveUsers = view.findViewById(R.id.tvActiveUsers);
+        tvBlockedUsers = view.findViewById(R.id.tvBlockedUsers);
         rvUsers = view.findViewById(R.id.rvUsers);
 
         setupRecyclerView();
@@ -90,7 +94,19 @@ public class AdminUsersFragment extends Fragment {
     private void observeUsers() {
         adminService.getAllUsers().observe(getViewLifecycleOwner(), users -> {
             allUsers = users;
-            tvUserCount.setText(users.size() + " Users");
+            tvUserCount.setText("All Users (" + users.size() + ")");
+
+            // Count active and blocked users
+            long activeCount = users.stream().filter(u -> !u.isBlocked()).count();
+            long blockedCount = users.stream().filter(User::isBlocked).count();
+
+            if (tvActiveUsers != null) {
+                tvActiveUsers.setText(activeCount + " Active");
+            }
+            if (tvBlockedUsers != null) {
+                tvBlockedUsers.setText(blockedCount + " Blocked");
+            }
+
             adapter.setUsers(users);
         });
     }

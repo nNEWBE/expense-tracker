@@ -51,11 +51,12 @@ public class AdminCategoriesFragment extends Fragment {
     private AdminService adminService;
     private RecyclerView rvCategories;
     private EditText etSearch;
-    private Chip chipAll, chipExpense, chipIncome;
+    private com.google.android.material.card.MaterialCardView chipAll, chipExpense, chipIncome;
     private TextView tvCategoryCount;
-    private FloatingActionButton fabAdd;
+    private com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton fabAdd;
     private CategoryAdapter adapter;
     private List<CategoryModel> allCategories = new ArrayList<>();
+    private String currentFilter = "ALL"; // ALL, EXPENSE, INCOME
 
     // Icon options - expanded list
     private static final String[] ICON_NAMES = {
@@ -123,13 +124,60 @@ public class AdminCategoriesFragment extends Fragment {
     }
 
     private void setupFilters() {
-        View.OnClickListener chipListener = v -> filterCategories();
-        if (chipAll != null)
-            chipAll.setOnClickListener(chipListener);
-        if (chipExpense != null)
-            chipExpense.setOnClickListener(chipListener);
-        if (chipIncome != null)
-            chipIncome.setOnClickListener(chipListener);
+        updateFilterChipStyles();
+
+        if (chipAll != null) {
+            chipAll.setOnClickListener(v -> {
+                currentFilter = "ALL";
+                updateFilterChipStyles();
+                filterCategories();
+            });
+        }
+        if (chipExpense != null) {
+            chipExpense.setOnClickListener(v -> {
+                currentFilter = "EXPENSE";
+                updateFilterChipStyles();
+                filterCategories();
+            });
+        }
+        if (chipIncome != null) {
+            chipIncome.setOnClickListener(v -> {
+                currentFilter = "INCOME";
+                updateFilterChipStyles();
+                filterCategories();
+            });
+        }
+    }
+
+    private void updateFilterChipStyles() {
+        // Update All chip
+        if (chipAll != null) {
+            if ("ALL".equals(currentFilter)) {
+                chipAll.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.primary));
+            } else {
+                chipAll.setCardBackgroundColor(Color.parseColor("#F1F5F9"));
+            }
+        }
+        // Update Expense chip
+        if (chipExpense != null) {
+            if ("EXPENSE".equals(currentFilter)) {
+                chipExpense.setCardBackgroundColor(Color.parseColor("#FEE2E2"));
+                chipExpense.setStrokeColor(Color.parseColor("#EF4444"));
+            } else {
+                chipExpense.setCardBackgroundColor(Color.parseColor("#FEF2F2"));
+                chipExpense.setStrokeColor(Color.parseColor("#FECACA"));
+            }
+        }
+        // Update Income chip
+        if (chipIncome != null) {
+            if ("INCOME".equals(currentFilter)) {
+                chipIncome.setCardBackgroundColor(Color.parseColor("#DCFCE7"));
+                chipIncome.setStrokeColor(Color.parseColor("#22C55E"));
+            } else {
+                chipIncome.setCardBackgroundColor(Color.parseColor("#F0FDF4"));
+                chipIncome.setStrokeColor(Color.parseColor("#BBF7D0"));
+            }
+        }
     }
 
     private void setupFab() {
@@ -146,21 +194,18 @@ public class AdminCategoriesFragment extends Fragment {
     private void filterCategories() {
         String query = etSearch.getText() != null ? etSearch.getText().toString().toLowerCase() : "";
 
-        boolean showExpenseOnly = chipExpense != null && chipExpense.isChecked();
-        boolean showIncomeOnly = chipIncome != null && chipIncome.isChecked();
-
         List<CategoryModel> filtered = allCategories.stream()
                 .filter(c -> query.isEmpty() || c.getName().toLowerCase().contains(query))
                 .filter(c -> {
-                    if (showExpenseOnly)
+                    if ("EXPENSE".equals(currentFilter))
                         return "EXPENSE".equals(c.getType());
-                    if (showIncomeOnly)
+                    if ("INCOME".equals(currentFilter))
                         return "INCOME".equals(c.getType());
                     return true;
                 })
                 .collect(Collectors.toList());
 
-        tvCategoryCount.setText(filtered.size() + " Categories");
+        tvCategoryCount.setText("All Categories (" + filtered.size() + ")");
         adapter.setCategories(filtered);
     }
 
