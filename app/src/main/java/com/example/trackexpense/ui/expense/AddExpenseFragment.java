@@ -348,7 +348,22 @@ public class AddExpenseFragment extends Fragment {
 
     private void setupCategoryGrid() {
         if (rvCategories != null) {
-            rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 4));
+            GridLayoutManager layoutManager = new GridLayoutManager(requireContext(), 4);
+            rvCategories.setLayoutManager(layoutManager);
+
+            // Add spacing between grid items
+            int spacing = (int) (8 * getResources().getDisplayMetrics().density);
+            rvCategories.addItemDecoration(new RecyclerView.ItemDecoration() {
+                @Override
+                public void getItemOffsets(@NonNull android.graphics.Rect outRect, @NonNull View view,
+                        @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+                    outRect.left = spacing / 2;
+                    outRect.right = spacing / 2;
+                    outRect.top = spacing / 2;
+                    outRect.bottom = spacing / 2;
+                }
+            });
+
             updateCategoriesForType();
         }
     }
@@ -398,9 +413,12 @@ public class AddExpenseFragment extends Fragment {
                         // Cache the categories for guest users
                         cacheCategories(categories);
 
+                        // Sort categories with "Other" at last
+                        List<Category> sortedCategories = sortCategoriesWithOtherLast(categories);
+
                         requireActivity().runOnUiThread(() -> {
                             if (categoryAdapter != null) {
-                                categoryAdapter.setCategories(categories);
+                                categoryAdapter.setCategories(sortedCategories);
                             }
                         });
                     }
@@ -490,7 +508,35 @@ public class AddExpenseFragment extends Fragment {
         }
 
         Log.d(TAG, "Loaded " + categories.size() + " cached " + selectedType + " categories");
-        return categories;
+        return sortCategoriesWithOtherLast(categories);
+    }
+
+    /**
+     * Sort categories to ensure "Other" is always at the end.
+     */
+    private List<Category> sortCategoriesWithOtherLast(List<Category> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return categories;
+        }
+
+        // Find and remove "Other" category
+        Category otherCategory = null;
+        List<Category> sortedList = new ArrayList<>();
+
+        for (Category cat : categories) {
+            if ("Other".equalsIgnoreCase(cat.getName())) {
+                otherCategory = cat;
+            } else {
+                sortedList.add(cat);
+            }
+        }
+
+        // Add "Other" at the end if it exists
+        if (otherCategory != null) {
+            sortedList.add(otherCategory);
+        }
+
+        return sortedList;
     }
 
     /**

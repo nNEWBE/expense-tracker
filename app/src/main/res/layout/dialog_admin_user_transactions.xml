@@ -8,16 +8,19 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:orientation="vertical">
 
-        <!-- Header -->
+        <!-- Header - White Background -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="16dp">
 
+            <!-- Icon -->
             <FrameLayout
                 android:layout_width="48dp"
                 android:layout_height="48dp">
@@ -28,8 +31,8 @@
                     android:background="@drawable/bg_primary_circle" />
 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_nav_transaction_outline"
                     app:tint="@android:color/white" />
@@ -46,6 +49,8 @@
                     android:id="@+id/tvTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
                     android:text="User's Transactions"
                     android:textColor="@color/on_background_light"
                     android:textSize="18sp"
@@ -56,8 +61,103 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="View and manage transactions"
-                    android:textColor="#6B7280"
+                    android:textColor="@color/gray_400"
                     android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Stats Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/gray_50"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingVertical="10dp">
+
+            <!-- Total -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvTotalCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="@color/on_background_light"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Total"
+                    android:textColor="@color/gray_400"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="24dp"
+                android:background="#E5E7EB" />
+
+            <!-- Income -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvIncomeCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="@color/income_green"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Income"
+                    android:textColor="@color/gray_400"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="24dp"
+                android:background="#E5E7EB" />
+
+            <!-- Expense -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvExpenseCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="@color/expense_red"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Expense"
+                    android:textColor="@color/gray_400"
+                    android:textSize="10sp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -65,42 +165,54 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="16dp"
-            android:background="#F3F4F6" />
+            android:background="#F0F0F0" />
 
         <!-- Empty State -->
         <LinearLayout
             android:id="@+id/emptyState"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="60dp"
+            android:layout_marginTop="50dp"
             android:gravity="center"
             android:orientation="vertical"
             android:visibility="gone">
 
-            <ImageView
+            <FrameLayout
                 android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:alpha="0.5"
-                android:src="@drawable/ic_nav_transaction_outline"
-                app:tint="@color/gray_400" />
+                android:layout_height="80dp">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/circle_background"
+                    android:backgroundTint="@color/gray_100" />
+
+                <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="center"
+                    android:alpha="0.4"
+                    android:src="@drawable/ic_nav_transaction_outline"
+                    app:tint="@color/gray_400" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/tvEmpty"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 android:text="No transactions yet"
-                android:textColor="@color/gray_400"
-                android:textSize="16sp" />
+                android:textColor="@color/on_background_light"
+                android:textSize="15sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Tap + to add a transaction"
-                android:textColor="#9CA3AF"
-                android:textSize="13sp" />
+                android:textColor="@color/gray_400"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <!-- Transactions List -->
@@ -108,23 +220,27 @@
             android:id="@+id/rvTransactions"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             android:layout_weight="1"
             android:clipToPadding="false"
+            android:paddingHorizontal="12dp"
             android:paddingBottom="70dp" />
     </LinearLayout>
 
     <!-- FAB -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
+        android:layout_margin="16dp"
         android:backgroundTint="@color/primary"
-        app:elevation="6dp"
-        app:shapeAppearanceOverlay="@style/ShapeAppearance.App.MediumComponent"
-        app:srcCompat="@drawable/ic_add"
-        app:tint="@color/white" />
+        android:text="Add"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        app:elevation="4dp"
+        app:icon="@drawable/ic_add"
+        app:iconTint="@android:color/white"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.App.MediumComponent" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

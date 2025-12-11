@@ -42,7 +42,7 @@ public class ProfileFragment extends Fragment {
 
     private TextView tvHeaderName, tvHeaderEmail, tvName, tvEmail, tvCurrency, tvBudget, tvTheme;
     private TextView tvTotalTransactions, tvThisMonth, tvBudgetUsed;
-    private Chip chipGuestMode;
+    private View cardGuestMode;
     private LinearLayout layoutAdmin;
     private FrameLayout headerLayout;
     private com.google.android.material.card.MaterialCardView cardStats, cardAccount, cardPreferences;
@@ -146,7 +146,7 @@ public class ProfileFragment extends Fragment {
         tvCurrency = view.findViewById(R.id.tvCurrency);
         tvBudget = view.findViewById(R.id.tvBudget);
         tvTheme = view.findViewById(R.id.tvTheme);
-        chipGuestMode = view.findViewById(R.id.chipGuestMode);
+        cardGuestMode = view.findViewById(R.id.cardGuestMode);
         layoutAdmin = view.findViewById(R.id.layoutAdmin);
 
         // Stats views
@@ -256,7 +256,18 @@ public class ProfileFragment extends Fragment {
         LinearLayout layoutDeleteAccount = getView().findViewById(R.id.layoutDeleteAccount);
 
         if (user != null) {
-            // Fetch user data from Firestore
+            // FIRST: Load cached data immediately for instant display
+            if (preferenceManager.hasUserProfileCached()) {
+                String cachedName = preferenceManager.getCachedUserName();
+                String cachedEmail = preferenceManager.getCachedUserEmail();
+                tvHeaderName.setText(cachedName);
+                if (tvHeaderEmail != null)
+                    tvHeaderEmail.setText(cachedEmail);
+                tvName.setText(cachedName);
+                tvEmail.setText(cachedEmail);
+            }
+
+            // THEN: Fetch fresh data from Firestore in background and update cache
             String userId = user.getUid();
             com.google.firebase.firestore.FirebaseFirestore.getInstance()
                     .collection("users")
@@ -287,36 +298,45 @@ public class ProfileFragment extends Fragment {
                             email = "No Email Provided";
                         }
 
-                        // Update UI
-                        tvHeaderName.setText(displayName);
-                        if (tvHeaderEmail != null)
-                            tvHeaderEmail.setText(email);
-                        tvName.setText(displayName);
-                        tvEmail.setText(email);
+                        // Update cache with fresh data
+                        preferenceManager.cacheUserName(displayName);
+                        preferenceManager.cacheUserEmail(email);
+
+                        // Update UI only if different from cached (avoid flicker)
+                        String cachedName = preferenceManager.getCachedUserName();
+                        if (!displayName.equals(cachedName)) {
+                            tvHeaderName.setText(displayName);
+                            if (tvHeaderEmail != null)
+                                tvHeaderEmail.setText(email);
+                            tvName.setText(displayName);
+                            tvEmail.setText(email);
+                        }
                     })
                     .addOnFailureListener(e -> {
                         if (!isAdded())
                             return;
 
-                        // Fallback to Firebase Auth data on failure
-                        String displayName = user.getDisplayName();
-                        String email = user.getEmail();
+                        // Only update UI if no cached data
+                        if (!preferenceManager.hasUserProfileCached()) {
+                            String displayName = user.getDisplayName();
+                            String email = user.getEmail();
 
-                        if (displayName == null || displayName.trim().isEmpty()) {
-                            displayName = "No Name Provided";
-                        }
-                        if (email == null || email.trim().isEmpty()) {
-                            email = "No Email Provided";
-                        }
+                            if (displayName == null || displayName.trim().isEmpty()) {
+                                displayName = "No Name Provided";
+                            }
+                            if (email == null || email.trim().isEmpty()) {
+                                email = "No Email Provided";
+                            }
 
-                        tvHeaderName.setText(displayName);
-                        if (tvHeaderEmail != null)
-                            tvHeaderEmail.setText(email);
-                        tvName.setText(displayName);
-                        tvEmail.setText(email);
+                            tvHeaderName.setText(displayName);
+                            if (tvHeaderEmail != null)
+                                tvHeaderEmail.setText(email);
+                            tvName.setText(displayName);
+                            tvEmail.setText(email);
+                        }
                     });
 
-            chipGuestMode.setVisibility(View.GONE);
+            cardGuestMode.setVisibility(View.GONE);
 
             // Show Logout for logged in users
             btnLogout.setText("Sign Out");
@@ -333,7 +353,7 @@ public class ProfileFragment extends Fragment {
                 tvHeaderEmail.setText("Sign in for more features");
             tvName.setText("Guest User");
             tvEmail.setText("Not signed in");
-            chipGuestMode.setVisibility(View.VISIBLE);
+            cardGuestMode.setVisibility(View.VISIBLE);
 
             // Show Login for guest users
             btnLogout.setText("Login / Register");
@@ -484,6 +504,8 @@ public class ProfileFragment extends Fragment {
 
         btnLogout.setOnClickListener(v -> {
             dialog.dismiss();
+            // Clear cached user data
+            preferenceManager.clearUserCache();
             FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(requireContext(), WelcomeActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

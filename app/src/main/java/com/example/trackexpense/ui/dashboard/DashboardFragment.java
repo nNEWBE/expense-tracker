@@ -351,6 +351,7 @@ public class DashboardFragment extends Fragment {
     private void setupRecyclerView() {
         expenseAdapter = new ExpenseAdapter();
         expenseAdapter.setCurrencySymbol(preferenceManager.getCurrencySymbol());
+        expenseAdapter.setExpandableEnabled(false); // Disable expanding in dashboard
         rvRecentTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvRecentTransactions.setAdapter(expenseAdapter);
     }

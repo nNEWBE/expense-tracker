@@ -152,7 +152,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@drawable/bg_icon_circle_teal" />
+                android:background="@drawable/bg_icon_circle_slate" />
 
             <ImageView
                 android:id="@+id/ivToggleAdmin"
@@ -160,7 +160,7 @@
                 android:layout_height="16dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_admin"
-                app:tint="@color/primary" />
+                app:tint="#64748B" />
 
         </FrameLayout>
 

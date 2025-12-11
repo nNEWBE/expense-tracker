@@ -326,12 +326,64 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Email is verified - proceed to main
-        saveUserToFirestore();
-        new PreferenceManager(this).setGuestMode(false);
-        BeautifulNotification.showSuccess(this, "Welcome back! You've successfully signed in.");
-        // Navigate after a short delay to show the notification
-        new Handler(Looper.getMainLooper()).postDelayed(this::goToMain, 1500);
+        // Email is verified - fetch user data from Firestore and cache it
+        PreferenceManager preferenceManager = new PreferenceManager(this);
+        preferenceManager.setGuestMode(false);
+
+        // Fetch user data from Firestore
+        String userId = user.getUid();
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String displayName;
+                    String email;
+
+                    if (documentSnapshot.exists()) {
+                        displayName = documentSnapshot.getString("displayName");
+                        email = documentSnapshot.getString("email");
+                    } else {
+                        displayName = user.getDisplayName();
+                        email = user.getEmail();
+                    }
+
+                    // Apply fallbacks
+                    if (displayName == null || displayName.trim().isEmpty()) {
+                        displayName = "User";
+                    }
+                    if (email == null || email.trim().isEmpty()) {
+                        email = user.getEmail() != null ? user.getEmail() : "No Email";
+                    }
+
+                    // Cache user data for instant loading
+                    preferenceManager.cacheUserName(displayName);
+                    preferenceManager.cacheUserEmail(email);
+
+                    // Save to Firestore and navigate
+                    saveUserToFirestore();
+                    BeautifulNotification.showSuccess(this, "Welcome back! You've successfully signed in.");
+                    new Handler(Looper.getMainLooper()).postDelayed(this::goToMain, 1500);
+                })
+                .addOnFailureListener(e -> {
+                    // Fallback to Firebase Auth data
+                    String displayName = user.getDisplayName();
+                    String email = user.getEmail();
+
+                    if (displayName == null || displayName.trim().isEmpty()) {
+                        displayName = "User";
+                    }
+                    if (email == null || email.trim().isEmpty()) {
+                        email = "No Email";
+                    }
+
+                    preferenceManager.cacheUserName(displayName);
+                    preferenceManager.cacheUserEmail(email);
+
+                    saveUserToFirestore();
+                    BeautifulNotification.showSuccess(this, "Welcome back! You've successfully signed in.");
+                    new Handler(Looper.getMainLooper()).postDelayed(this::goToMain, 1500);
+                });
     }
 
     private void saveUserToFirestore() {

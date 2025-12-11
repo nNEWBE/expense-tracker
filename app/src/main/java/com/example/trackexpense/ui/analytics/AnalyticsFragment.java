@@ -320,71 +320,111 @@ public class AnalyticsFragment extends Fragment {
     }
 
     private void addCategoryProgressBar(String category, double amount, double total) {
+        // Main item container with card-like styling
         LinearLayout itemLayout = new LinearLayout(requireContext());
         itemLayout.setOrientation(LinearLayout.VERTICAL);
-        itemLayout.setLayoutParams(new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
-        itemLayout.setPadding(0, 0, 0, dpToPx(12));
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        itemParams.bottomMargin = dpToPx(14);
+        itemLayout.setLayoutParams(itemParams);
 
-        // Top row: category name and percentage
+        // Top row: icon, category name, amount and percentage
         LinearLayout topRow = new LinearLayout(requireContext());
         topRow.setOrientation(LinearLayout.HORIZONTAL);
         topRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        // Category indicator dot
-        View dot = new View(requireContext());
-        int dotSize = dpToPx(8);
-        LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(dotSize, dotSize);
-        dot.setLayoutParams(dotParams);
+        // Category icon with background
+        FrameLayout iconContainer = new FrameLayout(requireContext());
+        int iconContainerSize = dpToPx(38);
+        LinearLayout.LayoutParams iconContainerParams = new LinearLayout.LayoutParams(iconContainerSize,
+                iconContainerSize);
+        iconContainer.setLayoutParams(iconContainerParams);
 
         CategoryHelper.CategoryInfo info = CategoryHelper.getCategoryInfo(category);
-        GradientDrawable dotBg = new GradientDrawable();
-        dotBg.setShape(GradientDrawable.OVAL);
-        dotBg.setColor(ContextCompat.getColor(requireContext(), info.colorRes));
-        dot.setBackground(dotBg);
+        int categoryColor = ContextCompat.getColor(requireContext(), info.colorRes);
+
+        // Icon background
+        View iconBg = new View(requireContext());
+        iconBg.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+        GradientDrawable iconBgDrawable = new GradientDrawable();
+        iconBgDrawable.setShape(GradientDrawable.OVAL);
+        iconBgDrawable.setColor(categoryColor);
+        iconBg.setBackground(iconBgDrawable);
+        iconContainer.addView(iconBg);
+
+        // Category icon
+        ImageView icon = new ImageView(requireContext());
+        int iconSize = dpToPx(18);
+        FrameLayout.LayoutParams iconParams = new FrameLayout.LayoutParams(iconSize, iconSize);
+        iconParams.gravity = Gravity.CENTER;
+        icon.setLayoutParams(iconParams);
+        icon.setImageResource(info.iconRes);
+        icon.setColorFilter(ContextCompat.getColor(requireContext(), android.R.color.white));
+        iconContainer.addView(icon);
+
+        // Text container
+        LinearLayout textContainer = new LinearLayout(requireContext());
+        textContainer.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        textParams.setMarginStart(dpToPx(12));
+        textContainer.setLayoutParams(textParams);
 
         // Category name
         TextView tvName = new TextView(requireContext());
-        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        nameParams.setMarginStart(dpToPx(8));
-        tvName.setLayoutParams(nameParams);
         tvName.setText(category);
         tvName.setTextColor(ContextCompat.getColor(requireContext(), R.color.on_background_light));
-        tvName.setTextSize(13);
+        tvName.setTextSize(14);
+        tvName.setTypeface(null, android.graphics.Typeface.BOLD);
 
-        // Percentage
+        // Amount
+        String symbol = preferenceManager.getCurrencySymbol();
+        TextView tvAmount = new TextView(requireContext());
+        tvAmount.setText(symbol + formatAmount(amount));
+        tvAmount.setTextColor(ContextCompat.getColor(requireContext(), R.color.gray_500));
+        tvAmount.setTextSize(12);
+
+        textContainer.addView(tvName);
+        textContainer.addView(tvAmount);
+
+        // Percentage badge
         int percent = (int) ((amount / total) * 100);
         TextView tvPercent = new TextView(requireContext());
         tvPercent.setText(percent + "%");
-        tvPercent.setTextColor(ContextCompat.getColor(requireContext(), info.colorRes));
-        tvPercent.setTextSize(13);
+        tvPercent.setTextColor(categoryColor);
+        tvPercent.setTextSize(15);
+        tvPercent.setTypeface(null, android.graphics.Typeface.BOLD);
 
-        topRow.addView(dot);
-        topRow.addView(tvName);
+        topRow.addView(iconContainer);
+        topRow.addView(textContainer);
         topRow.addView(tvPercent);
 
-        // Progress bar
+        // Progress bar with animation
         ProgressBar progressBar = new ProgressBar(requireContext(), null,
                 android.R.attr.progressBarStyleHorizontal);
         LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(6));
-        progressParams.topMargin = dpToPx(6);
+                LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(8));
+        progressParams.topMargin = dpToPx(10);
         progressBar.setLayoutParams(progressParams);
         progressBar.setMax(100);
-        progressBar.setProgress(percent);
-
-        // Set progress bar color
-        GradientDrawable progressBg = new GradientDrawable();
-        progressBg.setCornerRadius(dpToPx(3));
-        progressBg.setColor(Color.parseColor("#F3F4F6"));
+        progressBar.setProgress(0); // Start at 0 for animation
         progressBar.setProgressDrawable(createProgressDrawable(info.colorRes));
 
         itemLayout.addView(topRow);
         itemLayout.addView(progressBar);
 
         categoryProgressContainer.addView(itemLayout);
+
+        // Animate progress bar
+        android.animation.ObjectAnimator progressAnimator = android.animation.ObjectAnimator.ofInt(
+                progressBar, "progress", 0, percent);
+        progressAnimator.setDuration(1000);
+        progressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        progressAnimator.setStartDelay(categoryProgressContainer.getChildCount() * 100L); // Stagger animation
+        progressAnimator.start();
     }
 
     private android.graphics.drawable.Drawable createProgressDrawable(int colorRes) {
@@ -414,7 +454,7 @@ public class AnalyticsFragment extends Fragment {
     private GradientDrawable createRoundedDrawable(int color) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.RECTANGLE);
-        drawable.setCornerRadius(dpToPx(3));
+        drawable.setCornerRadius(dpToPx(6)); // More rounded for modern look
         drawable.setColor(color);
         return drawable;
     }
@@ -465,24 +505,25 @@ public class AnalyticsFragment extends Fragment {
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(0f);
-        dataSet.setSliceSpace(3f);
-        dataSet.setSelectionShift(5f);
+        dataSet.setSliceSpace(4f); // Slightly more spacing for modern look
+        dataSet.setSelectionShift(8f); // Enhanced selection effect
         dataSet.setDrawValues(false);
 
         PieData pieData = new PieData(dataSet);
         pieChart.setData(pieData);
         pieChart.setUsePercentValues(true);
         pieChart.getDescription().setEnabled(false);
-        pieChart.setHoleRadius(70f);
-        pieChart.setTransparentCircleRadius(75f);
+        pieChart.setHoleRadius(68f); // Slightly adjusted for better proportion
+        pieChart.setTransparentCircleRadius(73f);
         pieChart.setTransparentCircleColor(Color.WHITE);
-        pieChart.setTransparentCircleAlpha(50);
+        pieChart.setTransparentCircleAlpha(80); // More visible ring
         pieChart.setDrawCenterText(false);
         pieChart.setEntryLabelColor(Color.TRANSPARENT);
         pieChart.getLegend().setEnabled(false);
         pieChart.setDrawEntryLabels(false);
         pieChart.setRotationEnabled(false);
-        pieChart.animateY(1000);
+        pieChart.setHighlightPerTapEnabled(true); // Enable highlighting
+        pieChart.animateY(1200); // Slightly longer animation
         pieChart.invalidate();
     }
 

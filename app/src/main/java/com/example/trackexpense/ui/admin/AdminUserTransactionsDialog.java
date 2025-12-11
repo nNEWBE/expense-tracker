@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -27,7 +28,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -47,8 +48,9 @@ public class AdminUserTransactionsDialog extends DialogFragment {
     private User user;
     private AdminService adminService;
     private RecyclerView rvTransactions;
-    private TextView tvEmpty, tvTitle;
-    private FloatingActionButton fabAdd;
+    private TextView tvEmpty, tvTitle, tvTotalCount, tvIncomeCount, tvExpenseCount;
+    private View emptyState;
+    private ExtendedFloatingActionButton fabAdd;
     private TransactionAdapter adapter;
 
     public AdminUserTransactionsDialog(User user) {
@@ -64,13 +66,22 @@ public class AdminUserTransactionsDialog extends DialogFragment {
 
         tvTitle = view.findViewById(R.id.tvTitle);
         tvEmpty = view.findViewById(R.id.tvEmpty);
+        emptyState = view.findViewById(R.id.emptyState);
+        tvTotalCount = view.findViewById(R.id.tvTotalCount);
+        tvIncomeCount = view.findViewById(R.id.tvIncomeCount);
+        tvExpenseCount = view.findViewById(R.id.tvExpenseCount);
         rvTransactions = view.findViewById(R.id.rvTransactions);
         fabAdd = view.findViewById(R.id.fabAdd);
 
         String displayName = user.getDisplayName() != null && !user.getDisplayName().isEmpty()
                 ? user.getDisplayName()
                 : user.getEmail();
-        tvTitle.setText(displayName + "'s Transactions");
+        // Show only first name/first part
+        String firstName = displayName.split(" ")[0];
+        if (firstName.contains("@")) {
+            firstName = firstName.split("@")[0]; // Handle email case
+        }
+        tvTitle.setText(firstName + "'s Transactions");
 
         setupRecyclerView();
         setupFab();
@@ -94,14 +105,38 @@ public class AdminUserTransactionsDialog extends DialogFragment {
     private void loadTransactions() {
         adminService.getUserTransactions(user.getId()).observe(this, expenses -> {
             if (expenses == null || expenses.isEmpty()) {
-                tvEmpty.setVisibility(View.VISIBLE);
+                if (emptyState != null)
+                    emptyState.setVisibility(View.VISIBLE);
                 rvTransactions.setVisibility(View.GONE);
+                updateCounts(0, 0, 0);
             } else {
-                tvEmpty.setVisibility(View.GONE);
+                if (emptyState != null)
+                    emptyState.setVisibility(View.GONE);
                 rvTransactions.setVisibility(View.VISIBLE);
                 adapter.setExpenses(expenses);
+
+                // Calculate counts
+                int incomeCount = 0;
+                int expenseCount = 0;
+                for (Expense expense : expenses) {
+                    if ("INCOME".equals(expense.getType())) {
+                        incomeCount++;
+                    } else {
+                        expenseCount++;
+                    }
+                }
+                updateCounts(expenses.size(), incomeCount, expenseCount);
             }
         });
+    }
+
+    private void updateCounts(int total, int income, int expense) {
+        if (tvTotalCount != null)
+            tvTotalCount.setText(String.valueOf(total));
+        if (tvIncomeCount != null)
+            tvIncomeCount.setText(String.valueOf(income));
+        if (tvExpenseCount != null)
+            tvExpenseCount.setText(String.valueOf(expense));
     }
 
     private void showAddEditTransactionDialog(Expense existingExpense) {
@@ -119,7 +154,22 @@ public class AdminUserTransactionsDialog extends DialogFragment {
         final String[] selectedCategory = { null };
 
         // Setup category grid - use 3 columns for better visibility
-        rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 3));
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(requireContext(), 3);
+        rvCategories.setLayoutManager(gridLayoutManager);
+
+        // Add spacing between grid items
+        int spacing = (int) (8 * requireContext().getResources().getDisplayMetrics().density);
+        rvCategories.addItemDecoration(new RecyclerView.ItemDecoration() {
+            @Override
+            public void getItemOffsets(@NonNull android.graphics.Rect outRect, @NonNull View view,
+                    @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+                outRect.left = spacing / 2;
+                outRect.right = spacing / 2;
+                outRect.top = spacing / 2;
+                outRect.bottom = spacing / 2;
+            }
+        });
+
         CategorySelectionAdapter categoryAdapter = new CategorySelectionAdapter(
                 CategoryHelper.EXPENSE_CATEGORIES,
                 category -> selectedCategory[0] = category);
@@ -317,18 +367,24 @@ public class AdminUserTransactionsDialog extends DialogFragment {
                 ivIcon.setImageResource(info.iconRes);
                 ivIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), android.R.color.white));
 
+                int categoryColor = ContextCompat.getColor(itemView.getContext(), info.colorRes);
+
                 GradientDrawable bg = new GradientDrawable();
                 bg.setShape(GradientDrawable.OVAL);
-                bg.setColor(ContextCompat.getColor(itemView.getContext(), info.colorRes));
+                bg.setColor(categoryColor);
                 iconBg.setBackground(bg);
 
                 // Selection state
                 boolean isSelected = category.equals(selectedCategory);
                 if (isSelected) {
                     cardView.setStrokeColor(ContextCompat.getColor(itemView.getContext(), R.color.primary));
-                    cardView.setStrokeWidth(4);
+                    cardView.setStrokeWidth(6);
+                    cardView.setCardBackgroundColor(ContextCompat.getColor(itemView.getContext(), R.color.gray_50));
                 } else {
-                    cardView.setStrokeWidth(0);
+                    cardView.setStrokeColor(ContextCompat.getColor(itemView.getContext(), R.color.gray_200));
+                    cardView.setStrokeWidth(3);
+                    cardView.setCardBackgroundColor(
+                            ContextCompat.getColor(itemView.getContext(), android.R.color.white));
                 }
 
                 itemView.setOnClickListener(v -> {
@@ -386,37 +442,41 @@ public class AdminUserTransactionsDialog extends DialogFragment {
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
-            View iconBg;
-            ImageView ivIcon, btnEdit, btnDelete;
-            TextView tvCategory, tvDate, tvAmount, tvNotes;
+            View iconBg, expandableSection;
+            ImageView ivIcon, ivExpand;
+            FrameLayout btnEdit, btnDelete;
+            TextView tvCategory, tvDate, tvAmount;
+            boolean isExpanded = false;
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
                 iconBg = itemView.findViewById(R.id.iconBg);
                 ivIcon = itemView.findViewById(R.id.ivIcon);
+                ivExpand = itemView.findViewById(R.id.ivExpand);
                 tvCategory = itemView.findViewById(R.id.tvCategory);
                 tvDate = itemView.findViewById(R.id.tvDate);
                 tvAmount = itemView.findViewById(R.id.tvAmount);
-                tvNotes = itemView.findViewById(R.id.tvNotes);
+                expandableSection = itemView.findViewById(R.id.expandableSection);
                 btnEdit = itemView.findViewById(R.id.btnEdit);
                 btnDelete = itemView.findViewById(R.id.btnDelete);
             }
 
             public void bind(Expense expense) {
-                tvCategory.setText(expense.getCategory());
+                // Category - show only first word if too long
+                String category = expense.getCategory();
+                if (category.length() > 10) {
+                    String[] parts = category.split(" ");
+                    category = parts[0];
+                }
+                tvCategory.setText(category);
 
-                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
+                // Date - shorter format
+                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
                 tvDate.setText(sdf.format(new Date(expense.getDate())));
 
-                if (expense.getNotes() != null && !expense.getNotes().isEmpty()) {
-                    tvNotes.setText(expense.getNotes());
-                    tvNotes.setVisibility(View.VISIBLE);
-                } else {
-                    tvNotes.setVisibility(View.GONE);
-                }
-
-                // Set amount and color (no decimals)
-                if ("INCOME".equals(expense.getType())) {
+                // Amount with color based on type
+                boolean isIncome = "INCOME".equals(expense.getType());
+                if (isIncome) {
                     tvAmount.setText(String.format("+$%,.0f", expense.getAmount()));
                     tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.income_green));
                 } else {
@@ -429,14 +489,40 @@ public class AdminUserTransactionsDialog extends DialogFragment {
                 ivIcon.setImageResource(info.iconRes);
                 ivIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), android.R.color.white));
 
+                int categoryColor = ContextCompat.getColor(itemView.getContext(), info.colorRes);
+
                 GradientDrawable bg = new GradientDrawable();
                 bg.setShape(GradientDrawable.OVAL);
-                bg.setColor(ContextCompat.getColor(itemView.getContext(), info.colorRes));
+                bg.setColor(categoryColor);
                 iconBg.setBackground(bg);
 
-                // Click handlers
-                btnEdit.setOnClickListener(v -> showAddEditTransactionDialog(expense));
-                btnDelete.setOnClickListener(v -> confirmDeleteTransaction(expense));
+                // Expand/collapse functionality
+                isExpanded = false;
+                if (expandableSection != null) {
+                    expandableSection.setVisibility(View.GONE);
+                }
+                if (ivExpand != null) {
+                    ivExpand.setImageResource(R.drawable.ic_expand_more);
+                }
+
+                // Card click to toggle expand
+                itemView.setOnClickListener(v -> {
+                    isExpanded = !isExpanded;
+                    if (expandableSection != null) {
+                        expandableSection.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+                    }
+                    if (ivExpand != null) {
+                        ivExpand.setImageResource(isExpanded ? R.drawable.ic_expand_less : R.drawable.ic_expand_more);
+                    }
+                });
+
+                // Action button handlers
+                if (btnEdit != null) {
+                    btnEdit.setOnClickListener(v -> showAddEditTransactionDialog(expense));
+                }
+                if (btnDelete != null) {
+                    btnDelete.setOnClickListener(v -> confirmDeleteTransaction(expense));
+                }
             }
         }
     }

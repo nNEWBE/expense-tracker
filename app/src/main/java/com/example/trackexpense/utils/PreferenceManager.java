@@ -204,4 +204,55 @@ public class PreferenceManager {
         String income = getCachedIncomeCategories();
         return !expense.isEmpty() && !income.isEmpty();
     }
+
+    // User Profile Caching
+    private static final String KEY_CACHED_USER_NAME = "cached_user_name";
+    private static final String KEY_CACHED_USER_EMAIL = "cached_user_email";
+
+    /**
+     * Cache user display name for instant loading.
+     */
+    public void cacheUserName(String displayName) {
+        sharedPreferences.edit().putString(KEY_CACHED_USER_NAME, displayName).apply();
+    }
+
+    /**
+     * Get cached user display name.
+     */
+    public String getCachedUserName() {
+        return sharedPreferences.getString(KEY_CACHED_USER_NAME, "");
+    }
+
+    /**
+     * Cache user email for instant loading.
+     */
+    public void cacheUserEmail(String email) {
+        sharedPreferences.edit().putString(KEY_CACHED_USER_EMAIL, email).apply();
+    }
+
+    /**
+     * Get cached user email.
+     */
+    public String getCachedUserEmail() {
+        return sharedPreferences.getString(KEY_CACHED_USER_EMAIL, "");
+    }
+
+    /**
+     * Check if user profile is cached.
+     */
+    public boolean hasUserProfileCached() {
+        String name = getCachedUserName();
+        String email = getCachedUserEmail();
+        return !name.isEmpty() && !email.isEmpty();
+    }
+
+    /**
+     * Clear cached user data (on logout).
+     */
+    public void clearUserCache() {
+        sharedPreferences.edit()
+                .remove(KEY_CACHED_USER_NAME)
+                .remove(KEY_CACHED_USER_EMAIL)
+                .apply();
+    }
 }

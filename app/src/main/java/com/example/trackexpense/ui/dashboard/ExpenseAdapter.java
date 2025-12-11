@@ -40,6 +40,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
     private OnDeleteClickListener deleteClickListener;
     private String currencySymbol = "$";
     private Set<Integer> expandedPositions = new HashSet<>();
+    private boolean expandableEnabled = true; // Default is enabled
 
     // Category cache for dynamic icons/colors from Firestore
     private Map<String, Category> categoryCache = new HashMap<>();
@@ -102,6 +103,15 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
 
     public void setOnDeleteClickListener(OnDeleteClickListener listener) {
         this.deleteClickListener = listener;
+    }
+
+    /**
+     * Enable or disable the expandable feature.
+     * When disabled, the expand indicator is hidden and clicking won't expand.
+     */
+    public void setExpandableEnabled(boolean enabled) {
+        this.expandableEnabled = enabled;
+        notifyDataSetChanged();
     }
 
     /**
@@ -238,54 +248,66 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
                 tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.expense_red));
             }
 
-            // Handle expandable section
-            if (expandableSection != null) {
-                expandableSection.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
-
-                if (ivExpandIndicator != null) {
+            // Handle expand indicator visibility based on expandableEnabled
+            if (ivExpandIndicator != null) {
+                if (expandableEnabled) {
+                    ivExpandIndicator.setVisibility(View.VISIBLE);
                     ivExpandIndicator.setRotation(isExpanded ? 180f : 0f);
-                }
-
-                // Show notes if available
-                if (notesContainer != null && tvNotes != null) {
-                    String notes = expense.getNotes();
-                    if (notes != null && !notes.trim().isEmpty()) {
-                        notesContainer.setVisibility(View.VISIBLE);
-                        tvNotes.setText(notes);
-                    } else {
-                        notesContainer.setVisibility(View.GONE);
-                    }
-                }
-
-                // Edit button
-                if (btnEdit != null) {
-                    btnEdit.setOnClickListener(v -> {
-                        if (editClickListener != null) {
-                            editClickListener.onEditClick(expense, position);
-                        }
-                    });
-                }
-
-                // Delete button
-                if (btnDelete != null) {
-                    btnDelete.setOnClickListener(v -> {
-                        if (deleteClickListener != null) {
-                            deleteClickListener.onDeleteClick(expense, position);
-                        }
-                    });
+                } else {
+                    ivExpandIndicator.setVisibility(View.GONE);
                 }
             }
 
-            // Click to expand/collapse
+            // Handle expandable section
+            if (expandableSection != null) {
+                if (expandableEnabled) {
+                    expandableSection.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+
+                    // Show notes - always show container with "No notes available" if empty
+                    if (notesContainer != null && tvNotes != null) {
+                        notesContainer.setVisibility(View.VISIBLE);
+                        String notes = expense.getNotes();
+                        if (notes != null && !notes.trim().isEmpty()) {
+                            tvNotes.setText(notes);
+                        } else {
+                            tvNotes.setText("No notes available");
+                        }
+                    }
+
+                    // Edit button
+                    if (btnEdit != null) {
+                        btnEdit.setOnClickListener(v -> {
+                            if (editClickListener != null) {
+                                editClickListener.onEditClick(expense, position);
+                            }
+                        });
+                    }
+
+                    // Delete button
+                    if (btnDelete != null) {
+                        btnDelete.setOnClickListener(v -> {
+                            if (deleteClickListener != null) {
+                                deleteClickListener.onDeleteClick(expense, position);
+                            }
+                        });
+                    }
+                } else {
+                    expandableSection.setVisibility(View.GONE);
+                }
+            }
+
+            // Click to expand/collapse (only if expandable is enabled)
             itemView.setOnClickListener(v -> {
                 int adapterPosition = getAdapterPosition();
                 if (adapterPosition != RecyclerView.NO_POSITION) {
-                    if (expandedPositions.contains(adapterPosition)) {
-                        expandedPositions.remove(adapterPosition);
-                    } else {
-                        expandedPositions.add(adapterPosition);
+                    if (expandableEnabled) {
+                        if (expandedPositions.contains(adapterPosition)) {
+                            expandedPositions.remove(adapterPosition);
+                        } else {
+                            expandedPositions.add(adapterPosition);
+                        }
+                        notifyItemChanged(adapterPosition);
                     }
-                    notifyItemChanged(adapterPosition);
 
                     if (listener != null) {
                         listener.onItemClick(expense);
