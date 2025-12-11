@@ -110,46 +110,60 @@
 
     </LinearLayout>
 
-    <!-- Orbiting Dots Loading Animation -->
+    <!-- Currency Pulse Ring Loading Animation -->
     <FrameLayout
-        android:id="@+id/orbitContainer"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:id="@+id/loadingContainer"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="45dp"
         android:alpha="0">
 
-        <!-- Center glow -->
+        <!-- Outer expanding ring 1 -->
         <View
-            android:id="@+id/centerGlow"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:id="@+id/ringOuter1"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:layout_gravity="center"
-            android:background="@drawable/orbit_center_glow" />
+            android:background="@drawable/loading_ring_teal"
+            android:alpha="0" />
 
-        <!-- Orbiting dot 1 -->
+        <!-- Outer expanding ring 2 -->
         <View
-            android:id="@+id/orbitDot1"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
+            android:id="@+id/ringOuter2"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:layout_gravity="center"
-            android:background="@drawable/orbit_dot_primary" />
+            android:background="@drawable/loading_ring_teal"
+            android:alpha="0" />
 
-        <!-- Orbiting dot 2 -->
+        <!-- Main breathing ring -->
         <View
-            android:id="@+id/orbitDot2"
-            android:layout_width="8dp"
-            android:layout_height="8dp"
+            android:id="@+id/ringMain"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:layout_gravity="center"
-            android:background="@drawable/orbit_dot_secondary" />
+            android:background="@drawable/loading_ring_solid" />
 
-        <!-- Orbiting dot 3 -->
-        <View
-            android:id="@+id/orbitDot3"
-            android:layout_width="6dp"
-            android:layout_height="6dp"
+        <!-- Currency symbol container -->
+        <FrameLayout
+            android:id="@+id/currencyContainer"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_gravity="center"
-            android:background="@drawable/orbit_dot_tertiary" />
+            android:background="@drawable/currency_bg_circle">
+
+            <TextView
+                android:id="@+id/tvCurrencySymbol"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="৳"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+        </FrameLayout>
 
     </FrameLayout>
 

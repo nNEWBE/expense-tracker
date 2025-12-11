@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -13,9 +12,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
@@ -23,6 +23,7 @@ import androidx.core.splashscreen.SplashScreen;
 import com.example.trackexpense.MainActivity;
 import com.example.trackexpense.R;
 import com.example.trackexpense.ui.auth.WelcomeActivity;
+import com.example.trackexpense.utils.PreferenceManager;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -30,15 +31,11 @@ import com.google.firebase.auth.FirebaseAuth;
 public class SplashActivity extends AppCompatActivity {
 
     private MaterialCardView logoCard;
-    private View tvAppName, tvTagline, orbitContainer, tvLoading;
-    private View orbitDot1, orbitDot2, orbitDot3, centerGlow;
+    private View tvAppName, tvTagline, loadingContainer, tvLoading;
+    private View ringOuter1, ringOuter2, ringMain, currencyContainer;
+    private TextView tvCurrencySymbol;
     private View sphere1, sphere2, sphere3, sphere4, sphere5;
     private boolean isAnimating = true;
-
-    // Orbit parameters
-    private static final float ORBIT_RADIUS_1 = 22f; // dp
-    private static final float ORBIT_RADIUS_2 = 18f;
-    private static final float ORBIT_RADIUS_3 = 14f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +50,7 @@ public class SplashActivity extends AppCompatActivity {
         splashScreen.setKeepOnScreenCondition(() -> false);
 
         initViews();
+        setupCurrencySymbol();
         startAnimations();
     }
 
@@ -60,14 +58,15 @@ public class SplashActivity extends AppCompatActivity {
         logoCard = findViewById(R.id.logoCard);
         tvAppName = findViewById(R.id.tvAppName);
         tvTagline = findViewById(R.id.tvTagline);
-        orbitContainer = findViewById(R.id.orbitContainer);
+        loadingContainer = findViewById(R.id.loadingContainer);
         tvLoading = findViewById(R.id.tvLoading);
 
-        // Orbit dots
-        orbitDot1 = findViewById(R.id.orbitDot1);
-        orbitDot2 = findViewById(R.id.orbitDot2);
-        orbitDot3 = findViewById(R.id.orbitDot3);
-        centerGlow = findViewById(R.id.centerGlow);
+        // Loading ring elements
+        ringOuter1 = findViewById(R.id.ringOuter1);
+        ringOuter2 = findViewById(R.id.ringOuter2);
+        ringMain = findViewById(R.id.ringMain);
+        currencyContainer = findViewById(R.id.currencyContainer);
+        tvCurrencySymbol = findViewById(R.id.tvCurrencySymbol);
 
         // Spheres
         sphere1 = findViewById(R.id.sphere1);
@@ -75,6 +74,19 @@ public class SplashActivity extends AppCompatActivity {
         sphere3 = findViewById(R.id.sphere3);
         sphere4 = findViewById(R.id.sphere4);
         sphere5 = findViewById(R.id.sphere5);
+    }
+
+    private void setupCurrencySymbol() {
+        // Use user's preferred currency symbol
+        try {
+            PreferenceManager preferenceManager = new PreferenceManager(this);
+            String symbol = preferenceManager.getCurrencySymbol();
+            if (tvCurrencySymbol != null && symbol != null) {
+                tvCurrencySymbol.setText(symbol);
+            }
+        } catch (Exception e) {
+            // Use default symbol if preference not available
+        }
     }
 
     private void startAnimations() {
@@ -127,83 +139,99 @@ public class SplashActivity extends AppCompatActivity {
         tagAnimSet.setStartDelay(900);
         tagAnimSet.start();
 
-        // Fade in orbit container and loading text
-        ObjectAnimator orbitAlpha = ObjectAnimator.ofFloat(orbitContainer, "alpha", 0f, 1f);
-        orbitAlpha.setDuration(400);
-        orbitAlpha.setStartDelay(1100);
-        orbitAlpha.start();
+        // Fade in loading container
+        ObjectAnimator loadingAlpha = ObjectAnimator.ofFloat(loadingContainer, "alpha", 0f, 1f);
+        loadingAlpha.setDuration(400);
+        loadingAlpha.setStartDelay(1100);
+        loadingAlpha.start();
 
+        // Fade in loading text
         ObjectAnimator loadingTextAlpha = ObjectAnimator.ofFloat(tvLoading, "alpha", 0f, 1f);
         loadingTextAlpha.setDuration(300);
         loadingTextAlpha.setStartDelay(1200);
         loadingTextAlpha.start();
 
-        // Start orbiting animation
-        new Handler(Looper.getMainLooper()).postDelayed(this::startOrbitAnimation, 1100);
+        // Start currency pulse animation
+        new Handler(Looper.getMainLooper()).postDelayed(this::startCurrencyPulseAnimation, 1100);
 
         // Start logo pulse after initial animation
         new Handler(Looper.getMainLooper()).postDelayed(this::startLogoPulse, 1000);
-
-        // Start center glow pulse
-        new Handler(Looper.getMainLooper()).postDelayed(this::startCenterGlowPulse, 1100);
 
         // Navigate after animations complete
         new Handler(Looper.getMainLooper()).postDelayed(this::navigateToNextScreen, 3000);
     }
 
-    private void startOrbitAnimation() {
-        float density = getResources().getDisplayMetrics().density;
+    private void startCurrencyPulseAnimation() {
+        // Start the main ring breathing animation
+        startRingBreathing();
 
-        // Orbit dot 1 - Outer orbit, slower
-        startOrbitingDot(orbitDot1, ORBIT_RADIUS_1 * density, 1800, 0);
+        // Start the expanding ripple rings
+        startRingRipple(ringOuter1, 0);
+        startRingRipple(ringOuter2, 800);
 
-        // Orbit dot 2 - Middle orbit, medium speed, offset start
-        startOrbitingDot(orbitDot2, ORBIT_RADIUS_2 * density, 1400, 120);
-
-        // Orbit dot 3 - Inner orbit, faster, different offset
-        startOrbitingDot(orbitDot3, ORBIT_RADIUS_3 * density, 1100, 240);
+        // Start currency symbol pulse
+        startCurrencyPulse();
     }
 
-    private void startOrbitingDot(View dot, float radius, int duration, float startAngle) {
-        ValueAnimator orbitAnimator = ValueAnimator.ofFloat(startAngle, startAngle + 360f);
-        orbitAnimator.setDuration(duration);
-        orbitAnimator.setInterpolator(new LinearInterpolator());
-        orbitAnimator.setRepeatCount(ValueAnimator.INFINITE);
+    private void startRingBreathing() {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(ringMain, "scaleX", 1f, 1.15f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(ringMain, "scaleY", 1f, 1.15f, 1f);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(ringMain, "alpha", 1f, 0.7f, 1f);
 
-        orbitAnimator.addUpdateListener(animation -> {
-            if (!isAnimating)
-                return;
-
-            float angle = (float) animation.getAnimatedValue();
-            double radians = Math.toRadians(angle);
-
-            float x = (float) (Math.cos(radians) * radius);
-            float y = (float) (Math.sin(radians) * radius);
-
-            dot.setTranslationX(x);
-            dot.setTranslationY(y);
-
-            // Add subtle alpha variation based on position (fade when at top)
-            float alphaMod = (float) ((Math.sin(radians) + 1) / 2 * 0.3 + 0.7);
-            dot.setAlpha(alphaMod);
-
-            // Add subtle scale variation (larger when closer/bottom)
-            float scaleMod = (float) ((Math.sin(radians) + 1) / 2 * 0.2 + 0.9);
-            dot.setScaleX(scaleMod);
-            dot.setScaleY(scaleMod);
+        AnimatorSet breatheSet = new AnimatorSet();
+        breatheSet.playTogether(scaleX, scaleY, alpha);
+        breatheSet.setDuration(1600);
+        breatheSet.setInterpolator(new AccelerateDecelerateInterpolator());
+        breatheSet.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (isAnimating) {
+                    breatheSet.start();
+                }
+            }
         });
-
-        orbitAnimator.start();
+        breatheSet.start();
     }
 
-    private void startCenterGlowPulse() {
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(centerGlow, "scaleX", 1f, 1.5f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(centerGlow, "scaleY", 1f, 1.5f, 1f);
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(centerGlow, "alpha", 0.6f, 1f, 0.6f);
+    private void startRingRipple(View ring, int delay) {
+        // Reset initial state
+        ring.setScaleX(0.5f);
+        ring.setScaleY(0.5f);
+        ring.setAlpha(0f);
+
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(ring, "scaleX", 0.5f, 1.5f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(ring, "scaleY", 0.5f, 1.5f);
+        ObjectAnimator alphaIn = ObjectAnimator.ofFloat(ring, "alpha", 0f, 0.8f, 0f);
+
+        AnimatorSet rippleSet = new AnimatorSet();
+        rippleSet.playTogether(scaleX, scaleY, alphaIn);
+        rippleSet.setDuration(1600);
+        rippleSet.setStartDelay(delay);
+        rippleSet.setInterpolator(new AccelerateInterpolator(0.5f));
+        rippleSet.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (isAnimating) {
+                    // Reset and restart
+                    ring.setScaleX(0.5f);
+                    ring.setScaleY(0.5f);
+                    ring.setAlpha(0f);
+                    rippleSet.setStartDelay(0);
+                    rippleSet.start();
+                }
+            }
+        });
+        rippleSet.start();
+    }
+
+    private void startCurrencyPulse() {
+        // Currency container subtle pulse
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(currencyContainer, "scaleX", 1f, 1.1f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(currencyContainer, "scaleY", 1f, 1.1f, 1f);
 
         AnimatorSet pulseSet = new AnimatorSet();
-        pulseSet.playTogether(scaleX, scaleY, alpha);
-        pulseSet.setDuration(1500);
+        pulseSet.playTogether(scaleX, scaleY);
+        pulseSet.setDuration(1600);
         pulseSet.setInterpolator(new AccelerateDecelerateInterpolator());
         pulseSet.addListener(new AnimatorListenerAdapter() {
             @Override
@@ -214,6 +242,13 @@ public class SplashActivity extends AppCompatActivity {
             }
         });
         pulseSet.start();
+
+        // Currency symbol subtle rotation wiggle
+        ObjectAnimator rotation = ObjectAnimator.ofFloat(tvCurrencySymbol, "rotation", 0f, 5f, -5f, 0f);
+        rotation.setDuration(2000);
+        rotation.setInterpolator(new AccelerateDecelerateInterpolator());
+        rotation.setRepeatCount(ValueAnimator.INFINITE);
+        rotation.start();
     }
 
     private void animateSpheres() {
