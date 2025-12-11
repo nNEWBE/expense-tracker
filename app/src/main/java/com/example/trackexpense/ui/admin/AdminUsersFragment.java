@@ -470,7 +470,7 @@ public class AdminUsersFragment extends Fragment {
         }
 
         class UserViewHolder extends RecyclerView.ViewHolder {
-            TextView tvInitial, tvName, tvEmail, chipBlocked, chipAdmin;
+            TextView tvInitial, tvName, tvEmail;
             View btnMore, avatarBg, adminIndicator, blockedIndicator;
             ImageView ivVerified;
 
@@ -479,8 +479,6 @@ public class AdminUsersFragment extends Fragment {
                 tvInitial = itemView.findViewById(R.id.tvInitial);
                 tvName = itemView.findViewById(R.id.tvName);
                 tvEmail = itemView.findViewById(R.id.tvEmail);
-                chipBlocked = itemView.findViewById(R.id.chipBlocked);
-                chipAdmin = itemView.findViewById(R.id.chipAdmin);
                 btnMore = itemView.findViewById(R.id.btnMore);
                 avatarBg = itemView.findViewById(R.id.avatarBg);
                 ivVerified = itemView.findViewById(R.id.ivVerified);
@@ -500,7 +498,7 @@ public class AdminUsersFragment extends Fragment {
                     tvInitial.setText(name.substring(0, 1).toUpperCase());
                 }
 
-                // Set avatar color - use hash-based color with low opacity feel
+                // Set avatar color - use hash-based color
                 int[] colors = { R.color.category_food, R.color.category_transport,
                         R.color.category_shopping, R.color.category_entertainment,
                         R.color.category_health, R.color.primary };
@@ -513,15 +511,7 @@ public class AdminUsersFragment extends Fragment {
                 bg.setColor(avatarColor);
                 avatarBg.setBackground(bg);
 
-                // Show text badges
-                if (chipBlocked != null) {
-                    chipBlocked.setVisibility(user.isBlocked() ? View.VISIBLE : View.GONE);
-                }
-                if (chipAdmin != null) {
-                    chipAdmin.setVisibility(user.isAdmin() ? View.VISIBLE : View.GONE);
-                }
-
-                // Show avatar indicators
+                // Show avatar indicators (admin shield or blocked icon)
                 if (adminIndicator != null) {
                     adminIndicator.setVisibility(user.isAdmin() && !user.isBlocked() ? View.VISIBLE : View.GONE);
                 }
@@ -529,7 +519,7 @@ public class AdminUsersFragment extends Fragment {
                     blockedIndicator.setVisibility(user.isBlocked() ? View.VISIBLE : View.GONE);
                 }
 
-                // Show verified badge (Meta-style)
+                // Show verified badge (starburst style)
                 if (ivVerified != null) {
                     ivVerified.setVisibility(user.isVerified() ? View.VISIBLE : View.GONE);
                 }

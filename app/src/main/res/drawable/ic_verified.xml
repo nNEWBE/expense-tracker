@@ -4,12 +4,12 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Blue filled circle background -->
+    <!-- Starburst/badge background -->
     <path
-        android:fillColor="#1DA1F2"
-        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z"/>
+        android:fillColor="#5B9FE3"
+        android:pathData="M12,1L14.09,5.26L18.18,3.82L17.64,8.18L22,9.27L19.18,12.64L22,16L17.64,17.09L18.18,21.45L14.09,20L12,24.26L9.91,20L5.82,21.45L6.36,17.09L2,16L4.82,12.64L2,9.27L6.36,8.18L5.82,3.82L9.91,5.26L12,1Z"/>
     <!-- White checkmark -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M9.5,16.5L5.5,12.5L6.91,11.09L9.5,13.67L17.09,6.09L18.5,7.5L9.5,16.5z"/>
+        android:pathData="M10.5,15.5L7.5,12.5L8.91,11.09L10.5,12.67L15.09,8.09L16.5,9.5L10.5,15.5Z"/>
 </vector>
