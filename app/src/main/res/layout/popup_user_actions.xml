@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="220dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_popup_menu"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Edit Username -->
+    <LinearLayout
+        android:id="@+id/itemEditUsername"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_edit"
+            app:tint="#64748B" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="Edit Username"
+            android:textColor="@color/on_background_light"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+    <!-- Block/Unblock User -->
+    <LinearLayout
+        android:id="@+id/itemBlockUser"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp">
+
+        <ImageView
+            android:id="@+id/ivBlockUser"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_block"
+            app:tint="@color/expense_red" />
+
+        <TextView
+            android:id="@+id/tvBlockUser"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="Block User"
+            android:textColor="@color/on_background_light"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+    <!-- View Transactions -->
+    <LinearLayout
+        android:id="@+id/itemViewTransactions"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_receipt"
+            app:tint="#64748B" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="View Transactions"
+            android:textColor="@color/on_background_light"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="4dp"
+        android:background="#E2E8F0" />
+
+    <!-- Toggle Admin -->
+    <LinearLayout
+        android:id="@+id/itemToggleAdmin"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp">
+
+        <ImageView
+            android:id="@+id/ivToggleAdmin"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_admin"
+            app:tint="@color/primary" />
+
+        <TextView
+            android:id="@+id/tvToggleAdmin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="Make Admin"
+            android:textColor="@color/on_background_light"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+    <!-- Delete User -->
+    <LinearLayout
+        android:id="@+id/itemDeleteUser"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_delete"
+            app:tint="@color/expense_red" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="Delete User"
+            android:textColor="@color/expense_red"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</LinearLayout>

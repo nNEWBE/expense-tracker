@@ -10,65 +10,53 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Premium Search Bar -->
+        <!-- Premium Search Bar with Dark Background -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="12dp"
-            app:cardBackgroundColor="#F1F5F9"
+            app:cardBackgroundColor="#1E293B"
             app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
+            app:cardElevation="4dp"
             app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="56dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingHorizontal="16dp">
 
-                <!-- Search Icon with Background -->
-                <FrameLayout
-                    android:layout_width="36dp"
-                    android:layout_height="36dp">
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/circle_bg_primary_light" />
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_search"
-                        app:tint="@color/primary" />
-
-                </FrameLayout>
+                <!-- Search Icon -->
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="#94A3B8" />
 
                 <EditText
                     android:id="@+id/etSearch"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="14dp"
                     android:layout_weight="1"
                     android:background="@null"
                     android:hint="Search categories..."
                     android:imeOptions="actionSearch"
                     android:inputType="text"
-                    android:textColor="@color/on_background_light"
-                    android:textColorHint="#94A3B8"
-                    android:textSize="14sp" />
+                    android:textColor="@android:color/white"
+                    android:textColorHint="#64748B"
+                    android:textSize="15sp" />
 
-                <!-- Clear Button (hidden by default) -->
+                <!-- Clear Button -->
                 <ImageView
                     android:id="@+id/btnClearSearch"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_close"
                     android:visibility="gone"
-                    app:tint="#94A3B8" />
+                    app:tint="#64748B" />
 
             </LinearLayout>
 

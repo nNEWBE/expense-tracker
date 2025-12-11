@@ -1,15 +1,18 @@
 package com.example.trackexpense.ui.admin;
 
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.PopupMenu;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -22,13 +25,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.model.User;
 import com.example.trackexpense.data.remote.AdminService;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.example.trackexpense.utils.BeautifulNotification;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,11 +42,12 @@ public class AdminUsersFragment extends Fragment {
     private AdminService adminService;
     private RecyclerView rvUsers;
     private EditText etSearch;
+    private ImageView btnClearSearch;
     private TextView tvUserCount;
-    private TextView tvActiveUsers;
-    private TextView tvBlockedUsers;
+    private MaterialCardView chipAll, chipVerified, chipAdmin, chipBlocked;
     private UserAdapter adapter;
     private List<User> allUsers = new ArrayList<>();
+    private String currentFilter = "ALL"; // ALL, VERIFIED, ADMIN, BLOCKED
 
     @Nullable
     @Override
@@ -58,13 +62,19 @@ public class AdminUsersFragment extends Fragment {
         adminService = AdminService.getInstance();
 
         etSearch = view.findViewById(R.id.etSearch);
+        btnClearSearch = view.findViewById(R.id.btnClearSearch);
         tvUserCount = view.findViewById(R.id.tvUserCount);
-        tvActiveUsers = view.findViewById(R.id.tvActiveUsers);
-        tvBlockedUsers = view.findViewById(R.id.tvBlockedUsers);
         rvUsers = view.findViewById(R.id.rvUsers);
+
+        // Filter chips
+        chipAll = view.findViewById(R.id.chipAll);
+        chipVerified = view.findViewById(R.id.chipVerified);
+        chipAdmin = view.findViewById(R.id.chipAdmin);
+        chipBlocked = view.findViewById(R.id.chipBlocked);
 
         setupRecyclerView();
         setupSearch();
+        setupFilters();
         observeUsers();
     }
 
@@ -82,73 +92,234 @@ public class AdminUsersFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterUsers(s.toString());
+                filterUsers();
+                // Show/hide clear button
+                if (btnClearSearch != null) {
+                    btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                }
             }
 
             @Override
             public void afterTextChanged(Editable s) {
             }
         });
+
+        // Clear search button
+        if (btnClearSearch != null) {
+            btnClearSearch.setOnClickListener(v -> {
+                etSearch.setText("");
+                btnClearSearch.setVisibility(View.GONE);
+            });
+        }
+    }
+
+    private void setupFilters() {
+        updateFilterChipStyles();
+
+        if (chipAll != null) {
+            chipAll.setOnClickListener(v -> {
+                currentFilter = "ALL";
+                updateFilterChipStyles();
+                filterUsers();
+            });
+        }
+        if (chipVerified != null) {
+            chipVerified.setOnClickListener(v -> {
+                currentFilter = "VERIFIED";
+                updateFilterChipStyles();
+                filterUsers();
+            });
+        }
+        if (chipAdmin != null) {
+            chipAdmin.setOnClickListener(v -> {
+                currentFilter = "ADMIN";
+                updateFilterChipStyles();
+                filterUsers();
+            });
+        }
+        if (chipBlocked != null) {
+            chipBlocked.setOnClickListener(v -> {
+                currentFilter = "BLOCKED";
+                updateFilterChipStyles();
+                filterUsers();
+            });
+        }
+    }
+
+    private void updateFilterChipStyles() {
+        // All chip
+        if (chipAll != null) {
+            if ("ALL".equals(currentFilter)) {
+                chipAll.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.primary));
+            } else {
+                chipAll.setCardBackgroundColor(Color.parseColor("#F1F5F9"));
+            }
+        }
+        // Verified chip
+        if (chipVerified != null) {
+            if ("VERIFIED".equals(currentFilter)) {
+                chipVerified.setCardBackgroundColor(Color.parseColor("#DCFCE7"));
+                chipVerified.setStrokeColor(Color.parseColor("#22C55E"));
+            } else {
+                chipVerified.setCardBackgroundColor(Color.parseColor("#F0FDF4"));
+                chipVerified.setStrokeColor(Color.parseColor("#BBF7D0"));
+            }
+        }
+        // Admin chip
+        if (chipAdmin != null) {
+            if ("ADMIN".equals(currentFilter)) {
+                chipAdmin.setCardBackgroundColor(Color.parseColor("#E0E7FF"));
+                chipAdmin.setStrokeColor(Color.parseColor("#6366F1"));
+            } else {
+                chipAdmin.setCardBackgroundColor(Color.parseColor("#EEF2FF"));
+                chipAdmin.setStrokeColor(Color.parseColor("#C7D2FE"));
+            }
+        }
+        // Blocked chip
+        if (chipBlocked != null) {
+            if ("BLOCKED".equals(currentFilter)) {
+                chipBlocked.setCardBackgroundColor(Color.parseColor("#FEE2E2"));
+                chipBlocked.setStrokeColor(Color.parseColor("#EF4444"));
+            } else {
+                chipBlocked.setCardBackgroundColor(Color.parseColor("#FEF2F2"));
+                chipBlocked.setStrokeColor(Color.parseColor("#FECACA"));
+            }
+        }
     }
 
     private void observeUsers() {
         adminService.getAllUsers().observe(getViewLifecycleOwner(), users -> {
             allUsers = users;
-            tvUserCount.setText("All Users (" + users.size() + ")");
-
-            // Count active and blocked users
-            long activeCount = users.stream().filter(u -> !u.isBlocked()).count();
-            long blockedCount = users.stream().filter(User::isBlocked).count();
-
-            if (tvActiveUsers != null) {
-                tvActiveUsers.setText(activeCount + " Active");
-            }
-            if (tvBlockedUsers != null) {
-                tvBlockedUsers.setText(blockedCount + " Blocked");
-            }
-
-            adapter.setUsers(users);
+            filterUsers();
         });
     }
 
-    private void filterUsers(String query) {
-        if (query.isEmpty()) {
-            adapter.setUsers(allUsers);
-        } else {
-            List<User> filtered = allUsers.stream()
-                    .filter(u -> (u.getEmail() != null && u.getEmail().toLowerCase().contains(query.toLowerCase())) ||
-                            (u.getDisplayName() != null
-                                    && u.getDisplayName().toLowerCase().contains(query.toLowerCase())))
-                    .collect(Collectors.toList());
-            adapter.setUsers(filtered);
+    private void filterUsers() {
+        String query = etSearch.getText() != null ? etSearch.getText().toString().toLowerCase() : "";
+
+        List<User> filtered = allUsers.stream()
+                .filter(u -> {
+                    // Text search filter
+                    if (!query.isEmpty()) {
+                        boolean matchesEmail = u.getEmail() != null && u.getEmail().toLowerCase().contains(query);
+                        boolean matchesName = u.getDisplayName() != null
+                                && u.getDisplayName().toLowerCase().contains(query);
+                        if (!matchesEmail && !matchesName)
+                            return false;
+                    }
+                    return true;
+                })
+                .filter(u -> {
+                    // Category filter
+                    switch (currentFilter) {
+                        case "VERIFIED":
+                            return u.isVerified();
+                        case "ADMIN":
+                            return u.isAdmin();
+                        case "BLOCKED":
+                            return u.isBlocked();
+                        default:
+                            return true;
+                    }
+                })
+                .collect(Collectors.toList());
+
+        // Update count text based on filter
+        String filterLabel;
+        switch (currentFilter) {
+            case "VERIFIED":
+                filterLabel = "Verified Users";
+                break;
+            case "ADMIN":
+                filterLabel = "Admin Users";
+                break;
+            case "BLOCKED":
+                filterLabel = "Blocked Users";
+                break;
+            default:
+                filterLabel = "All Users";
+                break;
         }
+        tvUserCount.setText(filterLabel + " (" + filtered.size() + ")");
+        adapter.setUsers(filtered);
     }
 
     private void showUserActions(User user, View anchor) {
-        PopupMenu popup = new PopupMenu(requireContext(), anchor);
-        popup.getMenu().add("Edit Username");
-        popup.getMenu().add(user.isBlocked() ? "Unblock User" : "Block User");
-        popup.getMenu().add("View Transactions");
-        popup.getMenu().add(user.isAdmin() ? "Remove Admin" : "Make Admin");
-        popup.getMenu().add("Delete User");
+        // Create custom popup window with icons
+        View popupView = LayoutInflater.from(requireContext()).inflate(R.layout.popup_user_actions, null);
 
-        popup.setOnMenuItemClickListener(item -> {
-            String title = item.getTitle().toString();
-            if (title.equals("Edit Username")) {
+        PopupWindow popupWindow = new PopupWindow(popupView,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                true);
+
+        popupWindow.setElevation(16f);
+        popupWindow.setBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.bg_popup_menu));
+
+        // Setup menu items
+        View itemEdit = popupView.findViewById(R.id.itemEditUsername);
+        View itemBlock = popupView.findViewById(R.id.itemBlockUser);
+        View itemTransactions = popupView.findViewById(R.id.itemViewTransactions);
+        View itemAdmin = popupView.findViewById(R.id.itemToggleAdmin);
+        View itemDelete = popupView.findViewById(R.id.itemDeleteUser);
+
+        TextView tvBlock = popupView.findViewById(R.id.tvBlockUser);
+        ImageView ivBlock = popupView.findViewById(R.id.ivBlockUser);
+        TextView tvAdmin = popupView.findViewById(R.id.tvToggleAdmin);
+        ImageView ivAdmin = popupView.findViewById(R.id.ivToggleAdmin);
+
+        // Update block/unblock text
+        if (tvBlock != null) {
+            tvBlock.setText(user.isBlocked() ? "Unblock User" : "Block User");
+        }
+        if (ivBlock != null) {
+            ivBlock.setImageResource(user.isBlocked() ? R.drawable.ic_check_circle : R.drawable.ic_block);
+            ivBlock.setColorFilter(ContextCompat.getColor(requireContext(),
+                    user.isBlocked() ? R.color.income_green : R.color.expense_red));
+        }
+
+        // Update admin text
+        if (tvAdmin != null) {
+            tvAdmin.setText(user.isAdmin() ? "Remove Admin" : "Make Admin");
+        }
+        if (ivAdmin != null) {
+            ivAdmin.setColorFilter(ContextCompat.getColor(requireContext(),
+                    user.isAdmin() ? R.color.expense_red : R.color.primary));
+        }
+
+        // Click listeners
+        if (itemEdit != null) {
+            itemEdit.setOnClickListener(v -> {
+                popupWindow.dismiss();
                 showEditUsernameDialog(user);
-            } else if (title.contains("Block")) {
+            });
+        }
+        if (itemBlock != null) {
+            itemBlock.setOnClickListener(v -> {
+                popupWindow.dismiss();
                 toggleBlockUser(user);
-            } else if (title.equals("View Transactions")) {
+            });
+        }
+        if (itemTransactions != null) {
+            itemTransactions.setOnClickListener(v -> {
+                popupWindow.dismiss();
                 viewUserTransactions(user);
-            } else if (title.contains("Admin")) {
+            });
+        }
+        if (itemAdmin != null) {
+            itemAdmin.setOnClickListener(v -> {
+                popupWindow.dismiss();
                 toggleAdminStatus(user);
-            } else if (title.equals("Delete User")) {
+            });
+        }
+        if (itemDelete != null) {
+            itemDelete.setOnClickListener(v -> {
+                popupWindow.dismiss();
                 confirmDeleteUser(user);
-            }
-            return true;
-        });
+            });
+        }
 
-        popup.show();
+        popupWindow.showAsDropDown(anchor, 0, 0, Gravity.END);
     }
 
     private void showEditUsernameDialog(User user) {
@@ -167,12 +338,12 @@ public class AdminUsersFragment extends Fragment {
                         adminService.updateUser(user, new AdminService.OnCompleteListener() {
                             @Override
                             public void onSuccess() {
-                                Snackbar.make(requireView(), "Username updated", Snackbar.LENGTH_SHORT).show();
+                                BeautifulNotification.showSuccess(requireActivity(), "Username updated!");
                             }
 
                             @Override
                             public void onFailure(Exception e) {
-                                Snackbar.make(requireView(), "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
+                                BeautifulNotification.showError(requireActivity(), "Error: " + e.getMessage());
                             }
                         });
                     }
@@ -182,35 +353,47 @@ public class AdminUsersFragment extends Fragment {
     }
 
     private void toggleBlockUser(User user) {
-        boolean newStatus = !user.isBlocked();
-        adminService.blockUser(user.getId(), newStatus, new AdminService.OnCompleteListener() {
+        boolean newBlockedStatus = !user.isBlocked();
+        String actionText = newBlockedStatus ? "blocked" : "unblocked";
+
+        adminService.blockUser(user.getId(), newBlockedStatus, new AdminService.OnCompleteListener() {
             @Override
             public void onSuccess() {
-                Snackbar.make(requireView(),
-                        user.getEmail() + " " + (newStatus ? "blocked" : "unblocked"),
-                        Snackbar.LENGTH_SHORT).show();
+                if (newBlockedStatus) {
+                    BeautifulNotification.showWarning(requireActivity(),
+                            user.getDisplayName() + " has been blocked");
+                } else {
+                    BeautifulNotification.showSuccess(requireActivity(),
+                            user.getDisplayName() + " has been unblocked");
+                }
             }
 
             @Override
             public void onFailure(Exception e) {
-                Snackbar.make(requireView(), "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
+                BeautifulNotification.showError(requireActivity(), "Error: " + e.getMessage());
             }
         });
     }
 
     private void toggleAdminStatus(User user) {
-        user.setAdmin(!user.isAdmin());
+        boolean newAdminStatus = !user.isAdmin();
+        user.setAdmin(newAdminStatus);
+
         adminService.updateUser(user, new AdminService.OnCompleteListener() {
             @Override
             public void onSuccess() {
-                Snackbar.make(requireView(),
-                        user.getEmail() + " admin status updated",
-                        Snackbar.LENGTH_SHORT).show();
+                if (newAdminStatus) {
+                    BeautifulNotification.showSuccess(requireActivity(),
+                            user.getDisplayName() + " is now an admin");
+                } else {
+                    BeautifulNotification.showInfo(requireActivity(),
+                            user.getDisplayName() + " admin access removed");
+                }
             }
 
             @Override
             public void onFailure(Exception e) {
-                Snackbar.make(requireView(), "Error: " + e.getMessage(), Snackbar.LENGTH_SHORT).show();
+                BeautifulNotification.showError(requireActivity(), "Error: " + e.getMessage());
             }
         });
     }
@@ -230,7 +413,6 @@ public class AdminUsersFragment extends Fragment {
         MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelDelete);
         MaterialButton btnDelete = dialogView.findViewById(R.id.btnConfirmDelete);
 
-        // Set user info
         String displayName = user.getDisplayName() != null && !user.getDisplayName().isEmpty()
                 ? user.getDisplayName()
                 : "User";
@@ -247,7 +429,6 @@ public class AdminUsersFragment extends Fragment {
         btnDelete.setOnClickListener(v -> {
             btnDelete.setEnabled(false);
 
-            // Delete user from Firestore and related data
             adminService.deleteUser(user.getId(), new AdminService.OnCompleteListener() {
                 @Override
                 public void onSuccess() {
@@ -323,15 +504,25 @@ public class AdminUsersFragment extends Fragment {
                     tvInitial.setText(name.substring(0, 1).toUpperCase());
                 }
 
-                // Set avatar color based on email hash
-                int[] colors = { R.color.category_food, R.color.category_transport,
-                        R.color.category_shopping, R.color.category_entertainment,
-                        R.color.category_health, R.color.primary };
-                int colorIndex = Math.abs((user.getEmail() != null ? user.getEmail().hashCode() : 0)) % colors.length;
+                // Set avatar color based on status
+                int avatarColor;
+                if (user.isBlocked()) {
+                    avatarColor = ContextCompat.getColor(itemView.getContext(), R.color.expense_red);
+                } else if (user.isAdmin()) {
+                    avatarColor = ContextCompat.getColor(itemView.getContext(), R.color.primary);
+                } else {
+                    // Use hash-based color for normal users
+                    int[] colors = { R.color.category_food, R.color.category_transport,
+                            R.color.category_shopping, R.color.category_entertainment,
+                            R.color.category_health, R.color.primary };
+                    int colorIndex = Math.abs((user.getEmail() != null ? user.getEmail().hashCode() : 0))
+                            % colors.length;
+                    avatarColor = ContextCompat.getColor(itemView.getContext(), colors[colorIndex]);
+                }
 
                 GradientDrawable bg = new GradientDrawable();
                 bg.setShape(GradientDrawable.OVAL);
-                bg.setColor(ContextCompat.getColor(itemView.getContext(), colors[colorIndex]));
+                bg.setColor(avatarColor);
                 avatarBg.setBackground(bg);
 
                 // Show badges

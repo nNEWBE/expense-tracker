@@ -46,7 +46,7 @@ public class AdminService {
         return instance;
     }
 
-    // Check if current user is admin
+    // Check if current user is admin (from users collection isAdmin field)
     public void checkAdminStatus(OnAdminCheckListener listener) {
         String userId = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
         if (userId == null) {
@@ -54,10 +54,11 @@ public class AdminService {
             return;
         }
 
-        db.collection("admins").document(userId).get()
+        // Check isAdmin field directly from users collection
+        db.collection("users").document(userId).get()
                 .addOnSuccessListener(doc -> {
-                    boolean isAdmin = doc.exists();
-                    Log.d(TAG, "Admin status: " + isAdmin);
+                    boolean isAdmin = doc.exists() && Boolean.TRUE.equals(doc.getBoolean("isAdmin"));
+                    Log.d(TAG, "Admin status for user " + userId + ": " + isAdmin);
                     listener.onResult(isAdmin);
                 })
                 .addOnFailureListener(e -> {
