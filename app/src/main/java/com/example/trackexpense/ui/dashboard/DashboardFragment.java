@@ -42,7 +42,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.example.trackexpense.adapters.NotificationAdapter;
+import com.example.trackexpense.adapters.AppNotificationAdapter;
+import com.example.trackexpense.data.model.AppNotification;
+import com.example.trackexpense.data.repository.NotificationRepository;
 
 public class DashboardFragment extends Fragment {
 
@@ -66,10 +68,10 @@ public class DashboardFragment extends Fragment {
     private View notificationOverlay, notificationDimBackground, notificationPanel;
     private View emptyNotifications;
     private RecyclerView rvNotifications;
-    private NotificationAdapter notificationAdapter;
-    private TextView tvNotificationBadge;
-    private List<com.example.trackexpense.data.local.Expense> notificationsList = new ArrayList<>();
-    private java.util.Set<Integer> viewedNotificationIds = new java.util.HashSet<>();
+    private AppNotificationAdapter appNotificationAdapter;
+    private TextView tvNotificationBadge, tvNotificationCount;
+    private List<AppNotification> notificationsList = new ArrayList<>();
+    private NotificationRepository notificationRepository;
 
     // Handler for notification animation
     private android.os.Handler notificationHandler;
@@ -77,6 +79,11 @@ public class DashboardFragment extends Fragment {
     private boolean isNotificationPanelOpen = false;
 
     private boolean isShowingBalance = true;
+
+    // Skeleton loading
+    private View skeletonView;
+    private boolean isFirstLoad = true;
+    private boolean hasAnimatedBalanceCard = false;
 
     @Nullable
     @Override
@@ -92,12 +99,71 @@ public class DashboardFragment extends Fragment {
         expenseViewModel = new ViewModelProvider(this).get(ExpenseViewModel.class);
         preferenceManager = new PreferenceManager(requireContext());
 
+        // Check if data is already available (cached)
+        List<com.example.trackexpense.data.local.Expense> cachedData = expenseViewModel.getAllExpenses().getValue();
+        if (cachedData == null || cachedData.isEmpty()) {
+            isFirstLoad = true;
+            showSkeletonLoading(view);
+        } else {
+            isFirstLoad = false;
+        }
+
         initViews(view);
         setupUserInfo();
         setupRecyclerView();
         setupClickListeners(view);
         observeData();
-        animateBalanceCard();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh notification badge every time dashboard is shown
+        updateNotificationBadge();
+    }
+
+    /**
+     * Show skeleton loading placeholder while data loads.
+     */
+    private void showSkeletonLoading(View rootView) {
+        if (rootView instanceof ViewGroup) {
+            skeletonView = LayoutInflater.from(requireContext())
+                    .inflate(R.layout.skeleton_dashboard, (ViewGroup) rootView, false);
+            ((ViewGroup) rootView).addView(skeletonView);
+
+            // Ensure skeleton is above everything
+            skeletonView.setElevation(100f);
+        }
+    }
+
+    /**
+     * Hide skeleton loading with smooth fade animation.
+     */
+    private void hideSkeletonLoading(Runnable onAnimationEndAction) {
+        if (skeletonView == null) {
+            if (onAnimationEndAction != null)
+                onAnimationEndAction.run();
+            return;
+        }
+
+        isFirstLoad = false;
+
+        skeletonView.animate()
+                .alpha(0f)
+                .setDuration(400)
+                .setListener(new android.animation.AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(android.animation.Animator animation) {
+                        if (skeletonView != null && skeletonView.getParent() != null) {
+                            ((ViewGroup) skeletonView.getParent()).removeView(skeletonView);
+                            skeletonView = null;
+                        }
+                        if (onAnimationEndAction != null) {
+                            onAnimationEndAction.run();
+                        }
+                    }
+                })
+                .start();
     }
 
     @Override
@@ -153,6 +219,10 @@ public class DashboardFragment extends Fragment {
         rvNotifications = view.findViewById(R.id.rvNotifications);
         emptyNotifications = view.findViewById(R.id.emptyNotifications);
         tvNotificationBadge = view.findViewById(R.id.tvNotificationBadge);
+        tvNotificationCount = view.findViewById(R.id.tvNotificationCount);
+
+        // Initialize notification repository
+        notificationRepository = NotificationRepository.getInstance();
 
         // Setup notification panel
         setupNotificationPanel(view);
@@ -162,6 +232,12 @@ public class DashboardFragment extends Fragment {
     }
 
     private void animateBalanceCard() {
+        // Only animate once
+        if (hasAnimatedBalanceCard) {
+            return;
+        }
+        hasAnimatedBalanceCard = true;
+
         // Set camera distance for proper 3D effect
         float scale = getResources().getDisplayMetrics().density;
         cardBalance.setCameraDistance(8000 * scale);
@@ -306,9 +382,19 @@ public class DashboardFragment extends Fragment {
         expenseViewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
             if (expenses != null) {
                 allExpenses = expenses;
-                updateSummary(expenses);
-                updateRecentTransactions();
-                updateNotifications(expenses);
+
+                if (isFirstLoad && skeletonView != null) {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        hideSkeletonLoading(() -> {
+                            updateSummary(expenses);
+                            updateRecentTransactions();
+                            animateBalanceCard();
+                        });
+                    }, 500);
+                } else {
+                    updateSummary(expenses);
+                    updateRecentTransactions();
+                }
             }
         });
     }
@@ -418,13 +504,7 @@ public class DashboardFragment extends Fragment {
         }
         int count = Math.min(filtered.size(), 10); // Show up to 10
 
-        // Apply slide-right animation
-        android.view.animation.LayoutAnimationController animController = android.view.animation.AnimationUtils
-                .loadLayoutAnimation(
-                        requireContext(), R.anim.layout_animation_slide_right);
-        rvRecentTransactions.setLayoutAnimation(animController);
         expenseAdapter.setExpenses(filtered.subList(0, count));
-        rvRecentTransactions.scheduleLayoutAnimation();
     }
 
     private void applyFilter(String filter) {
@@ -471,19 +551,48 @@ public class DashboardFragment extends Fragment {
 
     private void setupNotificationPanel(View view) {
         // Setup RecyclerView for notifications
-        notificationAdapter = new NotificationAdapter();
+        appNotificationAdapter = new AppNotificationAdapter();
         String symbol = preferenceManager.getCurrencySymbol();
-        notificationAdapter.setCurrencySymbol(symbol);
+        appNotificationAdapter.setCurrencySymbol(symbol);
 
         rvNotifications.setLayoutManager(new LinearLayoutManager(requireContext()));
-        rvNotifications.setAdapter(notificationAdapter);
+        rvNotifications.setAdapter(appNotificationAdapter);
 
-        // Setup delete listener
-        notificationAdapter.setOnNotificationDeleteListener((expense, position) -> {
-            notificationAdapter.removeNotification(position);
-            updateNotificationBadge();
-            checkEmptyState();
-        });
+        // Setup action listener for notifications
+        appNotificationAdapter
+                .setOnNotificationActionListener(new AppNotificationAdapter.OnNotificationActionListener() {
+                    @Override
+                    public void onDelete(AppNotification notification, int position) {
+                        // Delete from Firebase permanently
+                        notificationRepository.deleteNotification(notification.getId(),
+                                new NotificationRepository.OnCompleteListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        appNotificationAdapter.removeNotification(position);
+                                        updateNotificationCount();
+                                        checkEmptyState();
+                                    }
+
+                                    @Override
+                                    public void onError(String error) {
+                                        // Show error toast
+                                        if (isAdded()) {
+                                            android.widget.Toast.makeText(requireContext(),
+                                                    "Failed to delete notification", android.widget.Toast.LENGTH_SHORT)
+                                                    .show();
+                                        }
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onClick(AppNotification notification) {
+                        // Mark as read when clicked
+                        if (!notification.isRead()) {
+                            notificationRepository.markAsRead(notification.getId(), null);
+                        }
+                    }
+                });
 
         // Close button
         view.findViewById(R.id.btnCloseNotifications).setOnClickListener(v -> hideNotificationPanel());
@@ -491,15 +600,32 @@ public class DashboardFragment extends Fragment {
         // Dim background click to close
         notificationDimBackground.setOnClickListener(v -> hideNotificationPanel());
 
-        // Clear all button
+        // Clear all button - delete all from Firebase
         view.findViewById(R.id.btnClearAll).setOnClickListener(v -> {
-            notificationAdapter.clearAll();
-            updateNotificationBadge();
-            checkEmptyState();
+            notificationRepository.deleteAllNotifications(new NotificationRepository.OnCompleteListener() {
+                @Override
+                public void onSuccess() {
+                    notificationsList.clear();
+                    appNotificationAdapter.setNotifications(notificationsList);
+                    updateNotificationCount();
+                    checkEmptyState();
+                }
+
+                @Override
+                public void onError(String error) {
+                    if (isAdded()) {
+                        android.widget.Toast.makeText(requireContext(), "Failed to clear notifications",
+                                android.widget.Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
         });
 
         // Notification button click
         btnNotification.setOnClickListener(v -> showNotificationPanel());
+
+        // Load notifications from Firebase
+        loadNotificationsFromFirebase();
     }
 
     private void showNotificationPanel() {
@@ -511,20 +637,6 @@ public class DashboardFragment extends Fragment {
         // Cancel any pending animation callbacks
         cancelNotificationAnimation();
 
-        // Mark all current notifications as viewed
-        for (Expense expense : notificationsList) {
-            viewedNotificationIds.add(expense.getId());
-        }
-        updateNotificationBadge();
-
-        // Clear adapter first
-        if (rvNotifications != null) {
-            rvNotifications.setLayoutAnimation(null);
-        }
-        if (notificationAdapter != null) {
-            notificationAdapter.setNotifications(new java.util.ArrayList<>());
-        }
-
         // Show overlay
         if (notificationOverlay != null) {
             notificationOverlay.setVisibility(View.VISIBLE);
@@ -533,7 +645,7 @@ public class DashboardFragment extends Fragment {
 
         // Set panel to starting position and animate
         if (notificationPanel != null) {
-            notificationPanel.setTranslationX(notificationPanel.getWidth());
+            notificationPanel.setTranslationX(notificationPanel.getWidth() > 0 ? notificationPanel.getWidth() : 1000);
             notificationPanel.animate()
                     .translationX(0)
                     .setDuration(300)
@@ -541,25 +653,39 @@ public class DashboardFragment extends Fragment {
                     .start();
         }
 
-        // Load data after a delay
-        notificationHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-        notificationAnimationRunnable = () -> {
-            try {
-                if (isAdded() && isNotificationPanelOpen && notificationAdapter != null && rvNotifications != null) {
-                    if (notificationsList != null && notificationsList.size() > 0) {
-                        android.view.animation.LayoutAnimationController animController = android.view.animation.AnimationUtils
-                                .loadLayoutAnimation(
-                                        requireContext(), R.anim.notification_layout_animation);
-                        rvNotifications.setLayoutAnimation(animController);
-                        notificationAdapter.setNotifications(notificationsList);
-                    }
-                    checkEmptyState();
+        // Always refresh notifications from Firebase when panel opens
+        refreshNotificationsFromFirebase();
+    }
+
+    /**
+     * Refresh notifications from Firebase and update the UI.
+     * Called when the notification panel is opened.
+     */
+    private void refreshNotificationsFromFirebase() {
+        if (notificationRepository == null)
+            return;
+
+        notificationRepository.getNotifications(new NotificationRepository.OnNotificationsLoadedListener() {
+            @Override
+            public void onLoaded(List<AppNotification> notifications) {
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> {
+                        notificationsList = new ArrayList<>(notifications);
+                        if (isNotificationPanelOpen && appNotificationAdapter != null) {
+                            appNotificationAdapter.setNotifications(notificationsList);
+                            updateNotificationCount();
+                            checkEmptyState();
+                        }
+                        updateNotificationBadge();
+                    });
                 }
-            } catch (Exception ignored) {
-                // Ignore any errors if fragment is detached
             }
-        };
-        notificationHandler.postDelayed(notificationAnimationRunnable, 350);
+
+            @Override
+            public void onError(String error) {
+                android.util.Log.e("DashboardFragment", "Error refreshing notifications: " + error);
+            }
+        });
     }
 
     private void hideNotificationPanel() {
@@ -601,36 +727,73 @@ public class DashboardFragment extends Fragment {
     }
 
     private void updateNotificationBadge() {
-        // Count unviewed notifications
-        int unviewedCount = 0;
-        for (Expense expense : notificationsList) {
-            if (!viewedNotificationIds.contains(expense.getId())) {
-                unviewedCount++;
-            }
+        // Count unread notifications from Firebase list
+        if (notificationRepository != null) {
+            notificationRepository.getUnreadCount(count -> {
+                if (isAdded() && tvNotificationBadge != null) {
+                    requireActivity().runOnUiThread(() -> {
+                        if (count > 0) {
+                            tvNotificationBadge.setVisibility(View.VISIBLE);
+                            tvNotificationBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+                        } else {
+                            tvNotificationBadge.setVisibility(View.GONE);
+                        }
+                    });
+                }
+            });
         }
+    }
 
-        if (unviewedCount > 0) {
-            tvNotificationBadge.setVisibility(View.VISIBLE);
-            tvNotificationBadge.setText(unviewedCount > 99 ? "99+" : String.valueOf(unviewedCount));
-        } else {
-            tvNotificationBadge.setVisibility(View.GONE);
+    private void updateNotificationCount() {
+        if (tvNotificationCount != null) {
+            int count = notificationsList.size();
+            tvNotificationCount.setText(count + (count == 1 ? " notification" : " notifications"));
         }
     }
 
     private void checkEmptyState() {
-        if (notificationAdapter.getNotificationCount() == 0) {
-            rvNotifications.setVisibility(View.GONE);
-            emptyNotifications.setVisibility(View.VISIBLE);
-        } else {
-            rvNotifications.setVisibility(View.VISIBLE);
-            emptyNotifications.setVisibility(View.GONE);
+        if (appNotificationAdapter != null) {
+            if (appNotificationAdapter.getNotificationCount() == 0) {
+                if (rvNotifications != null)
+                    rvNotifications.setVisibility(View.GONE);
+                if (emptyNotifications != null)
+                    emptyNotifications.setVisibility(View.VISIBLE);
+            } else {
+                if (rvNotifications != null)
+                    rvNotifications.setVisibility(View.VISIBLE);
+                if (emptyNotifications != null)
+                    emptyNotifications.setVisibility(View.GONE);
+            }
         }
     }
 
-    private void updateNotifications(List<Expense> expenses) {
-        // Get recent transactions as notifications (e.g., last 20)
-        int count = Math.min(expenses.size(), 20);
-        notificationsList = new ArrayList<>(expenses.subList(0, count));
-        updateNotificationBadge();
+    private void loadNotificationsFromFirebase() {
+        if (notificationRepository == null)
+            return;
+
+        // Use getNotifications instead of real-time listener for more reliability
+        notificationRepository.getNotifications(new NotificationRepository.OnNotificationsLoadedListener() {
+            @Override
+            public void onLoaded(List<AppNotification> notifications) {
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> {
+                        notificationsList = new ArrayList<>(notifications);
+                        updateNotificationBadge();
+
+                        // Update UI if panel is open
+                        if (isNotificationPanelOpen && appNotificationAdapter != null) {
+                            appNotificationAdapter.setNotifications(notificationsList);
+                            updateNotificationCount();
+                            checkEmptyState();
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                android.util.Log.e("DashboardFragment", "Error loading notifications: " + error);
+            }
+        });
     }
 }

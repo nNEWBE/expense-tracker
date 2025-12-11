@@ -10,6 +10,8 @@ import com.example.trackexpense.data.local.AppDatabase;
 import com.example.trackexpense.data.local.Expense;
 import com.example.trackexpense.data.local.ExpenseDao;
 import com.example.trackexpense.data.remote.FirestoreService;
+import com.example.trackexpense.data.repository.NotificationRepository;
+import com.example.trackexpense.utils.PreferenceManager;
 
 import java.util.List;
 
@@ -19,6 +21,8 @@ public class ExpenseRepository {
 
     private final ExpenseDao expenseDao;
     private final FirestoreService firestoreService;
+    private final NotificationRepository notificationRepository;
+    private final PreferenceManager preferenceManager;
     private final LiveData<List<Expense>> allExpenses;
     private final MediatorLiveData<List<Expense>> mergedExpenses = new MediatorLiveData<>();
 
@@ -26,6 +30,8 @@ public class ExpenseRepository {
         AppDatabase db = AppDatabase.getDatabase(application);
         expenseDao = db.expenseDao();
         firestoreService = FirestoreService.getInstance();
+        notificationRepository = NotificationRepository.getInstance();
+        preferenceManager = new PreferenceManager(application);
         allExpenses = expenseDao.getAllExpenses();
 
         Log.d(TAG, "ExpenseRepository initialized, user logged in: " + firestoreService.isUserLoggedIn());
@@ -103,6 +109,16 @@ public class ExpenseRepository {
                 Log.e(TAG, "insert: Failed to save to Room", e);
             }
         });
+
+        // Create notification for transaction created
+        if (firestoreService.isUserLoggedIn()) {
+            String currencySymbol = preferenceManager.getCurrencySymbol();
+            notificationRepository.notifyTransactionCreated(
+                    expense.getCategory(),
+                    expense.getAmount(),
+                    expense.getType(),
+                    currencySymbol);
+        }
     }
 
     public void delete(Expense expense) {
@@ -123,6 +139,14 @@ public class ExpenseRepository {
             } catch (Exception e) {
                 Log.e(TAG, "delete: Failed to delete from Firestore", e);
             }
+
+            // Create notification for transaction deleted
+            String currencySymbol = preferenceManager.getCurrencySymbol();
+            notificationRepository.notifyTransactionDeleted(
+                    expense.getCategory(),
+                    expense.getAmount(),
+                    expense.getType(),
+                    currencySymbol);
         }
     }
 
@@ -144,6 +168,14 @@ public class ExpenseRepository {
             } catch (Exception e) {
                 Log.e(TAG, "update: Failed to update Firestore", e);
             }
+
+            // Create notification for transaction updated
+            String currencySymbol = preferenceManager.getCurrencySymbol();
+            notificationRepository.notifyTransactionUpdated(
+                    expense.getCategory(),
+                    expense.getAmount(),
+                    expense.getType(),
+                    currencySymbol);
         }
     }
 
