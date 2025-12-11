@@ -10,63 +10,11 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Premium Search Bar with Dark Background -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="#1E293B"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
-
-                <!-- Search Icon -->
-                <ImageView
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:src="@drawable/ic_search"
-                    app:tint="#94A3B8" />
-
-                <EditText
-                    android:id="@+id/etSearch"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="14dp"
-                    android:layout_weight="1"
-                    android:background="@null"
-                    android:hint="Search categories..."
-                    android:imeOptions="actionSearch"
-                    android:inputType="text"
-                    android:textColor="@android:color/white"
-                    android:textColorHint="#64748B"
-                    android:textSize="15sp" />
-
-                <!-- Clear Button -->
-                <ImageView
-                    android:id="@+id/btnClearSearch"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_close"
-                    android:visibility="gone"
-                    app:tint="#64748B" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
         <!-- Modern Filter Chips -->
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:clipToPadding="false"
             android:paddingHorizontal="16dp"
             android:scrollbars="none">

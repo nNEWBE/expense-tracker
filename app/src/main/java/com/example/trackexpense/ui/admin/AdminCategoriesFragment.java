@@ -50,7 +50,7 @@ public class AdminCategoriesFragment extends Fragment {
 
     private AdminService adminService;
     private RecyclerView rvCategories;
-    private EditText etSearch;
+
     private com.google.android.material.card.MaterialCardView chipAll, chipExpense, chipIncome;
     private TextView tvCategoryCount;
     private com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton fabAdd;
@@ -85,7 +85,6 @@ public class AdminCategoriesFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         adminService = AdminService.getInstance();
 
-        etSearch = view.findViewById(R.id.etSearch);
         chipAll = view.findViewById(R.id.chipAll);
         chipExpense = view.findViewById(R.id.chipExpense);
         chipIncome = view.findViewById(R.id.chipIncome);
@@ -94,7 +93,6 @@ public class AdminCategoriesFragment extends Fragment {
         fabAdd = view.findViewById(R.id.fabAdd);
 
         setupRecyclerView();
-        setupSearch();
         setupFilters();
         setupFab();
         observeCategories();
@@ -104,23 +102,6 @@ public class AdminCategoriesFragment extends Fragment {
         adapter = new CategoryAdapter();
         rvCategories.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvCategories.setAdapter(adapter);
-    }
-
-    private void setupSearch() {
-        etSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterCategories();
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
     }
 
     private void setupFilters() {
@@ -192,10 +173,7 @@ public class AdminCategoriesFragment extends Fragment {
     }
 
     private void filterCategories() {
-        String query = etSearch.getText() != null ? etSearch.getText().toString().toLowerCase() : "";
-
         List<CategoryModel> filtered = allCategories.stream()
-                .filter(c -> query.isEmpty() || c.getName().toLowerCase().contains(query))
                 .filter(c -> {
                     if ("EXPENSE".equals(currentFilter))
                         return "EXPENSE".equals(c.getType());

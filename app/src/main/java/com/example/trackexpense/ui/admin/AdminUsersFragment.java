@@ -41,8 +41,6 @@ public class AdminUsersFragment extends Fragment {
 
     private AdminService adminService;
     private RecyclerView rvUsers;
-    private EditText etSearch;
-    private ImageView btnClearSearch;
     private TextView tvUserCount;
     private MaterialCardView chipAll, chipVerified, chipAdmin, chipBlocked;
     private UserAdapter adapter;
@@ -61,8 +59,6 @@ public class AdminUsersFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         adminService = AdminService.getInstance();
 
-        etSearch = view.findViewById(R.id.etSearch);
-        btnClearSearch = view.findViewById(R.id.btnClearSearch);
         tvUserCount = view.findViewById(R.id.tvUserCount);
         rvUsers = view.findViewById(R.id.rvUsers);
 
@@ -73,7 +69,6 @@ public class AdminUsersFragment extends Fragment {
         chipBlocked = view.findViewById(R.id.chipBlocked);
 
         setupRecyclerView();
-        setupSearch();
         setupFilters();
         observeUsers();
     }
@@ -82,35 +77,6 @@ public class AdminUsersFragment extends Fragment {
         adapter = new UserAdapter();
         rvUsers.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvUsers.setAdapter(adapter);
-    }
-
-    private void setupSearch() {
-        etSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterUsers();
-                // Show/hide clear button
-                if (btnClearSearch != null) {
-                    btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
-
-        // Clear search button
-        if (btnClearSearch != null) {
-            btnClearSearch.setOnClickListener(v -> {
-                etSearch.setText("");
-                btnClearSearch.setVisibility(View.GONE);
-            });
-        }
     }
 
     private void setupFilters() {
@@ -195,20 +161,7 @@ public class AdminUsersFragment extends Fragment {
     }
 
     private void filterUsers() {
-        String query = etSearch.getText() != null ? etSearch.getText().toString().toLowerCase() : "";
-
         List<User> filtered = allUsers.stream()
-                .filter(u -> {
-                    // Text search filter
-                    if (!query.isEmpty()) {
-                        boolean matchesEmail = u.getEmail() != null && u.getEmail().toLowerCase().contains(query);
-                        boolean matchesName = u.getDisplayName() != null
-                                && u.getDisplayName().toLowerCase().contains(query);
-                        if (!matchesEmail && !matchesName)
-                            return false;
-                    }
-                    return true;
-                })
                 .filter(u -> {
                     // Category filter
                     switch (currentFilter) {
