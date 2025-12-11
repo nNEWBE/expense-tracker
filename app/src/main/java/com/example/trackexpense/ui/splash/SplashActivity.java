@@ -13,9 +13,7 @@ import android.os.Looper;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
-import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
@@ -26,19 +24,13 @@ import com.example.trackexpense.ui.auth.WelcomeActivity;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
 
-import java.util.Random;
-
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
 
     private MaterialCardView logoCard;
-    private View tvAppName, tvTagline, loadingContainer, tvLoading;
-    private ImageView arc1, arc2, arc3;
-    private View centerOrb, outerGlow;
-    private View sparkle1, sparkle2, sparkle3;
+    private View tvAppName, tvTagline, tvLoading;
     private View sphere1, sphere2, sphere3, sphere4, sphere5;
     private boolean isAnimating = true;
-    private Random random = new Random();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,20 +52,7 @@ public class SplashActivity extends AppCompatActivity {
         logoCard = findViewById(R.id.logoCard);
         tvAppName = findViewById(R.id.tvAppName);
         tvTagline = findViewById(R.id.tvTagline);
-        loadingContainer = findViewById(R.id.loadingContainer);
         tvLoading = findViewById(R.id.tvLoading);
-
-        // Arc spinner elements
-        arc1 = findViewById(R.id.arc1);
-        arc2 = findViewById(R.id.arc2);
-        arc3 = findViewById(R.id.arc3);
-        centerOrb = findViewById(R.id.centerOrb);
-        outerGlow = findViewById(R.id.outerGlow);
-
-        // Sparkles
-        sparkle1 = findViewById(R.id.sparkle1);
-        sparkle2 = findViewById(R.id.sparkle2);
-        sparkle3 = findViewById(R.id.sparkle3);
 
         // Spheres
         sphere1 = findViewById(R.id.sphere1);
@@ -133,158 +112,17 @@ public class SplashActivity extends AppCompatActivity {
         tagAnimSet.setStartDelay(900);
         tagAnimSet.start();
 
-        // Fade in loading container with scale
-        loadingContainer.setScaleX(0.5f);
-        loadingContainer.setScaleY(0.5f);
-
-        AnimatorSet loadingAppear = new AnimatorSet();
-        ObjectAnimator loadingAlpha = ObjectAnimator.ofFloat(loadingContainer, "alpha", 0f, 1f);
-        ObjectAnimator loadingScaleX = ObjectAnimator.ofFloat(loadingContainer, "scaleX", 0.5f, 1f);
-        ObjectAnimator loadingScaleY = ObjectAnimator.ofFloat(loadingContainer, "scaleY", 0.5f, 1f);
-        loadingAppear.playTogether(loadingAlpha, loadingScaleX, loadingScaleY);
-        loadingAppear.setDuration(500);
-        loadingAppear.setStartDelay(1100);
-        loadingAppear.setInterpolator(new OvershootInterpolator(1.5f));
-        loadingAppear.start();
-
         // Fade in loading text
         ObjectAnimator loadingTextAlpha = ObjectAnimator.ofFloat(tvLoading, "alpha", 0f, 1f);
         loadingTextAlpha.setDuration(300);
-        loadingTextAlpha.setStartDelay(1300);
+        loadingTextAlpha.setStartDelay(1100);
         loadingTextAlpha.start();
-
-        // Start the awesome triple arc spinner
-        new Handler(Looper.getMainLooper()).postDelayed(this::startTripleArcSpinner, 1100);
 
         // Start logo pulse after initial animation
         new Handler(Looper.getMainLooper()).postDelayed(this::startLogoPulse, 1000);
 
         // Navigate after animations complete
         new Handler(Looper.getMainLooper()).postDelayed(this::navigateToNextScreen, 3000);
-    }
-
-    private void startTripleArcSpinner() {
-        // Rotate arc 1 - Slowest, clockwise
-        startArcRotation(arc1, 2400, true);
-
-        // Rotate arc 2 - Medium speed, counter-clockwise
-        startArcRotation(arc2, 1800, false);
-
-        // Rotate arc 3 - Fastest, clockwise
-        startArcRotation(arc3, 1200, true);
-
-        // Pulse the center orb
-        startCenterOrbPulse();
-
-        // Pulse the outer glow
-        startOuterGlowPulse();
-
-        // Start sparkle animations
-        startSparkleAnimations();
-    }
-
-    private void startArcRotation(ImageView arc, int duration, boolean clockwise) {
-        float startRotation = arc.getRotation();
-        float endRotation = clockwise ? startRotation + 360f : startRotation - 360f;
-
-        ObjectAnimator rotation = ObjectAnimator.ofFloat(arc, "rotation", startRotation, endRotation);
-        rotation.setDuration(duration);
-        rotation.setInterpolator(new LinearInterpolator());
-        rotation.setRepeatCount(ValueAnimator.INFINITE);
-        rotation.start();
-    }
-
-    private void startCenterOrbPulse() {
-        // Scale pulse
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(centerOrb, "scaleX", 1f, 1.3f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(centerOrb, "scaleY", 1f, 1.3f, 1f);
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(centerOrb, "alpha", 1f, 0.7f, 1f);
-
-        AnimatorSet pulseSet = new AnimatorSet();
-        pulseSet.playTogether(scaleX, scaleY, alpha);
-        pulseSet.setDuration(1200);
-        pulseSet.setInterpolator(new AccelerateDecelerateInterpolator());
-        pulseSet.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                if (isAnimating) {
-                    pulseSet.start();
-                }
-            }
-        });
-        pulseSet.start();
-    }
-
-    private void startOuterGlowPulse() {
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(outerGlow, "scaleX", 1f, 1.2f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(outerGlow, "scaleY", 1f, 1.2f, 1f);
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(outerGlow, "alpha", 0.4f, 0.7f, 0.4f);
-
-        AnimatorSet glowSet = new AnimatorSet();
-        glowSet.playTogether(scaleX, scaleY, alpha);
-        glowSet.setDuration(1600);
-        glowSet.setInterpolator(new AccelerateDecelerateInterpolator());
-        glowSet.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                if (isAnimating) {
-                    glowSet.start();
-                }
-            }
-        });
-        glowSet.start();
-    }
-
-    private void startSparkleAnimations() {
-        View[] sparkles = { sparkle1, sparkle2, sparkle3 };
-
-        for (View sparkle : sparkles) {
-            animateSparkle(sparkle);
-        }
-    }
-
-    private void animateSparkle(View sparkle) {
-        float density = getResources().getDisplayMetrics().density;
-
-        // Random starting position around the center
-        float angle = random.nextFloat() * 360f;
-        float startRadius = 15f * density;
-        float endRadius = 45f * density;
-
-        double radians = Math.toRadians(angle);
-        float startX = (float) (Math.cos(radians) * startRadius);
-        float startY = (float) (Math.sin(radians) * startRadius);
-        float endX = (float) (Math.cos(radians) * endRadius);
-        float endY = (float) (Math.sin(radians) * endRadius);
-
-        sparkle.setTranslationX(startX);
-        sparkle.setTranslationY(startY);
-        sparkle.setAlpha(0f);
-        sparkle.setScaleX(0.3f);
-        sparkle.setScaleY(0.3f);
-
-        AnimatorSet sparkleAnim = new AnimatorSet();
-
-        ObjectAnimator moveX = ObjectAnimator.ofFloat(sparkle, "translationX", startX, endX);
-        ObjectAnimator moveY = ObjectAnimator.ofFloat(sparkle, "translationY", startY, endY);
-        ObjectAnimator alphaAnim = ObjectAnimator.ofFloat(sparkle, "alpha", 0f, 1f, 0f);
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(sparkle, "scaleX", 0.3f, 1f, 0.3f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(sparkle, "scaleY", 0.3f, 1f, 0.3f);
-
-        sparkleAnim.playTogether(moveX, moveY, alphaAnim, scaleX, scaleY);
-        sparkleAnim.setDuration(800 + random.nextInt(400));
-        sparkleAnim.setStartDelay(random.nextInt(500));
-        sparkleAnim.setInterpolator(new AccelerateDecelerateInterpolator());
-        sparkleAnim.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                if (isAnimating) {
-                    // Restart with new random angle
-                    animateSparkle(sparkle);
-                }
-            }
-        });
-        sparkleAnim.start();
     }
 
     private void animateSpheres() {
