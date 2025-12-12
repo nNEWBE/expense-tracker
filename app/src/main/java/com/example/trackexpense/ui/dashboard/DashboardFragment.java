@@ -58,7 +58,7 @@ public class DashboardFragment extends Fragment {
     private RecyclerView rvRecentTransactions;
     private ExpenseAdapter expenseAdapter;
     private MaterialCardView btnMenu, btnNotification, cardBalance, cardBudget;
-    private com.google.android.material.button.MaterialButton btnFilterAll, btnFilterIncome, btnFilterExpense;
+    private MaterialCardView btnFilterAll, btnFilterIncome, btnFilterExpense;
     private View cardContainer;
 
     private List<Expense> allExpenses = new ArrayList<>();
@@ -645,34 +645,42 @@ public class DashboardFragment extends Fragment {
     private void updateFilterUI() {
         if (btnFilterAll == null)
             return;
-        updateButtonStyle(btnFilterAll, "ALL".equals(currentFilter), R.color.primary);
-        updateButtonStyle(btnFilterIncome, "INCOME".equals(currentFilter), R.color.income_green);
-        updateButtonStyle(btnFilterExpense, "EXPENSE".equals(currentFilter), R.color.expense_red);
+        
+        int whiteColor = androidx.core.content.ContextCompat.getColor(requireContext(), android.R.color.white);
+        int primaryColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.primary);
+        int incomeColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.income_green);
+        int expenseColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.expense_red);
+        int incomeBgColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.income_green_light);
+        int expenseBgColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.expense_red_light);
+
+        // All filter
+        boolean allSelected = "ALL".equals(currentFilter);
+        btnFilterAll.setCardBackgroundColor(allSelected ? primaryColor : whiteColor);
+        btnFilterAll.setStrokeWidth(allSelected ? 0 : dpToPx(1.5f));
+        btnFilterAll.setStrokeColor(primaryColor);
+        TextView tvAll = btnFilterAll.findViewById(R.id.tvFilterAll);
+        android.widget.ImageView iconAll = btnFilterAll.findViewById(R.id.iconFilterAll);
+        if (tvAll != null) tvAll.setTextColor(allSelected ? whiteColor : primaryColor);
+        if (iconAll != null) iconAll.setColorFilter(allSelected ? whiteColor : primaryColor);
+
+        // Income filter
+        boolean incomeSelected = "INCOME".equals(currentFilter);
+        btnFilterIncome.setCardBackgroundColor(incomeSelected ? incomeColor : incomeBgColor);
+        TextView tvIncome = btnFilterIncome.findViewById(R.id.tvFilterIncome);
+        android.widget.ImageView iconIncome = btnFilterIncome.findViewById(R.id.iconFilterIncome);
+        if (tvIncome != null) tvIncome.setTextColor(incomeSelected ? whiteColor : incomeColor);
+        if (iconIncome != null) iconIncome.setColorFilter(incomeSelected ? whiteColor : incomeColor);
+
+        // Expense filter
+        boolean expenseSelected = "EXPENSE".equals(currentFilter);
+        btnFilterExpense.setCardBackgroundColor(expenseSelected ? expenseColor : expenseBgColor);
+        TextView tvExpense = btnFilterExpense.findViewById(R.id.tvFilterExpense);
+        android.widget.ImageView iconExpense = btnFilterExpense.findViewById(R.id.iconFilterExpense);
+        if (tvExpense != null) tvExpense.setTextColor(expenseSelected ? whiteColor : expenseColor);
+        if (iconExpense != null) iconExpense.setColorFilter(expenseSelected ? whiteColor : expenseColor);
     }
 
-    private void updateButtonStyle(com.google.android.material.button.MaterialButton btn, boolean isActive,
-            int colorRes) {
-        int color = androidx.core.content.ContextCompat.getColor(requireContext(), colorRes);
-        if (isActive) {
-            // Modern tonal style: 20% opacity background, 100% opacity text/icon
-            int fadedColor = androidx.core.graphics.ColorUtils.setAlphaComponent(color, 50);
-
-            btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(fadedColor));
-            btn.setTextColor(color);
-            btn.setIconTint(android.content.res.ColorStateList.valueOf(color));
-            btn.setStrokeWidth(0);
-            btn.setElevation(0);
-        } else {
-            btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
-            btn.setTextColor(color);
-            btn.setIconTint(android.content.res.ColorStateList.valueOf(color));
-            btn.setStrokeColor(android.content.res.ColorStateList.valueOf(color));
-            btn.setStrokeWidth(dpToPx(1));
-            btn.setElevation(0);
-        }
-    }
-
-    private int dpToPx(int dp) {
+    private int dpToPx(float dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);
     }
 

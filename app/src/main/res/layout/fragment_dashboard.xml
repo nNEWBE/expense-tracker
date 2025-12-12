@@ -456,84 +456,134 @@
                     android:orientation="horizontal"
                     android:paddingVertical="16dp"
                     android:background="@android:color/white"
-                    android:paddingHorizontal="8dp">
+                    android:paddingHorizontal="12dp">
 
-                    <com.google.android.material.button.MaterialButton
+                    <!-- All Filter -->
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnFilterAll"
-                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginHorizontal="4dp"
-                        android:layout_weight="0.8"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minWidth="0dp"
-                        android:minHeight="0dp"
-                        android:padding="0dp"
-                        android:text="All"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.05"
-                        android:textColor="@android:color/white"
-                        app:backgroundTint="@color/primary"
-                        app:cornerRadius="20dp"
-                        app:elevation="0dp"
-                        app:icon="@drawable/ic_nav_analytics"
-                        app:iconGravity="textStart"
-                        app:iconPadding="4dp"
-                        app:iconSize="16dp" />
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/primary"
+                        app:cardCornerRadius="22dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
 
-                    <com.google.android.material.button.MaterialButton
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="12dp">
+
+                            <ImageView
+                                android:id="@+id/iconFilterAll"
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@drawable/ic_nav_analytics"
+                                app:tint="@android:color/white" />
+
+                            <TextView
+                                android:id="@+id/tvFilterAll"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:text="All"
+                                android:textColor="@android:color/white"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Income Filter -->
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnFilterIncome"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginHorizontal="4dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="8dp"
                         android:layout_weight="1"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minWidth="0dp"
-                        android:minHeight="0dp"
-                        android:padding="0dp"
-                        android:text="Income"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.05"
-                        android:textColor="@color/income_green"
-                        app:cornerRadius="20dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/income_green_light"
+                        app:cardCornerRadius="22dp"
+                        app:cardElevation="0dp"
                         app:strokeColor="@color/income_green"
-                        app:strokeWidth="1dp"
-                        app:elevation="0dp"
-                        app:icon="@drawable/ic_arrow_up"
-                        app:iconGravity="textStart"
-                        app:iconPadding="4dp"
-                        app:iconSize="16dp" />
+                        app:strokeWidth="1.5dp">
 
-                    <com.google.android.material.button.MaterialButton
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="12dp">
+
+                            <ImageView
+                                android:id="@+id/iconFilterIncome"
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@drawable/ic_arrow_up"
+                                app:tint="@color/income_green" />
+
+                            <TextView
+                                android:id="@+id/tvFilterIncome"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:text="Income"
+                                android:textColor="@color/income_green"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Expense Filter -->
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnFilterExpense"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginHorizontal="4dp"
+                        android:layout_height="44dp"
                         android:layout_weight="1"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minWidth="0dp"
-                        android:minHeight="0dp"
-                        android:padding="0dp"
-                        android:text="Expense"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.05"
-                        android:textColor="@color/expense_red"
-                        app:cornerRadius="20dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/expense_red_light"
+                        app:cardCornerRadius="22dp"
+                        app:cardElevation="0dp"
                         app:strokeColor="@color/expense_red"
-                        app:strokeWidth="1dp"
-                        app:elevation="0dp"
-                        app:icon="@drawable/ic_arrow_down"
-                        app:iconGravity="textStart"
-                        app:iconPadding="4dp"
-                        app:iconSize="16dp" />
+                        app:strokeWidth="1.5dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="12dp">
+
+                            <ImageView
+                                android:id="@+id/iconFilterExpense"
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@drawable/ic_arrow_down"
+                                app:tint="@color/expense_red" />
+
+                            <TextView
+                                android:id="@+id/tvFilterExpense"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:text="Expense"
+                                android:textColor="@color/expense_red"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
 
                 </LinearLayout>
 

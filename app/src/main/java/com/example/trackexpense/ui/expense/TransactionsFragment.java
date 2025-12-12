@@ -49,11 +49,11 @@ public class TransactionsFragment extends Fragment {
     private ExpenseViewModel viewModel;
     private PreferenceManager preferenceManager;
     private NotificationHelper notificationHelper;
-    private RecyclerView rvTransactions;
-    private ExpenseAdapter adapter;
+    private RecyclerView rvTransactions, rvPinnedTransactions;
+    private ExpenseAdapter adapter, pinnedAdapter;
     private EditText etSearch;
-    private TextView tvEmpty, tvTransactionCount;
-    private LinearLayout emptyState, categoryChipsContainer;
+    private TextView tvEmpty, tvTransactionCount, tvPinnedCount;
+    private LinearLayout emptyState, categoryChipsContainer, pinnedSection, allTransactionsHeader;
     private MaterialCardView chipAll, chipToday, chipWeek, chipMonth;
     private MaterialCardView btnTypeAll, btnTypeIncome, btnTypeExpense;
     private MaterialCardView chipCatAll;
@@ -61,6 +61,7 @@ public class TransactionsFragment extends Fragment {
     private ProgressBar progressLoadMore;
     private List<Expense> allExpenses = new ArrayList<>();
     private List<Expense> filteredExpenses = new ArrayList<>();
+    private List<Expense> pinnedExpenses = new ArrayList<>();
     private String currentTypeFilter = "ALL"; // ALL, INCOME, EXPENSE
     private String currentCategoryFilter = "ALL"; // ALL or specific category
     private String currentDateFilter = "ALL"; // ALL, TODAY, WEEK, MONTH
@@ -147,13 +148,17 @@ public class TransactionsFragment extends Fragment {
 
     private void initViews(View view) {
         rvTransactions = view.findViewById(R.id.rvTransactions);
+        rvPinnedTransactions = view.findViewById(R.id.rvPinnedTransactions);
         etSearch = view.findViewById(R.id.etSearch);
         tvEmpty = view.findViewById(R.id.tvEmpty);
         tvTransactionCount = view.findViewById(R.id.tvTransactionCount);
+        tvPinnedCount = view.findViewById(R.id.tvPinnedCount);
         emptyState = view.findViewById(R.id.emptyState);
         btnLoadMore = view.findViewById(R.id.btnLoadMore);
         progressLoadMore = view.findViewById(R.id.progressLoadMore);
         categoryChipsContainer = view.findViewById(R.id.categoryChipsContainer);
+        pinnedSection = view.findViewById(R.id.pinnedSection);
+        allTransactionsHeader = view.findViewById(R.id.allTransactionsHeader);
 
         // Date filter chips
         chipAll = view.findViewById(R.id.chipAll);
@@ -171,6 +176,7 @@ public class TransactionsFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
+        // Main transactions adapter
         adapter = new ExpenseAdapter();
         adapter.setCurrencySymbol(preferenceManager.getCurrencySymbol());
         rvTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -184,6 +190,19 @@ public class TransactionsFragment extends Fragment {
 
         // Pin click listener
         adapter.setOnPinClickListener((expense, position) -> togglePin(expense));
+
+        // Pinned transactions adapter
+        pinnedAdapter = new ExpenseAdapter();
+        pinnedAdapter.setCurrencySymbol(preferenceManager.getCurrencySymbol());
+        if (rvPinnedTransactions != null) {
+            rvPinnedTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
+            rvPinnedTransactions.setAdapter(pinnedAdapter);
+
+            // Same listeners for pinned adapter
+            pinnedAdapter.setOnEditClickListener((expense, position) -> showEditDialog(expense));
+            pinnedAdapter.setOnDeleteClickListener((expense, position) -> confirmDelete(expense));
+            pinnedAdapter.setOnPinClickListener((expense, position) -> togglePin(expense));
+        }
     }
 
     private void togglePin(Expense expense) {
@@ -768,25 +787,52 @@ public class TransactionsFragment extends Fragment {
             }
         }
 
-        // Sort pinned transactions to top
-        filteredExpenses.sort((e1, e2) -> {
-            if (e1.isPinned() && !e2.isPinned())
-                return -1;
-            if (!e1.isPinned() && e2.isPinned())
-                return 1;
-            return Long.compare(e2.getDate(), e1.getDate()); // Newest first
-        });
+        // Separate pinned and unpinned transactions
+        pinnedExpenses = filteredExpenses.stream()
+                .filter(Expense::isPinned)
+                .sorted((e1, e2) -> Long.compare(e2.getDate(), e1.getDate()))
+                .collect(Collectors.toList());
 
-        // Update transaction count
+        // Get unpinned transactions (these go in main list)
+        List<Expense> unpinnedExpenses = filteredExpenses.stream()
+                .filter(e -> !e.isPinned())
+                .sorted((e1, e2) -> Long.compare(e2.getDate(), e1.getDate()))
+                .collect(Collectors.toList());
+
+        // Replace filteredExpenses with unpinned only for pagination
+        filteredExpenses = unpinnedExpenses;
+
+        // Update transaction count (total = pinned + unpinned)
         if (tvTransactionCount != null) {
-            int count = filteredExpenses.size();
-            tvTransactionCount.setText(count + " transaction" + (count != 1 ? "s" : ""));
+            int totalCount = pinnedExpenses.size() + filteredExpenses.size();
+            tvTransactionCount.setText(totalCount + " transaction" + (totalCount != 1 ? "s" : ""));
         }
 
         displayPaginatedResults();
     }
 
     private void displayPaginatedResults() {
+        // Display pinned transactions (always show all)
+        if (pinnedSection != null) {
+            if (!pinnedExpenses.isEmpty()) {
+                pinnedSection.setVisibility(View.VISIBLE);
+                pinnedAdapter.setExpenses(new ArrayList<>(pinnedExpenses));
+                if (tvPinnedCount != null) {
+                    tvPinnedCount.setText(pinnedExpenses.size() + " pinned");
+                }
+                // Show "All Transactions" header when there are pinned items
+                if (allTransactionsHeader != null && !filteredExpenses.isEmpty()) {
+                    allTransactionsHeader.setVisibility(View.VISIBLE);
+                }
+            } else {
+                pinnedSection.setVisibility(View.GONE);
+                if (allTransactionsHeader != null) {
+                    allTransactionsHeader.setVisibility(View.GONE);
+                }
+            }
+        }
+
+        // Display unpinned transactions with pagination
         int totalItems = filteredExpenses.size();
         int itemsToShow = Math.min(currentPage * PAGE_SIZE, totalItems);
 
@@ -801,9 +847,10 @@ public class TransactionsFragment extends Fragment {
             btnLoadMore.setText("Load More (" + (totalItems - itemsToShow) + " remaining)");
         }
 
-        // Show/hide empty state
+        // Show/hide empty state (only when both lists are empty)
+        boolean isEmpty = pinnedExpenses.isEmpty() && filteredExpenses.isEmpty();
         if (emptyState != null) {
-            emptyState.setVisibility(filteredExpenses.isEmpty() ? View.VISIBLE : View.GONE);
+            emptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         }
         if (tvEmpty != null) {
             tvEmpty.setVisibility(View.GONE); // Using emptyState instead
