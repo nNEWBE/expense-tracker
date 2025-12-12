@@ -32,6 +32,7 @@ public class AppNotification {
     private String category;
     private String transactionType; // INCOME or EXPENSE
     private boolean isRead;
+    private String extraData; // For storing additional metadata (e.g., category request details)
     @ServerTimestamp
     private Date createdAt;
 
@@ -167,6 +168,14 @@ public class AppNotification {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getExtraData() {
+        return extraData;
+    }
+
+    public void setExtraData(String extraData) {
+        this.extraData = extraData;
     }
 
     /**
