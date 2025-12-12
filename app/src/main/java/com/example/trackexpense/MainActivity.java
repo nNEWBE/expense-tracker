@@ -23,6 +23,8 @@ import androidx.core.view.WindowCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
@@ -393,27 +395,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     // ==================== EXPORT DATA ====================
     private void showExportDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_export, null);
-        
+
         com.google.android.material.card.MaterialCardView cardCSV = dialogView.findViewById(R.id.cardCSV);
         com.google.android.material.card.MaterialCardView cardJSON = dialogView.findViewById(R.id.cardJSON);
         com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
-        
+
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
                 .create();
-        
+
         cardCSV.setOnClickListener(v -> {
             dialog.dismiss();
             exportAsCSV();
         });
-        
+
         cardJSON.setOnClickListener(v -> {
             dialog.dismiss();
             exportAsJSON();
         });
-        
+
         btnCancel.setOnClickListener(v -> dialog.dismiss());
-        
+
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
@@ -479,31 +481,212 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     // ==================== CATEGORIES ====================
     private void showCategoriesDialog() {
-        String[] categories = {
-                "🍔 Food & Dining",
-                "🚗 Transportation",
-                "🛒 Shopping",
-                "🎬 Entertainment",
-                "🏥 Health & Fitness",
-                "📱 Bills & Utilities",
-                "📚 Education",
-                "✈️ Travel",
-                "🛒 Groceries",
-                "📺 Subscriptions",
-                "💼 Salary (Income)",
-                "💻 Freelance (Income)",
-                "📈 Investment (Income)",
-                "🎁 Gift (Income)"
-        };
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_categories, null);
 
-        new MaterialAlertDialogBuilder(this, R.style.Theme_TrackExpense_Dialog)
-                .setTitle("📂 Categories")
-                .setItems(categories, null)
-                .setPositiveButton("OK", null)
-                .setNeutralButton("Add Custom", (dialog, which) -> {
-                    BeautifulNotification.showInfo(this, "Custom categories coming soon!");
+        com.google.android.material.card.MaterialCardView tabExpense = dialogView.findViewById(R.id.tabExpense);
+        com.google.android.material.card.MaterialCardView tabIncome = dialogView.findViewById(R.id.tabIncome);
+        TextView tvExpenseTab = dialogView.findViewById(R.id.tvExpenseTab);
+        TextView tvIncomeTab = dialogView.findViewById(R.id.tvIncomeTab);
+        ImageView icExpenseTab = dialogView.findViewById(R.id.icExpenseTab);
+        ImageView icIncomeTab = dialogView.findViewById(R.id.icIncomeTab);
+        RecyclerView rvCategories = dialogView.findViewById(R.id.rvCategories);
+        com.google.android.material.card.MaterialCardView cardRequest = dialogView.findViewById(R.id.cardRequest);
+        com.google.android.material.button.MaterialButton btnClose = dialogView.findViewById(R.id.btnClose);
+
+        // Setup RecyclerView
+        com.example.trackexpense.ui.dialog.CategoryListAdapter adapter = new com.example.trackexpense.ui.dialog.CategoryListAdapter(
+                this);
+        rvCategories.setLayoutManager(new LinearLayoutManager(this));
+        rvCategories.setAdapter(adapter);
+
+        // Initial state - show expense categories
+        boolean[] isExpenseTab = { true };
+        adapter.setCategories(java.util.Arrays.asList(
+                com.example.trackexpense.utils.CategoryHelper.EXPENSE_CATEGORIES));
+
+        // Tab click listeners
+        tabExpense.setOnClickListener(v -> {
+            if (!isExpenseTab[0]) {
+                isExpenseTab[0] = true;
+                // Update tab styles
+                tabExpense.setCardBackgroundColor(ContextCompat.getColor(this, R.color.expense_red_light));
+                tabExpense.setStrokeColor(ContextCompat.getColor(this, R.color.expense_red));
+                tvExpenseTab.setTextColor(ContextCompat.getColor(this, R.color.expense_red));
+                icExpenseTab.setColorFilter(ContextCompat.getColor(this, R.color.expense_red));
+
+                tabIncome.setCardBackgroundColor(ContextCompat.getColor(this, R.color.gray_50));
+                tabIncome.setStrokeColor(ContextCompat.getColor(this, R.color.gray_200));
+                tvIncomeTab.setTextColor(ContextCompat.getColor(this, R.color.gray_500));
+                icIncomeTab.setColorFilter(ContextCompat.getColor(this, R.color.gray_500));
+
+                adapter.setCategories(java.util.Arrays.asList(
+                        com.example.trackexpense.utils.CategoryHelper.EXPENSE_CATEGORIES));
+            }
+        });
+
+        tabIncome.setOnClickListener(v -> {
+            if (isExpenseTab[0]) {
+                isExpenseTab[0] = false;
+                // Update tab styles
+                tabIncome.setCardBackgroundColor(ContextCompat.getColor(this, R.color.green_50));
+                tabIncome.setStrokeColor(ContextCompat.getColor(this, R.color.income_green));
+                tvIncomeTab.setTextColor(ContextCompat.getColor(this, R.color.income_green));
+                icIncomeTab.setColorFilter(ContextCompat.getColor(this, R.color.income_green));
+
+                tabExpense.setCardBackgroundColor(ContextCompat.getColor(this, R.color.gray_50));
+                tabExpense.setStrokeColor(ContextCompat.getColor(this, R.color.gray_200));
+                tvExpenseTab.setTextColor(ContextCompat.getColor(this, R.color.gray_500));
+                icExpenseTab.setColorFilter(ContextCompat.getColor(this, R.color.gray_500));
+
+                adapter.setCategories(java.util.Arrays.asList(
+                        com.example.trackexpense.utils.CategoryHelper.INCOME_CATEGORIES));
+            }
+        });
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        // Request new category
+        cardRequest.setOnClickListener(v -> {
+            dialog.dismiss();
+            showRequestCategoryDialog();
+        });
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
+    }
+
+    private void showRequestCategoryDialog() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_request_category, null);
+
+        com.google.android.material.textfield.TextInputLayout tilCategoryName = dialogView
+                .findViewById(R.id.tilCategoryName);
+        com.google.android.material.textfield.TextInputEditText etCategoryName = dialogView
+                .findViewById(R.id.etCategoryName);
+        com.google.android.material.textfield.TextInputEditText etReason = dialogView.findViewById(R.id.etReason);
+        com.google.android.material.card.MaterialCardView cardTypeExpense = dialogView
+                .findViewById(R.id.cardTypeExpense);
+        com.google.android.material.card.MaterialCardView cardTypeIncome = dialogView.findViewById(R.id.cardTypeIncome);
+        ImageView ivExpenseType = dialogView.findViewById(R.id.ivExpenseType);
+        ImageView ivIncomeType = dialogView.findViewById(R.id.ivIncomeType);
+        TextView tvExpenseType = dialogView.findViewById(R.id.tvExpenseType);
+        TextView tvIncomeType = dialogView.findViewById(R.id.tvIncomeType);
+        ImageView checkExpense = dialogView.findViewById(R.id.checkExpense);
+        ImageView checkIncome = dialogView.findViewById(R.id.checkIncome);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        com.google.android.material.button.MaterialButton btnSubmit = dialogView.findViewById(R.id.btnSubmit);
+
+        String[] selectedType = { "EXPENSE" };
+
+        // Type selection listeners
+        cardTypeExpense.setOnClickListener(v -> {
+            selectedType[0] = "EXPENSE";
+            cardTypeExpense.setCardBackgroundColor(ContextCompat.getColor(this, R.color.expense_red_light));
+            cardTypeExpense.setStrokeColor(ContextCompat.getColor(this, R.color.expense_red));
+            cardTypeExpense.setStrokeWidth(4);
+            ivExpenseType.setColorFilter(ContextCompat.getColor(this, R.color.expense_red));
+            tvExpenseType.setTextColor(ContextCompat.getColor(this, R.color.expense_red));
+            checkExpense.setVisibility(View.VISIBLE);
+
+            cardTypeIncome.setCardBackgroundColor(ContextCompat.getColor(this, R.color.gray_50));
+            cardTypeIncome.setStrokeColor(ContextCompat.getColor(this, R.color.gray_200));
+            cardTypeIncome.setStrokeWidth(3);
+            ivIncomeType.setColorFilter(ContextCompat.getColor(this, R.color.gray_400));
+            tvIncomeType.setTextColor(ContextCompat.getColor(this, R.color.gray_500));
+            checkIncome.setVisibility(View.GONE);
+        });
+
+        cardTypeIncome.setOnClickListener(v -> {
+            selectedType[0] = "INCOME";
+            cardTypeIncome.setCardBackgroundColor(ContextCompat.getColor(this, R.color.green_50));
+            cardTypeIncome.setStrokeColor(ContextCompat.getColor(this, R.color.income_green));
+            cardTypeIncome.setStrokeWidth(4);
+            ivIncomeType.setColorFilter(ContextCompat.getColor(this, R.color.income_green));
+            tvIncomeType.setTextColor(ContextCompat.getColor(this, R.color.income_green));
+            checkIncome.setVisibility(View.VISIBLE);
+
+            cardTypeExpense.setCardBackgroundColor(ContextCompat.getColor(this, R.color.gray_50));
+            cardTypeExpense.setStrokeColor(ContextCompat.getColor(this, R.color.gray_200));
+            cardTypeExpense.setStrokeWidth(3);
+            ivExpenseType.setColorFilter(ContextCompat.getColor(this, R.color.gray_400));
+            tvExpenseType.setTextColor(ContextCompat.getColor(this, R.color.gray_500));
+            checkExpense.setVisibility(View.GONE);
+        });
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnSubmit.setOnClickListener(v -> {
+            String categoryName = etCategoryName.getText() != null ? etCategoryName.getText().toString().trim() : "";
+            String reason = etReason.getText() != null ? etReason.getText().toString().trim() : "";
+
+            if (categoryName.isEmpty()) {
+                tilCategoryName.setError("Please enter a category name");
+                return;
+            }
+
+            // Submit request to Firestore
+            submitCategoryRequest(categoryName, selectedType[0], reason);
+            dialog.dismiss();
+        });
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
+    }
+
+    private void submitCategoryRequest(String categoryName, String type, String reason) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            BeautifulNotification.showError(this, "Please log in to submit requests");
+            return;
+        }
+
+        com.example.trackexpense.data.model.CategoryRequest request = new com.example.trackexpense.data.model.CategoryRequest(
+                user.getUid(),
+                user.getDisplayName() != null ? user.getDisplayName() : "User",
+                user.getEmail() != null ? user.getEmail() : "",
+                categoryName,
+                type,
+                reason);
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("category_requests")
+                .add(request)
+                .addOnSuccessListener(documentReference -> {
+                    // Also create a notification for admin
+                    sendAdminNotification(categoryName, type, user.getDisplayName());
+                    BeautifulNotification.showSuccess(this, "Request submitted! Admin will review it.");
                 })
-                .show();
+                .addOnFailureListener(e -> {
+                    BeautifulNotification.showError(this, "Failed to submit request");
+                });
+    }
+
+    private void sendAdminNotification(String categoryName, String type, String userName) {
+        // Create notification in admin_notifications collection
+        java.util.Map<String, Object> notification = new java.util.HashMap<>();
+        notification.put("type", "CATEGORY_REQUEST");
+        notification.put("title", "New Category Request");
+        notification.put("message", userName + " requested a new " + type.toLowerCase() + " category: " + categoryName);
+        notification.put("categoryName", categoryName);
+        notification.put("categoryType", type);
+        notification.put("requestedBy", userName);
+        notification.put("isRead", false);
+        notification.put("createdAt", System.currentTimeMillis());
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("admin_notifications")
+                .add(notification);
     }
 
     // ==================== RECURRING EXPENSES ====================
@@ -522,28 +705,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     // ==================== NOTIFICATIONS ====================
     private void showNotificationsDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_notifications, null);
-        
-        com.google.android.material.switchmaterial.SwitchMaterial switchDaily = dialogView.findViewById(R.id.switchDaily);
-        com.google.android.material.switchmaterial.SwitchMaterial switchBudget = dialogView.findViewById(R.id.switchBudget);
-        com.google.android.material.switchmaterial.SwitchMaterial switchWeekly = dialogView.findViewById(R.id.switchWeekly);
+
+        com.google.android.material.switchmaterial.SwitchMaterial switchDaily = dialogView
+                .findViewById(R.id.switchDaily);
+        com.google.android.material.switchmaterial.SwitchMaterial switchBudget = dialogView
+                .findViewById(R.id.switchBudget);
+        com.google.android.material.switchmaterial.SwitchMaterial switchWeekly = dialogView
+                .findViewById(R.id.switchWeekly);
         com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
         com.google.android.material.button.MaterialButton btnSave = dialogView.findViewById(R.id.btnSave);
-        
+
         // Load current preferences
         switchDaily.setChecked(preferenceManager.isNotificationsEnabled());
-        
+
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
                 .create();
-        
+
         btnCancel.setOnClickListener(v -> dialog.dismiss());
-        
+
         btnSave.setOnClickListener(v -> {
             preferenceManager.setNotificationsEnabled(switchDaily.isChecked());
             BeautifulNotification.showSuccess(this, "Notification settings saved!");
             dialog.dismiss();
         });
-        
+
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
@@ -553,7 +739,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     // ==================== THEME ====================
     private void showThemeDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_theme, null);
-        
+
         com.google.android.material.card.MaterialCardView cardLight = dialogView.findViewById(R.id.cardLight);
         com.google.android.material.card.MaterialCardView cardDark = dialogView.findViewById(R.id.cardDark);
         com.google.android.material.card.MaterialCardView cardSystem = dialogView.findViewById(R.id.cardSystem);
@@ -562,20 +748,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         ImageView checkSystem = dialogView.findViewById(R.id.checkSystem);
         com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
         com.google.android.material.button.MaterialButton btnApply = dialogView.findViewById(R.id.btnApply);
-        
+
         int[] selectedTheme = { preferenceManager.getThemeMode() };
-        
+
         Runnable updateSelection = () -> {
             int gray = ContextCompat.getColor(this, R.color.gray_200);
             int primary = ContextCompat.getColor(this, R.color.primary);
-            
+
             cardLight.setStrokeColor(gray);
             cardDark.setStrokeColor(gray);
             cardSystem.setStrokeColor(gray);
             checkLight.setVisibility(View.GONE);
             checkDark.setVisibility(View.GONE);
             checkSystem.setVisibility(View.GONE);
-            
+
             if (selectedTheme[0] == AppCompatDelegate.MODE_NIGHT_NO) {
                 cardLight.setStrokeColor(primary);
                 checkLight.setVisibility(View.VISIBLE);
@@ -588,35 +774,35 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         };
         updateSelection.run();
-        
+
         cardLight.setOnClickListener(v -> {
             selectedTheme[0] = AppCompatDelegate.MODE_NIGHT_NO;
             updateSelection.run();
         });
-        
+
         cardDark.setOnClickListener(v -> {
             selectedTheme[0] = AppCompatDelegate.MODE_NIGHT_YES;
             updateSelection.run();
         });
-        
+
         cardSystem.setOnClickListener(v -> {
             selectedTheme[0] = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
             updateSelection.run();
         });
-        
+
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
                 .create();
-        
+
         btnCancel.setOnClickListener(v -> dialog.dismiss());
-        
+
         btnApply.setOnClickListener(v -> {
             preferenceManager.setThemeMode(selectedTheme[0]);
             AppCompatDelegate.setDefaultNightMode(selectedTheme[0]);
             BeautifulNotification.showSuccess(this, "Theme updated!");
             dialog.dismiss();
         });
-        
+
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
@@ -626,35 +812,35 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     // ==================== BACKUP & RESTORE ====================
     private void showBackupDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_backup, null);
-        
+
         TextView tvLastBackup = dialogView.findViewById(R.id.tvLastBackup);
         com.google.android.material.card.MaterialCardView cardBackup = dialogView.findViewById(R.id.cardBackup);
         com.google.android.material.card.MaterialCardView cardRestore = dialogView.findViewById(R.id.cardRestore);
         com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
-        
+
         long lastBackup = preferenceManager.getLastBackupTime();
         String lastBackupText = lastBackup > 0
                 ? new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(new Date(lastBackup))
                 : "Never";
         tvLastBackup.setText(lastBackupText);
-        
+
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
                 .create();
-        
+
         cardBackup.setOnClickListener(v -> {
             dialog.dismiss();
             exportAsJSON();
             preferenceManager.setLastBackupTime(System.currentTimeMillis());
         });
-        
+
         cardRestore.setOnClickListener(v -> {
             dialog.dismiss();
             BeautifulNotification.showInfo(this, "Restore feature coming soon!");
         });
-        
+
         btnCancel.setOnClickListener(v -> dialog.dismiss());
-        
+
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
@@ -664,21 +850,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     // ==================== HELP & FAQ ====================
     private void showHelpDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_help, null);
-        
+
         com.google.android.material.button.MaterialButton btnClose = dialogView.findViewById(R.id.btnClose);
         com.google.android.material.button.MaterialButton btnContact = dialogView.findViewById(R.id.btnContact);
-        
+
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
                 .create();
-        
+
         btnClose.setOnClickListener(v -> dialog.dismiss());
-        
+
         btnContact.setOnClickListener(v -> {
             dialog.dismiss();
             sendFeedback();
         });
-        
+
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }

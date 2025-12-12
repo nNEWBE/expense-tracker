@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_rounded_background"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="70dp"
+            android:layout_height="70dp">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_amber_circle_ring" />
+
+            <View
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_amber_circle" />
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_lightbulb"
+                app:tint="@android:color/white" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Request New Category"
+            android:textColor="@color/on_background_light"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="Submit a request to add a new category"
+            android:textColor="@color/gray_500"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <!-- Category Name Input -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilCategoryName"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:hint="Category Name"
+        app:boxCornerRadiusBottomEnd="14dp"
+        app:boxCornerRadiusBottomStart="14dp"
+        app:boxCornerRadiusTopEnd="14dp"
+        app:boxCornerRadiusTopStart="14dp"
+        app:boxStrokeColor="@color/primary"
+        app:hintTextColor="@color/primary"
+        app:startIconDrawable="@drawable/ic_nav_categories"
+        app:startIconTint="@color/primary">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etCategoryName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textCapWords"
+            android:maxLength="30" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Category Type Selection -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Category Type"
+        android:textColor="@color/gray_600"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <!-- Expense Type -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardTypeExpense"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            app:cardBackgroundColor="@color/expense_red_light"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/expense_red"
+            app:strokeWidth="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <ImageView
+                    android:id="@+id/ivExpenseType"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_trending_down"
+                    app:tint="@color/expense_red" />
+
+                <TextView
+                    android:id="@+id/tvExpenseType"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Expense"
+                    android:textColor="@color/expense_red"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/checkExpense"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginTop="6dp"
+                    android:src="@drawable/ic_check_circle"
+                    android:visibility="visible"
+                    app:tint="@color/expense_red" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Income Type -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardTypeIncome"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            app:cardBackgroundColor="@color/gray_50"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/gray_200"
+            app:strokeWidth="1.5dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <ImageView
+                    android:id="@+id/ivIncomeType"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_trending_up"
+                    app:tint="@color/gray_400" />
+
+                <TextView
+                    android:id="@+id/tvIncomeType"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Income"
+                    android:textColor="@color/gray_500"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/checkIncome"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginTop="6dp"
+                    android:src="@drawable/ic_check_circle"
+                    android:visibility="gone"
+                    app:tint="@color/income_green" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+    <!-- Reason Input -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilReason"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:hint="Why do you need this category? (Optional)"
+        app:boxCornerRadiusBottomEnd="14dp"
+        app:boxCornerRadiusBottomStart="14dp"
+        app:boxCornerRadiusTopEnd="14dp"
+        app:boxCornerRadiusTopStart="14dp"
+        app:boxStrokeColor="@color/primary"
+        app:counterEnabled="true"
+        app:counterMaxLength="100"
+        app:hintTextColor="@color/primary">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etReason"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textMultiLine"
+            android:maxLength="100"
+            android:maxLines="3"
+            android:minLines="2" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancel"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:text="Cancel"
+            android:textAllCaps="false"
+            android:textColor="@color/gray_500"
+            android:textSize="15sp"
+            app:cornerRadius="14dp"
+            app:strokeColor="@color/gray_200"
+            app:strokeWidth="1.5dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSubmit"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/warning_yellow"
+            android:text="Submit"
+            android:textAllCaps="false"
+            android:textSize="15sp"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_send"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconSize="18dp" />
+    </LinearLayout>
+
+</LinearLayout>

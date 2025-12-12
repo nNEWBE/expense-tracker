@@ -137,6 +137,7 @@
     <color name="gray_neutral">#888888</color>
     <color name="amber_100">#FEF3C7</color>
     <color name="amber_600">#D97706</color>
+    <color name="amber_700">#B45309</color>
     <color name="gray_50">#F9FAFB</color>
     <color name="gray_text_secondary">#666666</color>
     <color name="sky_blue_23_alpha">#3B87CEEB</color>

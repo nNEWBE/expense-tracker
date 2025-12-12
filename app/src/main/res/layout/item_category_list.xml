@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="4dp"
+    android:paddingVertical="8dp">
+
+    <!-- Category Icon Background -->
+    <FrameLayout
+        android:layout_width="44dp"
+        android:layout_height="44dp">
+
+        <View
+            android:id="@+id/viewIconBg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/circle_category_bg" />
+
+        <ImageView
+            android:id="@+id/ivCategoryIcon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_other" />
+    </FrameLayout>
+
+    <!-- Category Name -->
+    <TextView
+        android:id="@+id/tvCategoryName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_weight="1"
+        android:text="Category"
+        android:textColor="@color/on_background_light"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <!-- Type Badge -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardTypeBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/green_50"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
+
+        <TextView
+            android:id="@+id/tvTypeBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:text="Income"
+            android:textColor="@color/income_green"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>
