@@ -12,6 +12,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -41,9 +43,12 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -63,6 +68,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     // Custom bottom nav views
     private View navDashboard, navTransaction, navAnalytics, navProfile;
     private ImageView icDashboard, icTransaction, icAnalytics, icProfile;
+
+    // File picker launcher for import
+    private ActivityResultLauncher<String[]> filePickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +92,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         checkNotificationPermission();
         scheduleDailyReminder();
         setupBackPressHandler();
+        setupFilePicker();
+    }
+
+    private void setupFilePicker() {
+        filePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.OpenDocument(),
+                uri -> {
+                    if (uri != null) {
+                        processImportFile(uri);
+                    }
+                });
     }
 
     private void setupBackPressHandler() {
@@ -332,6 +351,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (itemId == R.id.nav_export) {
             showExportDialog();
+        } else if (itemId == R.id.nav_import) {
+            showImportDialog();
         } else if (itemId == R.id.nav_categories) {
             showCategoriesDialog();
         } else if (itemId == R.id.nav_recurring) {
@@ -477,6 +498,321 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } catch (IOException e) {
             runOnUiThread(() -> BeautifulNotification.showError(this, "Export failed: " + e.getMessage()));
         }
+    }
+
+    // ==================== IMPORT DATA ====================
+    private void showImportDialog() {
+        // Check if guest mode
+        if (preferenceManager.isGuestMode()) {
+            BeautifulNotification.showWarning(this, "Please log in to import data");
+            return;
+        }
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            BeautifulNotification.showWarning(this, "Please log in to import data");
+            return;
+        }
+
+        new MaterialAlertDialogBuilder(this, R.style.Theme_TrackExpense_Dialog)
+                .setTitle("Import Data")
+                .setMessage(
+                        "Select a JSON or CSV file containing your transactions.\n\nRequired format:\n• JSON: Array of objects with amount, category, type, notes, date\n• CSV: Headers: amount,category,type,notes,date")
+                .setPositiveButton("Select File", (dialog, which) -> {
+                    filePickerLauncher.launch(new String[] {
+                            "application/json",
+                            "text/csv",
+                            "text/comma-separated-values",
+                            "*/*"
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void processImportFile(Uri uri) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            BeautifulNotification.showError(this, "Please log in to import data");
+            return;
+        }
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(uri);
+                if (inputStream == null) {
+                    runOnUiThread(() -> BeautifulNotification.showError(this, "Could not read file"));
+                    return;
+                }
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder content = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append("\n");
+                }
+                reader.close();
+                inputStream.close();
+
+                String fileContent = content.toString().trim();
+                String fileName = getFileNameFromUri(uri);
+
+                // Detect format and parse
+                java.util.List<java.util.Map<String, Object>> transactions;
+                if (fileName != null && fileName.toLowerCase().endsWith(".csv")) {
+                    transactions = parseCSV(fileContent);
+                } else {
+                    transactions = parseJSON(fileContent);
+                }
+
+                if (transactions == null || transactions.isEmpty()) {
+                    runOnUiThread(() -> BeautifulNotification.showError(this, "No valid transactions found in file"));
+                    return;
+                }
+
+                // Import to Firestore
+                importTransactionsToFirestore(currentUser.getUid(), transactions);
+
+            } catch (Exception e) {
+                android.util.Log.e("Import", "Error importing file", e);
+                runOnUiThread(() -> BeautifulNotification.showError(this, "Import failed: " + e.getMessage()));
+            }
+        });
+    }
+
+    private String getFileNameFromUri(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    if (index >= 0) {
+                        result = cursor.getString(index);
+                    }
+                }
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+    private java.util.List<java.util.Map<String, Object>> parseJSON(String content) {
+        java.util.List<java.util.Map<String, Object>> transactions = new java.util.ArrayList<>();
+
+        try {
+            org.json.JSONArray jsonArray = new org.json.JSONArray(content);
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                org.json.JSONObject obj = jsonArray.getJSONObject(i);
+                java.util.Map<String, Object> transaction = new java.util.HashMap<>();
+
+                // Required: amount
+                if (!obj.has("amount"))
+                    continue;
+                double amount = obj.getDouble("amount");
+                transaction.put("amount", amount);
+
+                // Required: category
+                String category = obj.optString("category", "Other");
+                transaction.put("category", category);
+
+                // Required: type (INCOME or EXPENSE)
+                String type = obj.optString("type", "EXPENSE").toUpperCase();
+                if (!type.equals("INCOME") && !type.equals("EXPENSE")) {
+                    type = "EXPENSE";
+                }
+                transaction.put("type", type);
+
+                // Optional: notes
+                String notes = obj.optString("notes", "");
+                transaction.put("notes", notes);
+
+                // Optional: date
+                String dateStr = obj.optString("date", "");
+                long timestamp = parseDate(dateStr);
+                transaction.put("date", timestamp);
+
+                transactions.add(transaction);
+            }
+        } catch (org.json.JSONException e) {
+            android.util.Log.e("Import", "JSON parse error", e);
+            return null;
+        }
+
+        return transactions;
+    }
+
+    private java.util.List<java.util.Map<String, Object>> parseCSV(String content) {
+        java.util.List<java.util.Map<String, Object>> transactions = new java.util.ArrayList<>();
+
+        String[] lines = content.split("\n");
+        if (lines.length < 2)
+            return transactions; // Need header + at least 1 row
+
+        // Parse header to find column indices
+        String[] headers = lines[0].toLowerCase().split(",");
+        int amountIdx = -1, categoryIdx = -1, typeIdx = -1, notesIdx = -1, dateIdx = -1;
+
+        for (int i = 0; i < headers.length; i++) {
+            String h = headers[i].trim();
+            if (h.equals("amount"))
+                amountIdx = i;
+            else if (h.equals("category"))
+                categoryIdx = i;
+            else if (h.equals("type"))
+                typeIdx = i;
+            else if (h.equals("notes") || h.equals("note"))
+                notesIdx = i;
+            else if (h.equals("date"))
+                dateIdx = i;
+        }
+
+        if (amountIdx == -1)
+            return transactions; // Amount is required
+
+        for (int i = 1; i < lines.length; i++) {
+            String line = lines[i].trim();
+            if (line.isEmpty())
+                continue;
+
+            String[] values = line.split(",");
+            java.util.Map<String, Object> transaction = new java.util.HashMap<>();
+
+            try {
+                // Amount
+                if (amountIdx >= values.length)
+                    continue;
+                double amount = Double.parseDouble(values[amountIdx].trim());
+                transaction.put("amount", amount);
+
+                // Category
+                String category = categoryIdx >= 0 && categoryIdx < values.length ? values[categoryIdx].trim()
+                        : "Other";
+                if (category.isEmpty())
+                    category = "Other";
+                transaction.put("category", category);
+
+                // Type
+                String type = typeIdx >= 0 && typeIdx < values.length ? values[typeIdx].trim().toUpperCase()
+                        : "EXPENSE";
+                if (!type.equals("INCOME") && !type.equals("EXPENSE")) {
+                    type = "EXPENSE";
+                }
+                transaction.put("type", type);
+
+                // Notes
+                String notes = notesIdx >= 0 && notesIdx < values.length ? values[notesIdx].trim() : "";
+                transaction.put("notes", notes);
+
+                // Date
+                String dateStr = dateIdx >= 0 && dateIdx < values.length ? values[dateIdx].trim() : "";
+                long timestamp = parseDate(dateStr);
+                transaction.put("date", timestamp);
+
+                transactions.add(transaction);
+            } catch (NumberFormatException e) {
+                // Skip invalid rows
+            }
+        }
+
+        return transactions;
+    }
+
+    private long parseDate(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) {
+            return System.currentTimeMillis();
+        }
+
+        String[] formats = {
+                "yyyy-MM-dd",
+                "dd/MM/yyyy",
+                "MM/dd/yyyy",
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss"
+        };
+
+        for (String format : formats) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
+                Date date = sdf.parse(dateStr);
+                if (date != null)
+                    return date.getTime();
+            } catch (Exception ignored) {
+            }
+        }
+
+        return System.currentTimeMillis();
+    }
+
+    private void importTransactionsToFirestore(String userId,
+            java.util.List<java.util.Map<String, Object>> transactions) {
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
+                .getInstance();
+        com.google.firebase.firestore.WriteBatch batch = db.batch();
+
+        int count = 0;
+        for (java.util.Map<String, Object> transaction : transactions) {
+            // Add userId and createdAt
+            transaction.put("userId", userId);
+            transaction.put("createdAt", System.currentTimeMillis());
+
+            com.google.firebase.firestore.DocumentReference docRef = db.collection("users").document(userId)
+                    .collection("expenses").document();
+            batch.set(docRef, transaction);
+            count++;
+
+            // Firestore batch limit is 500
+            if (count >= 500)
+                break;
+        }
+
+        final int importedCount = count;
+
+        batch.commit()
+                .addOnSuccessListener(v -> {
+                    runOnUiThread(() -> {
+                        BeautifulNotification.showSuccess(this,
+                                "Successfully imported " + importedCount + " transactions!");
+
+                        // Send in-app notification
+                        sendImportNotification(userId, importedCount);
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    runOnUiThread(() -> BeautifulNotification.showError(this,
+                            "Import failed: " + e.getMessage()));
+                });
+    }
+
+    private void sendImportNotification(String userId, int count) {
+        java.util.Map<String, Object> notification = new java.util.HashMap<>();
+        notification.put("userId", userId);
+        notification.put("type", "DATA_IMPORT");
+        notification.put("title", "Data Import Complete");
+        notification.put("message", "Successfully imported " + count + " transactions from file.");
+        notification.put("amount", 0);
+        notification.put("category", "");
+        notification.put("transactionType", "");
+        notification.put("isRead", false);
+        notification.put("createdAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId)
+                .collection("notifications")
+                .add(notification)
+                .addOnSuccessListener(docRef -> {
+                    android.util.Log.d("Import", "Import notification sent");
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("Import", "Failed to send notification", e);
+                });
     }
 
     // ==================== CATEGORIES ====================
