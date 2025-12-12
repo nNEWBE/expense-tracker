@@ -47,6 +47,10 @@ public class ExpenseViewModel extends AndroidViewModel {
         repository.update(expense);
     }
 
+    public void updatePinStatus(Expense expense) {
+        repository.updatePinStatus(expense);
+    }
+
     public void getCurrentMonthTotal(FirestoreService.OnTotalLoadedListener listener) {
         repository.getCurrentMonthTotal(listener);
     }

@@ -189,6 +189,31 @@ public class ExpenseRepository {
         }
     }
 
+    /**
+     * Update expense pin status without triggering notifications.
+     * Used for lightweight pin/unpin operations.
+     */
+    public void updatePinStatus(Expense expense) {
+        Log.d(TAG, "updatePinStatus: " + expense.getCategory() + ", isPinned: " + expense.isPinned());
+
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            try {
+                expenseDao.update(expense);
+            } catch (Exception e) {
+                Log.e(TAG, "updatePinStatus: Failed to update Room", e);
+            }
+        });
+
+        // Update Firestore if user is logged in (no notification)
+        if (firestoreService.isUserLoggedIn()) {
+            try {
+                firestoreService.updateExpense(expense);
+            } catch (Exception e) {
+                Log.e(TAG, "updatePinStatus: Failed to update Firestore", e);
+            }
+        }
+    }
+
     public void syncLocalToCloud() {
         if (firestoreService.isUserLoggedIn()) {
             List<Expense> localExpenses = allExpenses.getValue();

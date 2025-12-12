@@ -207,10 +207,11 @@ public class TransactionsFragment extends Fragment {
 
     private void togglePin(Expense expense) {
         expense.setPinned(!expense.isPinned());
-        viewModel.update(expense);
+        viewModel.updatePinStatus(expense);
 
-        String message = expense.isPinned() ? "Transaction pinned" : "Transaction unpinned";
-        BeautifulNotification.showSuccess(requireActivity(), message);
+        // Use simple toast for faster, smoother feedback
+        String message = expense.isPinned() ? "📌 Transaction pinned" : "📍 Transaction unpinned";
+        android.widget.Toast.makeText(requireContext(), message, android.widget.Toast.LENGTH_SHORT).show();
     }
 
     private void setupPagination() {

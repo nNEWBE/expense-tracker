@@ -95,6 +95,7 @@ public class FirestoreService {
         expenseData.put("date", expense.getDate());
         expenseData.put("notes", expense.getNotes() != null ? expense.getNotes() : "");
         expenseData.put("type", expense.getType());
+        expenseData.put("isPinned", expense.isPinned());
         expenseData.put("createdAt", System.currentTimeMillis());
         expenseData.put("localId", expense.getId());
 
@@ -132,6 +133,7 @@ public class FirestoreService {
         expenseData.put("date", expense.getDate());
         expenseData.put("notes", expense.getNotes() != null ? expense.getNotes() : "");
         expenseData.put("type", expense.getType());
+        expenseData.put("isPinned", expense.isPinned());
         expenseData.put("updatedAt", System.currentTimeMillis());
 
         expensesRef.document(firestoreId)
@@ -187,6 +189,10 @@ public class FirestoreService {
                             expense.setDate(doc.getLong("date") != null ? doc.getLong("date") : 0);
                             expense.setNotes(doc.getString("notes"));
                             expense.setType(doc.getString("type"));
+
+                            // Get isPinned field
+                            Boolean isPinned = doc.getBoolean("isPinned");
+                            expense.setPinned(isPinned != null ? isPinned : false);
 
                             // Get local ID if exists
                             Long localId = doc.getLong("localId");
