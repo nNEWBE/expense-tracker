@@ -152,12 +152,13 @@
         android:clipToPadding="false"
         android:paddingVertical="4dp" />
 
-    <!-- Request New Category Card -->
+    <!-- Request New Category Card (hidden by default, shown for non-admin users) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardRequest"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:visibility="gone"
         app:cardBackgroundColor="@color/amber_100"
         app:cardCornerRadius="14dp"
         app:cardElevation="0dp"

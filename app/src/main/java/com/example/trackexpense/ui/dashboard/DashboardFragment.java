@@ -692,6 +692,44 @@ public class DashboardFragment extends Fragment {
                 .setOnNotificationActionListener(new AppNotificationAdapter.OnNotificationActionListener() {
                     @Override
                     public void onDelete(AppNotification notification, int position) {
+                        String type = notification.getType();
+
+                        // Check if this is a category request notification
+                        if ("CATEGORY_REQUEST".equals(type) || "CATEGORY_REQUEST_STATUS".equals(type)) {
+                            // Delete from category_requests collection
+                            String requestId = notification.getId();
+                            if (requestId != null) {
+                                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                        .collection("category_requests")
+                                        .document(requestId)
+                                        .delete()
+                                        .addOnSuccessListener(v -> {
+                                            if (isAdded()) {
+                                                categoryRequestsList.remove(position);
+                                                if (!isAlertsTabActive) {
+                                                    appNotificationAdapter.removeNotification(position);
+                                                    if (tvNotificationCount != null) {
+                                                        int count = categoryRequestsList.size();
+                                                        tvNotificationCount.setText(
+                                                                count + (count == 1 ? " request" : " requests"));
+                                                    }
+                                                }
+                                                checkEmptyState();
+                                                loadAllNotificationCounts();
+                                            }
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            if (isAdded()) {
+                                                android.widget.Toast.makeText(requireContext(),
+                                                        "Failed to delete request",
+                                                        android.widget.Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                            }
+                            return;
+                        }
+
+                        // Regular notification delete
                         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
                         if (currentUser != null) {
                             // Delete from Firebase permanently
@@ -699,9 +737,13 @@ public class DashboardFragment extends Fragment {
                                     new NotificationRepository.OnCompleteListener() {
                                         @Override
                                         public void onSuccess() {
-                                            appNotificationAdapter.removeNotification(position);
-                                            updateNotificationCount();
+                                            notificationsList.remove(notification);
+                                            if (isAlertsTabActive) {
+                                                appNotificationAdapter.removeNotification(position);
+                                                updateNotificationCount();
+                                            }
                                             checkEmptyState();
+                                            loadAllNotificationCounts();
                                         }
 
                                         @Override
@@ -736,7 +778,7 @@ public class DashboardFragment extends Fragment {
                             String categoryType = "";
                             String reason = "";
                             String status = "";
-                            
+
                             if (extraData != null && !extraData.isEmpty()) {
                                 String[] parts = extraData.split("\\|", -1);
                                 if (parts.length >= 4) {
@@ -746,24 +788,20 @@ public class DashboardFragment extends Fragment {
                                     status = parts[3];
                                 }
                             }
-                            
-                            // Get category name from title (remove emoji prefix)
+
+                            // Get category name from title
                             String categoryName = notification.getTitle();
-                            if (categoryName != null) {
-                                categoryName = categoryName.replaceAll("^[📂✅❌⏳] ?", "").trim();
-                            }
-                            
+
                             showCategoryRequestReviewDialog(
                                     notification.getId(),
                                     categoryName,
                                     categoryType,
                                     userName,
                                     reason,
-                                    status
-                            );
+                                    status);
                             return;
                         }
-                        
+
                         // Mark as read when clicked (for regular notifications)
                         if (!notification.isRead()) {
                             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -942,12 +980,13 @@ public class DashboardFragment extends Fragment {
                 reasonContainer.setVisibility(View.VISIBLE);
         }
 
-        // Set status
+        // Set status - hide emoji view
+        if (tvStatusEmoji != null)
+            tvStatusEmoji.setVisibility(View.GONE);
+
         if ("APPROVED".equals(status)) {
             if (tvStatus != null)
                 tvStatus.setText("APPROVED");
-            if (tvStatusEmoji != null)
-                tvStatusEmoji.setText("✅");
             if (statusContainer != null)
                 statusContainer.setBackgroundResource(R.drawable.bg_chip_green);
             if (tvStatus != null)
@@ -956,8 +995,6 @@ public class DashboardFragment extends Fragment {
         } else if ("REJECTED".equals(status)) {
             if (tvStatus != null)
                 tvStatus.setText("REJECTED");
-            if (tvStatusEmoji != null)
-                tvStatusEmoji.setText("❌");
             if (statusContainer != null)
                 statusContainer.setBackgroundResource(R.drawable.bg_chip_red);
             if (tvStatus != null)
@@ -1314,8 +1351,8 @@ public class DashboardFragment extends Fragment {
                         AppNotification requestNotification = new AppNotification(
                                 "admin",
                                 "CATEGORY_REQUEST",
-                                "📂 " + categoryName,
-                                userName + " • " + (categoryType != null ? categoryType : "Unknown") + " category");
+                                categoryName,
+                                userName + " - " + (categoryType != null ? categoryType : "Unknown") + " category");
                         requestNotification.setId(requestId); // Store actual request ID
                         requestNotification.setRead(false);
 
@@ -1360,13 +1397,10 @@ public class DashboardFragment extends Fragment {
                         String status = doc.getString("status");
 
                         // Format status for display
-                        String statusEmoji = "⏳";
                         String statusText = "Pending";
                         if ("APPROVED".equals(status)) {
-                            statusEmoji = "✅";
                             statusText = "Approved";
                         } else if ("REJECTED".equals(status)) {
-                            statusEmoji = "❌";
                             statusText = "Rejected";
                         }
 
@@ -1374,8 +1408,8 @@ public class DashboardFragment extends Fragment {
                         AppNotification requestNotification = new AppNotification(
                                 userId,
                                 "CATEGORY_REQUEST_STATUS",
-                                statusEmoji + " " + categoryName,
-                                statusText + " • " + (categoryType != null ? categoryType : "Unknown") + " category");
+                                categoryName,
+                                statusText + " - " + (categoryType != null ? categoryType : "Unknown") + " category");
                         requestNotification.setId(requestId);
                         requestNotification.setRead(!"PENDING".equals(status)); // Pending = unread
 

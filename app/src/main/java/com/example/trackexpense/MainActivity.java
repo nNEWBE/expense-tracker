@@ -547,7 +547,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .setView(dialogView)
                 .create();
 
-        // Check if user is admin - hide request button for admin
+        // Check if user is admin - show request button only for non-admin
+        // cardRequest is hidden by default in XML
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
             com.google.firebase.firestore.FirebaseFirestore.getInstance()
@@ -556,10 +557,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {
                         Boolean isAdmin = documentSnapshot.getBoolean("isAdmin");
-                        if (isAdmin != null && isAdmin) {
-                            // Hide request card for admin
-                            cardRequest.setVisibility(View.GONE);
+                        if (isAdmin == null || !isAdmin) {
+                            // Show request card for non-admin users
+                            cardRequest.setVisibility(View.VISIBLE);
                         }
+                        // For admin, card stays GONE (default in XML)
                     });
         }
 
@@ -672,28 +674,47 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             return;
         }
 
-        // Use HashMap for direct Firestore serialization
-        java.util.Map<String, Object> request = new java.util.HashMap<>();
-        request.put("userId", user.getUid());
-        request.put("userName", user.getDisplayName() != null ? user.getDisplayName() : "User");
-        request.put("userEmail", user.getEmail() != null ? user.getEmail() : "");
-        request.put("categoryName", categoryName);
-        request.put("categoryType", type);
-        request.put("reason", reason);
-        request.put("status", "PENDING");
-        request.put("createdAt", System.currentTimeMillis());
-        request.put("updatedAt", System.currentTimeMillis());
-
+        // Check if user already has a pending request
         com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("category_requests")
-                .add(request)
-                .addOnSuccessListener(documentReference -> {
-                    android.util.Log.d("CategoryRequest", "Request saved with ID: " + documentReference.getId());
-                    BeautifulNotification.showSuccess(this, "Request submitted! Admin will review it.");
+                .whereEqualTo("userId", user.getUid())
+                .whereEqualTo("status", "PENDING")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        // User already has a pending request
+                        BeautifulNotification.showWarning(this,
+                                "You already have a pending request. Please wait for admin review.");
+                        return;
+                    }
+
+                    // No pending request, proceed with submission
+                    java.util.Map<String, Object> request = new java.util.HashMap<>();
+                    request.put("userId", user.getUid());
+                    request.put("userName", user.getDisplayName() != null ? user.getDisplayName() : "User");
+                    request.put("userEmail", user.getEmail() != null ? user.getEmail() : "");
+                    request.put("categoryName", categoryName);
+                    request.put("categoryType", type);
+                    request.put("reason", reason);
+                    request.put("status", "PENDING");
+                    request.put("createdAt", System.currentTimeMillis());
+                    request.put("updatedAt", System.currentTimeMillis());
+
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            .collection("category_requests")
+                            .add(request)
+                            .addOnSuccessListener(documentReference -> {
+                                android.util.Log.d("CategoryRequest",
+                                        "Request saved with ID: " + documentReference.getId());
+                                BeautifulNotification.showSuccess(this, "Request submitted! Admin will review it.");
+                            })
+                            .addOnFailureListener(e -> {
+                                android.util.Log.e("CategoryRequest", "Failed to save request", e);
+                                BeautifulNotification.showError(this, "Failed to submit request: " + e.getMessage());
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("CategoryRequest", "Failed to save request", e);
-                    BeautifulNotification.showError(this, "Failed to submit request: " + e.getMessage());
+                    BeautifulNotification.showError(this, "Failed to check pending requests");
                 });
     }
 
