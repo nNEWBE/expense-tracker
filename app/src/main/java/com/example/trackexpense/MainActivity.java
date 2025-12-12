@@ -755,26 +755,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
                 .getInstance();
 
-        // Step 1: Check today's import count
-        long todayStart = getTodayStartTimestamp();
-
-        db.collection("users").document(userId).collection("expenses")
-                .whereGreaterThanOrEqualTo("createdAt", todayStart)
-                .get()
-                .addOnSuccessListener(todaySnapshot -> {
+        // Step 1: Check daily import count from user document in Firestore
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(userDoc -> {
+                    String todayDate = getTodayDateString();
                     int todayImportCount = 0;
-                    java.util.Set<String> existingHashes = new java.util.HashSet<>();
 
-                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : todaySnapshot) {
-                        // Count today's imports
-                        if (doc.contains("importedAt")) {
-                            todayImportCount++;
-                        }
-                        // Build hash of existing transactions for duplicate detection
-                        String hash = buildTransactionHash(doc);
-                        if (hash != null) {
-                            existingHashes.add(hash);
-                        }
+                    // Get stored import data
+                    String lastImportDate = userDoc.getString("lastImportDate");
+                    Long storedCount = userDoc.getLong("dailyImportCount");
+
+                    // Check if it's the same day
+                    if (todayDate.equals(lastImportDate) && storedCount != null) {
+                        todayImportCount = storedCount.intValue();
                     }
 
                     // Check daily limit
@@ -785,8 +778,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         return;
                     }
 
-                    // Step 2: Also fetch ALL existing transactions for duplicate check
-                    fetchAllTransactionsForDuplicateCheck(db, userId, existingHashes, transactions, remainingLimit);
+                    final int currentDayCount = todayImportCount;
+
+                    // Step 2: Fetch ALL existing transactions for duplicate check
+                    fetchAllTransactionsForDuplicateCheck(db, userId, transactions, remainingLimit, currentDayCount);
                 })
                 .addOnFailureListener(e -> {
                     runOnUiThread(() -> BeautifulNotification.showError(this,
@@ -797,14 +792,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void fetchAllTransactionsForDuplicateCheck(
             com.google.firebase.firestore.FirebaseFirestore db,
             String userId,
-            java.util.Set<String> existingHashes,
             java.util.List<java.util.Map<String, Object>> transactions,
-            int remainingLimit) {
+            int remainingLimit,
+            int currentDayCount) {
 
         db.collection("users").document(userId).collection("expenses")
                 .get()
                 .addOnSuccessListener(allSnapshot -> {
                     // Build complete hash set of all existing transactions
+                    java.util.Set<String> existingHashes = new java.util.HashSet<>();
                     for (com.google.firebase.firestore.QueryDocumentSnapshot doc : allSnapshot) {
                         String hash = buildTransactionHash(doc);
                         if (hash != null) {
@@ -842,7 +838,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     final int skippedLimit = uniqueTransactions.size() - toImport;
 
                     // Proceed with import
-                    performBatchImport(db, userId, finalTransactions, skippedDuplicates, skippedLimit);
+                    performBatchImport(db, userId, finalTransactions, skippedDuplicates, skippedLimit, currentDayCount);
                 })
                 .addOnFailureListener(e -> {
                     runOnUiThread(() -> BeautifulNotification.showError(this,
@@ -855,7 +851,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             String userId,
             java.util.List<java.util.Map<String, Object>> transactions,
             int skippedDuplicates,
-            int skippedLimit) {
+            int skippedLimit,
+            int currentDayCount) {
 
         com.google.firebase.firestore.WriteBatch batch = db.batch();
         long now = System.currentTimeMillis();
@@ -863,7 +860,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         for (java.util.Map<String, Object> transaction : transactions) {
             transaction.put("userId", userId);
             transaction.put("createdAt", now);
-            transaction.put("importedAt", now); // Mark as imported for daily tracking
+            transaction.put("importedAt", now); // Mark as imported
 
             com.google.firebase.firestore.DocumentReference docRef = db.collection("users").document(userId)
                     .collection("expenses").document();
@@ -874,6 +871,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         batch.commit()
                 .addOnSuccessListener(v -> {
+                    // Update daily import count in Firestore user document
+                    updateDailyImportCount(db, userId, currentDayCount + importedCount);
+
                     runOnUiThread(() -> {
                         // Build detailed message
                         StringBuilder message = new StringBuilder();
@@ -896,13 +896,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 });
     }
 
-    private long getTodayStartTimestamp() {
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
-        cal.set(java.util.Calendar.MINUTE, 0);
-        cal.set(java.util.Calendar.SECOND, 0);
-        cal.set(java.util.Calendar.MILLISECOND, 0);
-        return cal.getTimeInMillis();
+    private void updateDailyImportCount(com.google.firebase.firestore.FirebaseFirestore db,
+            String userId, int newCount) {
+        String todayDate = getTodayDateString();
+
+        java.util.Map<String, Object> updates = new java.util.HashMap<>();
+        updates.put("lastImportDate", todayDate);
+        updates.put("dailyImportCount", newCount);
+
+        db.collection("users").document(userId)
+                .update(updates)
+                .addOnFailureListener(e -> {
+                    // If update fails (field doesn't exist), try set with merge
+                    db.collection("users").document(userId)
+                            .set(updates, com.google.firebase.firestore.SetOptions.merge());
+                });
+    }
+
+    private String getTodayDateString() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        return sdf.format(new Date());
     }
 
     private String buildTransactionHash(com.google.firebase.firestore.QueryDocumentSnapshot doc) {
@@ -911,15 +924,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             String category = doc.getString("category");
             String type = doc.getString("type");
             Long date = doc.getLong("date");
+            String notes = doc.getString("notes");
 
             if (amount == null)
                 return null;
 
-            return String.format(Locale.US, "%.2f|%s|%s|%d",
+            return String.format(Locale.US, "%.2f|%s|%s|%d|%s",
                     amount,
                     category != null ? category : "",
                     type != null ? type : "",
-                    date != null ? date : 0L);
+                    date != null ? date : 0L,
+                    notes != null ? notes.trim().toLowerCase() : "");
         } catch (Exception e) {
             return null;
         }
@@ -933,8 +948,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             String type = (String) transaction.getOrDefault("type", "");
             Object dateObj = transaction.get("date");
             long date = dateObj instanceof Number ? ((Number) dateObj).longValue() : 0L;
+            String notes = (String) transaction.getOrDefault("notes", "");
 
-            return String.format(Locale.US, "%.2f|%s|%s|%d", amount, category, type, date);
+            return String.format(Locale.US, "%.2f|%s|%s|%d|%s",
+                    amount, category, type, date,
+                    notes != null ? notes.trim().toLowerCase() : "");
         } catch (Exception e) {
             return "";
         }
