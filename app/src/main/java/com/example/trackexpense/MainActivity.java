@@ -701,20 +701,48 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void sendAdminNotification(String categoryName, String type, String userName) {
-        // Create notification in admin_notifications collection
-        java.util.Map<String, Object> notification = new java.util.HashMap<>();
-        notification.put("type", "CATEGORY_REQUEST");
-        notification.put("title", "New Category Request");
-        notification.put("message", userName + " requested a new " + type.toLowerCase() + " category: " + categoryName);
-        notification.put("categoryName", categoryName);
-        notification.put("categoryType", type);
-        notification.put("requestedBy", userName);
-        notification.put("isRead", false);
-        notification.put("createdAt", System.currentTimeMillis());
+        // Query all admin users and send notification to their notifications
+        // subcollection
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
+                .getInstance();
 
-        com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                .collection("admin_notifications")
-                .add(notification);
+        db.collection("users")
+                .whereEqualTo("isAdmin", true)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot adminDoc : querySnapshot) {
+                        String adminId = adminDoc.getId();
+
+                        // Create notification matching AppNotification model structure
+                        java.util.Map<String, Object> notification = new java.util.HashMap<>();
+                        notification.put("type", "CATEGORY_REQUEST");
+                        notification.put("title", "📂 New Category Request");
+                        notification.put("message", userName + " requested a new " + type.toLowerCase()
+                                + " category: \"" + categoryName + "\"");
+                        notification.put("isRead", false);
+                        notification.put("read", false);
+                        notification.put("createdAt", new java.util.Date());
+                        notification.put("userId", adminId);
+                        notification.put("iconResource", com.example.trackexpense.R.drawable.ic_nav_categories);
+                        notification.put("colorResource", com.example.trackexpense.R.color.warning_yellow);
+
+                        // Send to admin's notifications subcollection
+                        db.collection("users")
+                                .document(adminId)
+                                .collection("notifications")
+                                .add(notification)
+                                .addOnSuccessListener(ref -> {
+                                    android.util.Log.d("AdminNotification", "Notification sent to admin: " + adminId);
+                                })
+                                .addOnFailureListener(e -> {
+                                    android.util.Log.e("AdminNotification",
+                                            "Failed to send notification to admin: " + adminId, e);
+                                });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("AdminNotification", "Failed to query admin users", e);
+                });
     }
 
     // ==================== RECURRING EXPENSES ====================
