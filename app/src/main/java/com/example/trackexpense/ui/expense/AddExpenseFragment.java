@@ -1,5 +1,8 @@
 package com.example.trackexpense.ui.expense;
 
+import android.app.AlertDialog;
+import com.example.trackexpense.data.remote.FirestoreService;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -33,6 +36,7 @@ import com.example.trackexpense.utils.CategoryHelper;
 import com.example.trackexpense.utils.NotificationHelper;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.viewmodel.ExpenseViewModel;
+import com.example.trackexpense.utils.BeautifulNotification;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -717,6 +721,14 @@ public class AddExpenseFragment extends Fragment {
 
         btnSave.setOnClickListener(v -> {
             try {
+                // IMPORTANT: Check if monthly budget is set before allowing any transaction
+                double monthlyBudget = preferenceManager.getMonthlyBudget();
+                if (monthlyBudget <= 0) {
+                    // No budget set - show prompt to set budget first
+                    showSetBudgetRequiredDialog();
+                    return;
+                }
+
                 String amountStr = etAmount != null ? etAmount.getText().toString() : "";
                 if (amountStr.isEmpty()) {
                     Snackbar.make(v, "Please enter an amount", Snackbar.LENGTH_SHORT).show();
@@ -744,28 +756,324 @@ public class AddExpenseFragment extends Fragment {
 
                 Expense expense = new Expense(amount, selectedCategory, selectedDate.getTimeInMillis(), notes,
                         selectedType);
-                viewModel.insert(expense);
 
-                // Show notification (wrapped in try-catch)
-                try {
-                    String symbol = preferenceManager.getCurrencySymbol();
-                    notificationHelper.showTransactionAddedNotification(selectedType, amount, selectedCategory, symbol);
-                } catch (Exception e) {
-                    // Ignore notification errors
+                if ("EXPENSE".equals(selectedType)) {
+                    // Check budget for expense transactions
+                    viewModel.getCurrentMonthTotal(new FirestoreService.OnTotalLoadedListener() {
+                        @Override
+                        public void onLoaded(double total) {
+                            runOnUiThread(() -> {
+                                double newTotal = total + amount;
+                                if (newTotal > monthlyBudget) {
+                                    showBudgetDialog(expense, newTotal, monthlyBudget, true);
+                                } else if (newTotal > monthlyBudget * 0.9) {
+                                    showBudgetDialog(expense, newTotal, monthlyBudget, false);
+                                } else {
+                                    performSave(expense);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            runOnUiThread(() -> performSave(expense));
+                        }
+                    });
+                    return;
                 }
 
-                Snackbar.make(v, "Transaction saved!", Snackbar.LENGTH_SHORT).show();
-
-                // Navigate back
-                try {
-                    NavHostFragment.findNavController(this).popBackStack();
-                } catch (Exception e) {
-                    // Fragment might be detached
-                }
+                performSave(expense);
 
             } catch (Exception e) {
-                Snackbar.make(v, "Error saving transaction", Snackbar.LENGTH_SHORT).show();
+                BeautifulNotification.showError(requireActivity(), "Error saving transaction");
+            }
+
+        });
+
+    }
+
+    private void runOnUiThread(Runnable action) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(action);
+        }
+    }
+
+    private void showBudgetDialog(Expense expense, double newTotal, double budget, boolean isExceeded) {
+        if (getContext() == null)
+            return;
+
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_budget_warning, null);
+
+        // Get views
+        TextView tvDialogTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        TextView tvDialogMessage = dialogView.findViewById(R.id.tvDialogMessage);
+        TextView tvCurrentSpending = dialogView.findViewById(R.id.tvCurrentSpending);
+        TextView tvBudgetLimit = dialogView.findViewById(R.id.tvBudgetLimit);
+        TextView tvBudgetPercentage = dialogView.findViewById(R.id.tvBudgetPercentage);
+        TextView tvOverBudget = dialogView.findViewById(R.id.tvOverBudget);
+        LinearLayout overBudgetRow = dialogView.findViewById(R.id.overBudgetRow);
+        android.widget.ProgressBar progressBudget = dialogView.findViewById(R.id.progressBudget);
+        View warningCircle = dialogView.findViewById(R.id.warningCircle);
+        View pulseRing = dialogView.findViewById(R.id.pulseRing);
+        android.widget.ImageView iconWarning = dialogView.findViewById(R.id.iconWarning);
+        MaterialButton btnProceed = dialogView.findViewById(R.id.btnProceed);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+
+        String currencySymbol = preferenceManager.getCurrencySymbol();
+        double percentage = (newTotal / budget) * 100;
+        double overAmount = newTotal - budget;
+
+        // Set title and message based on exceeded state
+        if (isExceeded) {
+            tvDialogTitle.setText("Budget Exceeded!");
+            tvDialogTitle.setTextColor(getResources().getColor(R.color.expense_red, null));
+            tvDialogMessage.setText("This expense will exceed your monthly budget. Are you sure you want to proceed?");
+
+            // Show over budget row
+            overBudgetRow.setVisibility(View.VISIBLE);
+            tvOverBudget.setText(String.format("Exceeding by %s%,.0f", currencySymbol, overAmount));
+
+            // Change circle color to red
+            warningCircle.setBackgroundResource(R.drawable.bg_danger_circle);
+            pulseRing.setBackgroundResource(R.drawable.bg_danger_circle_ring);
+
+            // Set progress to 100% with red color
+            progressBudget.setProgress(100);
+            progressBudget.setProgressDrawable(getResources().getDrawable(R.drawable.budget_progress_critical, null));
+            tvBudgetPercentage.setText(String.format("%.0f%%", percentage));
+            tvBudgetPercentage.setTextColor(getResources().getColor(R.color.expense_red, null));
+
+            // Button styling for exceeded state
+            btnProceed.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    getResources().getColor(R.color.expense_red, null)));
+            btnProceed.setText("Proceed Anyway");
+        } else {
+            tvDialogTitle.setText("Budget Warning");
+            tvDialogMessage.setText("You are approaching your monthly spending limit.");
+            overBudgetRow.setVisibility(View.GONE);
+
+            // Set progress with warning color
+            int progress = Math.min((int) percentage, 100);
+            progressBudget.setProgress(progress);
+            progressBudget.setProgressDrawable(getResources().getDrawable(R.drawable.budget_progress_warning, null));
+            tvBudgetPercentage.setText(String.format("%.0f%%", percentage));
+            tvBudgetPercentage.setTextColor(getResources().getColor(R.color.warning_yellow, null));
+        }
+
+        // Set values
+        tvCurrentSpending.setText(String.format("%s%,.0f", currencySymbol, newTotal));
+        tvBudgetLimit.setText(String.format("%s%,.0f", currencySymbol, budget));
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext(), R.style.Theme_TrackExpense_Dialog)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        // Pulse animation for the ring
+        android.animation.ObjectAnimator pulse = android.animation.ObjectAnimator.ofFloat(pulseRing, "alpha", 0.3f, 1f,
+                0.3f);
+        pulse.setDuration(1500);
+        pulse.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        pulse.start();
+
+        btnProceed.setOnClickListener(v -> {
+            pulse.cancel();
+            dialog.dismiss();
+            performSave(expense);
+            // Trigger notifications if exceeded
+            if (isExceeded) {
+                triggerBudgetNotifications(newTotal, budget, true);
+            } else if (percentage >= 90) {
+                triggerBudgetNotifications(newTotal, budget, false);
             }
         });
+
+        btnCancel.setOnClickListener(v -> {
+            pulse.cancel();
+            dialog.dismiss();
+        });
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
+    }
+
+    private void triggerBudgetNotifications(double total, double budget, boolean isExceeded) {
+        try {
+            String currencySymbol = preferenceManager.getCurrencySymbol();
+            boolean isGuestMode = preferenceManager.isGuestMode();
+
+            if (isGuestMode) {
+                // Guest user: Store notification locally
+                String title = isExceeded ? "⚠️ Budget Exceeded!" : "⚡ Budget Warning";
+                double percentage = (total / budget) * 100;
+                String message = isExceeded
+                        ? String.format("You've spent %s%,.0f, exceeding your monthly budget of %s%,.0f",
+                                currencySymbol, total, currencySymbol, budget)
+                        : String.format("You've used %.0f%% of your monthly budget (%s%,.0f of %s%,.0f)",
+                                percentage, currencySymbol, total, currencySymbol, budget);
+
+                String type = isExceeded ? "BUDGET_EXCEEDED" : "BUDGET_WARNING";
+                preferenceManager.addGuestNotification(type, title, message);
+            } else {
+                // Logged-in user: Store in Firebase
+                if (isExceeded) {
+                    com.example.trackexpense.data.repository.NotificationRepository.getInstance()
+                            .notifyBudgetExceeded(total, budget, currencySymbol);
+                } else {
+                    com.example.trackexpense.data.repository.NotificationRepository.getInstance()
+                            .notifyBudgetWarning(total, budget, currencySymbol);
+                }
+            }
+
+            // System Notification (works for both)
+            notificationHelper.showBudgetWarningNotification(total, budget, currencySymbol);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error triggering budget notification", e);
+        }
+    }
+
+    private void triggerBudgetExceededNotification(double total, double budget) {
+        triggerBudgetNotifications(total, budget, true);
+    }
+
+    private void performSave(Expense expense) {
+        viewModel.insert(expense);
+
+        // Show notification (wrapped in try-catch)
+        try {
+            String symbol = preferenceManager.getCurrencySymbol();
+            notificationHelper.showTransactionAddedNotification(expense.getType(), expense.getAmount(),
+                    expense.getCategory(), symbol);
+        } catch (Exception e) {
+            // Ignore notification errors
+        }
+
+        BeautifulNotification.showSuccess(requireActivity(),
+                "EXPENSE".equals(expense.getType()) ? "Expense saved successfully!" : "Income saved successfully!");
+
+        // Navigate back
+        try {
+            NavHostFragment.findNavController(this).popBackStack();
+        } catch (Exception e) {
+            // Fragment might be detached
+        }
+    }
+
+    /**
+     * Shows a dialog informing the user that they need to set a monthly budget
+     * before they can add any transactions.
+     */
+    private void showSetBudgetRequiredDialog() {
+        if (getContext() == null)
+            return;
+
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_set_budget_prompt, null);
+
+        com.google.android.material.textfield.TextInputLayout tilBudget = dialogView.findViewById(R.id.tilBudget);
+        com.google.android.material.textfield.TextInputEditText etBudget = dialogView.findViewById(R.id.etBudget);
+
+        // Quick amount chips
+        com.google.android.material.chip.Chip chip5000 = dialogView.findViewById(R.id.chip5000);
+        com.google.android.material.chip.Chip chip10000 = dialogView.findViewById(R.id.chip10000);
+        com.google.android.material.chip.Chip chip20000 = dialogView.findViewById(R.id.chip20000);
+        com.google.android.material.chip.Chip chip50000 = dialogView.findViewById(R.id.chip50000);
+
+        // Update title to emphasize requirement
+        TextView tvTitle = dialogView.findViewById(android.R.id.title);
+        if (tvTitle != null) {
+            tvTitle.setText("Budget Required");
+        }
+
+        // Set currency prefix
+        String currencySymbol = preferenceManager.getCurrencySymbol();
+        tilBudget.setPrefixText(currencySymbol + " ");
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext(), R.style.Theme_TrackExpense_Dialog)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        // Quick chip listeners
+        View.OnClickListener chipListener = v -> {
+            com.google.android.material.chip.Chip chip = (com.google.android.material.chip.Chip) v;
+            etBudget.setText(chip.getText().toString().replace(",", ""));
+        };
+        chip5000.setOnClickListener(chipListener);
+        chip10000.setOnClickListener(chipListener);
+        chip20000.setOnClickListener(chipListener);
+        chip50000.setOnClickListener(chipListener);
+
+        // Save button
+        dialogView.findViewById(R.id.btnSaveBudget).setOnClickListener(v -> {
+            String budgetStr = etBudget.getText() != null ? etBudget.getText().toString() : "";
+            if (budgetStr.isEmpty()) {
+                tilBudget.setError("Please enter a budget");
+                return;
+            }
+
+            try {
+                double budget = Double.parseDouble(budgetStr);
+                if (budget <= 0) {
+                    tilBudget.setError("Budget must be greater than 0");
+                    return;
+                }
+
+                boolean isGuestMode = preferenceManager.isGuestMode();
+
+                if (isGuestMode) {
+                    preferenceManager.setGuestMonthlyBudget(budget);
+                    preferenceManager.setMonthlyBudget(budget);
+                } else {
+                    preferenceManager.setMonthlyBudget(budget);
+                    saveBudgetToFirestore(budget);
+                }
+                preferenceManager.setBudgetSetupDone(true);
+                dialog.dismiss();
+                BeautifulNotification.showSuccess(requireActivity(),
+                        "Monthly budget set! You can now add transactions.");
+
+            } catch (NumberFormatException e) {
+                tilBudget.setError("Invalid number");
+            }
+        });
+
+        // Skip/Cancel button - hide it or make it just close the dialog
+        TextView btnSkip = dialogView.findViewById(R.id.btnSkipBudget);
+        if (btnSkip != null) {
+            btnSkip.setText("Cancel");
+            btnSkip.setOnClickListener(v -> {
+                dialog.dismiss();
+                BeautifulNotification.showWarning(requireActivity(), "You must set a budget to add transactions");
+            });
+        }
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
+    }
+
+    /**
+     * Save budget to Firestore for logged-in users.
+     */
+    private void saveBudgetToFirestore(double budget) {
+        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .getCurrentUser();
+        if (user == null)
+            return;
+
+        java.util.Map<String, Object> updates = new java.util.HashMap<>();
+        updates.put("monthlyBudget", budget);
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(user.getUid())
+                .update(updates)
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to save budget to Firestore", e);
+                });
     }
 }

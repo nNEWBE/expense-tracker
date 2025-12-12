@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
 import com.example.trackexpense.ui.dashboard.ExpenseAdapter;
+import com.example.trackexpense.utils.BeautifulNotification;
 import com.example.trackexpense.utils.NotificationHelper;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.viewmodel.ExpenseViewModel;
@@ -348,9 +349,7 @@ public class TransactionsFragment extends Fragment {
             viewModel.update(expense);
             dialog.dismiss();
 
-            com.google.android.material.snackbar.Snackbar.make(
-                    requireView(), "Transaction updated",
-                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+            BeautifulNotification.showSuccess(requireActivity(), "Transaction updated successfully!");
         });
 
         dialog.show();
@@ -367,9 +366,7 @@ public class TransactionsFragment extends Fragment {
                     notificationHelper.showTransactionDeletedNotification(
                             expense.getCategory(), symbol, expense.getAmount());
 
-                    com.google.android.material.snackbar.Snackbar.make(
-                            requireView(), "Transaction deleted",
-                            com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+                    BeautifulNotification.showSuccess(requireActivity(), "Transaction deleted successfully!");
                 })
                 .setNegativeButton("Cancel", null)
                 .show();

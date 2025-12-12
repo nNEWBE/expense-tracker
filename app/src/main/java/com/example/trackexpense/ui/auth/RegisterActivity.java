@@ -25,6 +25,9 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import android.app.AlertDialog;
+import android.widget.TextView;
+import com.example.trackexpense.data.ExpenseRepository;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -362,10 +365,122 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void navigateToEmailVerification(String name) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
+            proceedToVerification(name);
+            return;
+        }
+
+        // Check if there's local guest data to sync
+        ExpenseRepository repository = new ExpenseRepository(getApplication());
+        repository.getLocalExpenseCount(count -> {
+            runOnUiThread(() -> {
+                if (count > 0) {
+                    // There's local data - show sync dialog
+                    showSyncGuestDataDialog(user, repository, count, name);
+                } else {
+                    // No local data - proceed normally
+                    proceedToVerification(name);
+                }
+            });
+        });
+    }
+
+    private void proceedToVerification(String name) {
         Intent intent = new Intent(this, EmailVerificationActivity.class);
         intent.putExtra("USER_NAME", name);
         startActivity(intent);
         finish();
+    }
+
+    /**
+     * Show dialog to ask user if they want to sync their guest data.
+     */
+    private void showSyncGuestDataDialog(FirebaseUser user, ExpenseRepository repository, int transactionCount,
+            String name) {
+        showLoading(false);
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_sync_guest_data, null);
+
+        TextView tvTransactionCount = dialogView.findViewById(R.id.tvTransactionCount);
+        if (tvTransactionCount != null) {
+            tvTransactionCount
+                    .setText(transactionCount + " transaction" + (transactionCount > 1 ? "s" : "") + " found");
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.Theme_TrackExpense_Dialog)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+
+        // Sync button
+        View btnSync = dialogView.findViewById(R.id.btnSync);
+        if (btnSync != null) {
+            btnSync.setOnClickListener(v -> {
+                dialog.dismiss();
+                showLoading(true);
+
+                // Sync guest data to cloud and delete local after
+                repository.syncGuestDataToCloud(true, new ExpenseRepository.OnSyncCompleteListener() {
+                    @Override
+                    public void onSuccess(int syncedCount) {
+                        runOnUiThread(() -> {
+                            BeautifulNotification.showSuccess(RegisterActivity.this,
+                                    "Synced " + syncedCount + " transactions to your account!");
+                            proceedToVerification(name);
+                        });
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        runOnUiThread(() -> {
+                            BeautifulNotification.showError(RegisterActivity.this,
+                                    "Failed to sync data: " + error);
+                            proceedToVerification(name);
+                        });
+                    }
+                });
+            });
+        }
+
+        // Skip button (keep local data)
+        View btnSkip = dialogView.findViewById(R.id.btnSkip);
+        if (btnSkip != null) {
+            btnSkip.setOnClickListener(v -> {
+                dialog.dismiss();
+                proceedToVerification(name);
+            });
+        }
+
+        // Discard button (delete local data)
+        View btnDiscard = dialogView.findViewById(R.id.btnDiscard);
+        if (btnDiscard != null) {
+            btnDiscard.setOnClickListener(v -> {
+                dialog.dismiss();
+                showLoading(true);
+                repository.deleteAllLocalExpenses(new ExpenseRepository.OnCompleteListener() {
+                    @Override
+                    public void onSuccess() {
+                        runOnUiThread(() -> {
+                            BeautifulNotification.showSuccess(RegisterActivity.this, "Local data cleared");
+                            proceedToVerification(name);
+                        });
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        runOnUiThread(() -> {
+                            proceedToVerification(name);
+                        });
+                    }
+                });
+            });
+        }
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
     }
 
     private void goToMain() {

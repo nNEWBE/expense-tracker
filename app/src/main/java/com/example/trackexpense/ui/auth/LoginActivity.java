@@ -32,6 +32,10 @@ import com.google.firebase.auth.FirebaseUser;
 import java.util.HashMap;
 import java.util.Map;
 
+import android.app.AlertDialog;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.textfield.TextInputLayout;
+
 public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword;
@@ -232,8 +236,14 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnGuest).setOnClickListener(v -> {
-            new PreferenceManager(this).setGuestMode(true);
-            goToMain();
+            PreferenceManager pm = new PreferenceManager(this);
+            pm.setGuestMode(true);
+            // Check if guest has budget set, if not show prompt
+            if (!pm.isBudgetSetupDone() && !pm.hasGuestBudgetSet()) {
+                showGuestBudgetPromptDialog();
+            } else {
+                goToMain();
+            }
         });
 
         // Password visibility toggle
@@ -326,9 +336,23 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Email is verified - fetch user data from Firestore and cache it
+        // Email is verified - proceed to login
+        completeLogin(user);
+    }
+
+    /**
+     * Complete the login process after sync decision.
+     */
+    private void completeLogin(FirebaseUser user) {
+        showLoading(true);
+
         PreferenceManager preferenceManager = new PreferenceManager(this);
         preferenceManager.setGuestMode(false);
+
+        // IMPORTANT: Clear previous user's budget data to ensure per-user budget
+        // handling
+        // Each user should have their own budget stored in Firestore
+        preferenceManager.clearBudgetData();
 
         // Fetch user data from Firestore
         String userId = user.getUid();
@@ -363,7 +387,20 @@ public class LoginActivity extends AppCompatActivity {
                     // Save to Firestore and navigate
                     saveUserToFirestore();
                     BeautifulNotification.showSuccess(this, "Welcome back! You've successfully signed in.");
-                    new Handler(Looper.getMainLooper()).postDelayed(this::goToMain, 1500);
+
+                    // Check if THIS USER has budget set in Firestore (per-user budget)
+                    Double monthlyBudget = documentSnapshot.getDouble("monthlyBudget");
+                    boolean hasBudget = monthlyBudget != null && monthlyBudget > 0;
+
+                    if (hasBudget) {
+                        // User has budget in Firestore - load it locally
+                        preferenceManager.setMonthlyBudget(monthlyBudget);
+                        preferenceManager.setBudgetSetupDone(true);
+                        new Handler(Looper.getMainLooper()).postDelayed(this::goToMain, 1500);
+                    } else {
+                        // User doesn't have budget - always prompt to set one
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> showBudgetPromptDialog(false), 1200);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     // Fallback to Firebase Auth data
@@ -382,7 +419,9 @@ public class LoginActivity extends AppCompatActivity {
 
                     saveUserToFirestore();
                     BeautifulNotification.showSuccess(this, "Welcome back! You've successfully signed in.");
-                    new Handler(Looper.getMainLooper()).postDelayed(this::goToMain, 1500);
+
+                    // On Firestore failure, always prompt for budget (to be safe)
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> showBudgetPromptDialog(false), 1200);
                 });
     }
 
@@ -412,6 +451,115 @@ public class LoginActivity extends AppCompatActivity {
                             .collection("users")
                             .document(userId)
                             .set(userData);
+                });
+    }
+
+    /**
+     * Show budget prompt dialog for logged-in users.
+     */
+    private void showBudgetPromptDialog(boolean isGuest) {
+        showLoading(false);
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_set_budget_prompt, null);
+        TextInputLayout tilBudget = dialogView.findViewById(R.id.tilBudget);
+        TextInputEditText etBudget = dialogView.findViewById(R.id.etBudget);
+
+        // Quick amount chips
+        Chip chip5000 = dialogView.findViewById(R.id.chip5000);
+        Chip chip10000 = dialogView.findViewById(R.id.chip10000);
+        Chip chip20000 = dialogView.findViewById(R.id.chip20000);
+        Chip chip50000 = dialogView.findViewById(R.id.chip50000);
+
+        PreferenceManager pm = new PreferenceManager(this);
+
+        // Set currency prefix
+        String currencySymbol = pm.getCurrencySymbol();
+        tilBudget.setPrefixText(currencySymbol + " ");
+
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.Theme_TrackExpense_Dialog)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+
+        // Quick chip listeners
+        View.OnClickListener chipListener = v -> {
+            Chip chip = (Chip) v;
+            etBudget.setText(chip.getText().toString().replace(",", ""));
+        };
+        chip5000.setOnClickListener(chipListener);
+        chip10000.setOnClickListener(chipListener);
+        chip20000.setOnClickListener(chipListener);
+        chip50000.setOnClickListener(chipListener);
+
+        // Save button
+        dialogView.findViewById(R.id.btnSaveBudget).setOnClickListener(v -> {
+            String budgetStr = etBudget.getText() != null ? etBudget.getText().toString() : "";
+            if (budgetStr.isEmpty()) {
+                tilBudget.setError("Please enter a budget");
+                return;
+            }
+
+            try {
+                double budget = Double.parseDouble(budgetStr);
+                if (budget <= 0) {
+                    tilBudget.setError("Budget must be greater than 0");
+                    return;
+                }
+
+                if (isGuest) {
+                    pm.setGuestMonthlyBudget(budget);
+                    pm.setMonthlyBudget(budget); // Also set regular budget for consistency
+                } else {
+                    pm.setMonthlyBudget(budget);
+                    saveBudgetToFirestore(budget);
+                }
+                pm.setBudgetSetupDone(true);
+                dialog.dismiss();
+                BeautifulNotification.showSuccess(this, "Monthly budget set successfully!");
+                goToMain();
+
+            } catch (NumberFormatException e) {
+                tilBudget.setError("Invalid number");
+            }
+        });
+
+        // Skip button
+        dialogView.findViewById(R.id.btnSkipBudget).setOnClickListener(v -> {
+            pm.setBudgetSetupDone(true);
+            dialog.dismiss();
+            goToMain();
+        });
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
+    }
+
+    /**
+     * Show budget prompt for guest users.
+     */
+    private void showGuestBudgetPromptDialog() {
+        showBudgetPromptDialog(true);
+    }
+
+    /**
+     * Save budget to Firestore for logged-in users.
+     */
+    private void saveBudgetToFirestore(double budget) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null)
+            return;
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("monthlyBudget", budget);
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(user.getUid())
+                .update(updates)
+                .addOnFailureListener(e -> {
+                    // If update fails (document doesn't exist), the budget was still saved locally
                 });
     }
 

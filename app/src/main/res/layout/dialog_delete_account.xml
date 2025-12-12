@@ -102,7 +102,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:text="All your transaction data"
-                    android:textColor="#991B1B"
+                    android:textColor="@color/expense_red_dark"
                     android:textSize="13sp" />
             </LinearLayout>
 
@@ -124,7 +124,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:text="Your profile information"
-                    android:textColor="#991B1B"
+                    android:textColor="@color/expense_red_dark"
                     android:textSize="13sp" />
             </LinearLayout>
 
@@ -146,7 +146,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:text="Your account permanently"
-                    android:textColor="#991B1B"
+                    android:textColor="@color/expense_red_dark"
                     android:textSize="13sp" />
             </LinearLayout>
         </LinearLayout>

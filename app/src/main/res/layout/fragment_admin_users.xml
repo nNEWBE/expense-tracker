@@ -142,10 +142,10 @@
                 android:id="@+id/chipBlocked"
                 android:layout_width="wrap_content"
                 android:layout_height="38dp"
-                app:cardBackgroundColor="#FEF2F2"
+                app:cardBackgroundColor="@color/expense_red_light"
                 app:cardCornerRadius="19dp"
                 app:cardElevation="0dp"
-                app:strokeColor="#FECACA"
+                app:strokeColor="@color/red_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -159,7 +159,7 @@
                         android:layout_width="16dp"
                         android:layout_height="16dp"
                         android:src="@drawable/ic_block"
-                        app:tint="#EF4444" />
+                        app:tint="@color/expense_red" />
 
                     <TextView
                         android:id="@+id/tvChipBlocked"
@@ -167,7 +167,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
                         android:text="Blocked"
-                        android:textColor="#DC2626"
+                        android:textColor="@color/expense_red_dark"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 

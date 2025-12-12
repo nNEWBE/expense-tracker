@@ -15,6 +15,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.app.AlertDialog;
+import com.example.trackexpense.utils.PreferenceManager;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -295,10 +299,10 @@ public class EmailVerificationActivity extends AppCompatActivity {
                         BeautifulNotification.showSuccess(EmailVerificationActivity.this,
                                 "Account verified successfully!");
 
-                        // Navigate to main after brief delay to show notification
+                        // Show Set Budget Dialog instead of direct navigation
                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            navigateToMain();
-                        }, 1500);
+                            showSetBudgetDialog();
+                        }, 1000);
                     })
                     .addOnFailureListener(e -> {
                         // Even if Firestore update fails, proceed to main
@@ -406,5 +410,75 @@ public class EmailVerificationActivity extends AppCompatActivity {
                     finish();
                 })
                 .show();
+    }
+
+    private void showSetBudgetDialog() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_set_budget, null);
+
+        TextInputLayout tilBudget = dialogView.findViewById(R.id.tilBudget);
+        TextInputEditText etBudget = dialogView.findViewById(R.id.etBudget);
+
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.Theme_TrackExpense_Dialog)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+
+        // Save Budget Logic
+        dialogView.findViewById(R.id.btnSaveBudget).setOnClickListener(v -> {
+            String budgetStr = etBudget.getText().toString();
+            if (budgetStr.isEmpty()) {
+                tilBudget.setError("Please enter a budget");
+                return;
+            }
+
+            try {
+                double budget = Double.parseDouble(budgetStr);
+                if (budget <= 0) {
+                    tilBudget.setError("Budget must be greater than 0");
+                    return;
+                }
+
+                // Save to Firestore
+                saveBudgetToFirestore(budget, dialog);
+
+            } catch (NumberFormatException e) {
+                tilBudget.setError("Invalid number");
+            }
+        });
+
+        // Skip Logic
+        dialogView.findViewById(R.id.btnSkipBudget).setOnClickListener(v -> {
+            dialog.dismiss();
+            navigateToMain();
+        });
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
+    }
+
+    private void saveBudgetToFirestore(double budget, AlertDialog dialog) {
+        if (currentUser == null)
+            return;
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("monthlyBudget", budget);
+
+        FirebaseFirestore.getInstance().collection("users")
+                .document(currentUser.getUid())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    dialog.dismiss();
+                    BeautifulNotification.showSuccess(this, "Monthly budget set successfully!");
+
+                    // Also save to local preference for immediate access
+                    new PreferenceManager(this).setMonthlyBudget(budget);
+
+                    navigateToMain();
+                })
+                .addOnFailureListener(e -> {
+                    BeautifulNotification.showError(this, "Failed to save budget: " + e.getMessage());
+                });
     }
 }

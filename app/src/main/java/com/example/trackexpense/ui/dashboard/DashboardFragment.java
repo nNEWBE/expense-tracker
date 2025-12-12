@@ -564,33 +564,52 @@ public class DashboardFragment extends Fragment {
                 .setOnNotificationActionListener(new AppNotificationAdapter.OnNotificationActionListener() {
                     @Override
                     public void onDelete(AppNotification notification, int position) {
-                        // Delete from Firebase permanently
-                        notificationRepository.deleteNotification(notification.getId(),
-                                new NotificationRepository.OnCompleteListener() {
-                                    @Override
-                                    public void onSuccess() {
-                                        appNotificationAdapter.removeNotification(position);
-                                        updateNotificationCount();
-                                        checkEmptyState();
-                                    }
-
-                                    @Override
-                                    public void onError(String error) {
-                                        // Show error toast
-                                        if (isAdded()) {
-                                            android.widget.Toast.makeText(requireContext(),
-                                                    "Failed to delete notification", android.widget.Toast.LENGTH_SHORT)
-                                                    .show();
+                        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                        if (currentUser != null) {
+                            // Delete from Firebase permanently
+                            notificationRepository.deleteNotification(notification.getId(),
+                                    new NotificationRepository.OnCompleteListener() {
+                                        @Override
+                                        public void onSuccess() {
+                                            appNotificationAdapter.removeNotification(position);
+                                            updateNotificationCount();
+                                            checkEmptyState();
                                         }
-                                    }
-                                });
+
+                                        @Override
+                                        public void onError(String error) {
+                                            // Show error toast
+                                            if (isAdded()) {
+                                                android.widget.Toast.makeText(requireContext(),
+                                                        "Failed to delete notification",
+                                                        android.widget.Toast.LENGTH_SHORT)
+                                                        .show();
+                                            }
+                                        }
+                                    });
+                        } else {
+                            // Guest: Delete locally
+                            preferenceManager.deleteGuestNotification(notification.getId());
+                            appNotificationAdapter.removeNotification(position);
+                            updateNotificationCount();
+                            checkEmptyState();
+                            updateNotificationBadge();
+                        }
                     }
 
                     @Override
                     public void onClick(AppNotification notification) {
                         // Mark as read when clicked
                         if (!notification.isRead()) {
-                            notificationRepository.markAsRead(notification.getId(), null);
+                            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                            if (currentUser != null) {
+                                notificationRepository.markAsRead(notification.getId(), null);
+                            } else {
+                                preferenceManager.markGuestNotificationRead(notification.getId());
+                                notification.setRead(true);
+                                appNotificationAdapter.notifyDataSetChanged();
+                                updateNotificationBadge();
+                            }
                         }
                     }
                 });
@@ -602,24 +621,37 @@ public class DashboardFragment extends Fragment {
         notificationDimBackground.setOnClickListener(v -> hideNotificationPanel());
 
         // Clear all button - delete all from Firebase
+        // Clear all button - delete all
         view.findViewById(R.id.btnClearAll).setOnClickListener(v -> {
-            notificationRepository.deleteAllNotifications(new NotificationRepository.OnCompleteListener() {
-                @Override
-                public void onSuccess() {
-                    notificationsList.clear();
-                    appNotificationAdapter.setNotifications(notificationsList);
-                    updateNotificationCount();
-                    checkEmptyState();
-                }
-
-                @Override
-                public void onError(String error) {
-                    if (isAdded()) {
-                        android.widget.Toast.makeText(requireContext(), "Failed to clear notifications",
-                                android.widget.Toast.LENGTH_SHORT).show();
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser != null) {
+                // Logged-in: Delete from Firebase
+                notificationRepository.deleteAllNotifications(new NotificationRepository.OnCompleteListener() {
+                    @Override
+                    public void onSuccess() {
+                        notificationsList.clear();
+                        appNotificationAdapter.setNotifications(notificationsList);
+                        updateNotificationCount();
+                        checkEmptyState();
                     }
-                }
-            });
+
+                    @Override
+                    public void onError(String error) {
+                        if (isAdded()) {
+                            android.widget.Toast.makeText(requireContext(), "Failed to clear notifications",
+                                    android.widget.Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            } else {
+                // Guest: Clear local notifications
+                preferenceManager.clearGuestNotifications();
+                notificationsList.clear();
+                appNotificationAdapter.setNotifications(notificationsList);
+                updateNotificationCount();
+                checkEmptyState();
+                updateNotificationBadge();
+            }
         });
 
         // Notification button click
@@ -663,30 +695,76 @@ public class DashboardFragment extends Fragment {
      * Called when the notification panel is opened.
      */
     private void refreshNotificationsFromFirebase() {
-        if (notificationRepository == null)
-            return;
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        notificationRepository.getNotifications(new NotificationRepository.OnNotificationsLoadedListener() {
-            @Override
-            public void onLoaded(List<AppNotification> notifications) {
-                if (isAdded()) {
-                    requireActivity().runOnUiThread(() -> {
-                        notificationsList = new ArrayList<>(notifications);
-                        if (isNotificationPanelOpen && appNotificationAdapter != null) {
-                            appNotificationAdapter.setNotifications(notificationsList);
-                            updateNotificationCount();
-                            checkEmptyState();
-                        }
-                        updateNotificationBadge();
-                    });
+        if (currentUser != null && notificationRepository != null) {
+            // Logged-in user: Load from Firebase
+            notificationRepository.getNotifications(new NotificationRepository.OnNotificationsLoadedListener() {
+                @Override
+                public void onLoaded(List<AppNotification> notifications) {
+                    if (isAdded()) {
+                        requireActivity().runOnUiThread(() -> {
+                            notificationsList = new ArrayList<>(notifications);
+                            if (isNotificationPanelOpen && appNotificationAdapter != null) {
+                                appNotificationAdapter.setNotifications(notificationsList);
+                                updateNotificationCount();
+                                checkEmptyState();
+                            }
+                            updateNotificationBadge();
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String error) {
+                    android.util.Log.e("DashboardFragment", "Error refreshing notifications: " + error);
+                }
+            });
+        } else {
+            // Guest user: Load from local storage
+            loadGuestNotifications();
+        }
+    }
+
+    /**
+     * Load guest notifications from local storage and display in panel.
+     */
+    private void loadGuestNotifications() {
+        String rawData = preferenceManager.getGuestNotificationsRaw();
+        notificationsList = new ArrayList<>();
+
+        if (rawData != null && !rawData.isEmpty()) {
+            String[] items = rawData.split(";");
+            for (String item : items) {
+                String[] parts = item.split("\\|");
+                if (parts.length >= 6) {
+                    try {
+                        String id = parts[0];
+                        String type = parts[1];
+                        String title = parts[2];
+                        String message = parts[3];
+                        long timestamp = Long.parseLong(parts[4]);
+                        boolean isRead = "true".equals(parts[5]);
+
+                        AppNotification notification = new AppNotification("guest", type, title, message);
+                        notification.setId(id);
+                        notification.setRead(isRead);
+                        notification.setCreatedAt(new java.util.Date(timestamp));
+
+                        notificationsList.add(notification);
+                    } catch (Exception e) {
+                        android.util.Log.e("DashboardFragment", "Error parsing guest notification: " + e.getMessage());
+                    }
                 }
             }
+        }
 
-            @Override
-            public void onError(String error) {
-                android.util.Log.e("DashboardFragment", "Error refreshing notifications: " + error);
-            }
-        });
+        if (isNotificationPanelOpen && appNotificationAdapter != null) {
+            appNotificationAdapter.setNotifications(notificationsList);
+            updateNotificationCount();
+            checkEmptyState();
+        }
+        updateNotificationBadge();
     }
 
     private void hideNotificationPanel() {
@@ -728,8 +806,11 @@ public class DashboardFragment extends Fragment {
     }
 
     private void updateNotificationBadge() {
-        // Count unread notifications from Firebase list
-        if (notificationRepository != null) {
+        // Check if user is logged in or guest
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (currentUser != null && notificationRepository != null) {
+            // Logged-in user: Get unread count from Firebase
             notificationRepository.getUnreadCount(count -> {
                 if (isAdded() && tvNotificationBadge != null) {
                     requireActivity().runOnUiThread(() -> {
@@ -742,6 +823,17 @@ public class DashboardFragment extends Fragment {
                     });
                 }
             });
+        } else {
+            // Guest user: Get unread count from local storage
+            int count = preferenceManager.getGuestUnreadNotificationCount();
+            if (isAdded() && tvNotificationBadge != null) {
+                if (count > 0) {
+                    tvNotificationBadge.setVisibility(View.VISIBLE);
+                    tvNotificationBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+                } else {
+                    tvNotificationBadge.setVisibility(View.GONE);
+                }
+            }
         }
     }
 
@@ -769,32 +861,36 @@ public class DashboardFragment extends Fragment {
     }
 
     private void loadNotificationsFromFirebase() {
-        if (notificationRepository == null)
-            return;
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        // Use getNotifications instead of real-time listener for more reliability
-        notificationRepository.getNotifications(new NotificationRepository.OnNotificationsLoadedListener() {
-            @Override
-            public void onLoaded(List<AppNotification> notifications) {
-                if (isAdded()) {
-                    requireActivity().runOnUiThread(() -> {
-                        notificationsList = new ArrayList<>(notifications);
-                        updateNotificationBadge();
+        if (currentUser != null && notificationRepository != null) {
+            // Logged-in user: Load from Firebase
+            notificationRepository.getNotifications(new NotificationRepository.OnNotificationsLoadedListener() {
+                @Override
+                public void onLoaded(List<AppNotification> notifications) {
+                    if (isAdded()) {
+                        requireActivity().runOnUiThread(() -> {
+                            notificationsList = new ArrayList<>(notifications);
+                            updateNotificationBadge();
 
-                        // Update UI if panel is open
-                        if (isNotificationPanelOpen && appNotificationAdapter != null) {
-                            appNotificationAdapter.setNotifications(notificationsList);
-                            updateNotificationCount();
-                            checkEmptyState();
-                        }
-                    });
+                            // Update UI if panel is open
+                            if (isNotificationPanelOpen && appNotificationAdapter != null) {
+                                appNotificationAdapter.setNotifications(notificationsList);
+                                updateNotificationCount();
+                                checkEmptyState();
+                            }
+                        });
+                    }
                 }
-            }
 
-            @Override
-            public void onError(String error) {
-                android.util.Log.e("DashboardFragment", "Error loading notifications: " + error);
-            }
-        });
+                @Override
+                public void onError(String error) {
+                    android.util.Log.e("DashboardFragment", "Error loading notifications: " + error);
+                }
+            });
+        } else {
+            // Guest user: Load from local storage
+            loadGuestNotifications();
+        }
     }
 }

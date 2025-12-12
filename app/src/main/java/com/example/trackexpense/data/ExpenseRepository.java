@@ -13,6 +13,8 @@ import com.example.trackexpense.data.remote.FirestoreService;
 import com.example.trackexpense.data.repository.NotificationRepository;
 import com.example.trackexpense.utils.PreferenceManager;
 
+import java.util.Calendar;
+import java.util.Calendar;
 import java.util.List;
 
 public class ExpenseRepository {
@@ -111,13 +113,21 @@ public class ExpenseRepository {
         });
 
         // Create notification for transaction created
+        String currencySymbol = preferenceManager.getCurrencySymbol();
         if (firestoreService.isUserLoggedIn()) {
-            String currencySymbol = preferenceManager.getCurrencySymbol();
             notificationRepository.notifyTransactionCreated(
                     expense.getCategory(),
                     expense.getAmount(),
                     expense.getType(),
                     currencySymbol);
+        } else {
+            // Guest user - store notification locally
+            String type = expense.getType();
+            String title = "EXPENSE".equals(type) ? "Expense Added" : "Income Added";
+            String message = String.format("Added %s%,.0f to %s", currencySymbol, expense.getAmount(),
+                    expense.getCategory());
+            preferenceManager.addGuestNotification(type, title, message);
+            Log.d(TAG, "insert: Created local notification for guest user");
         }
     }
 
@@ -190,5 +200,133 @@ public class ExpenseRepository {
 
     public boolean isUserLoggedIn() {
         return firestoreService.isUserLoggedIn();
+    }
+
+    /**
+     * Get count of local expenses (for checking if guest has data).
+     */
+    public void getLocalExpenseCount(OnCountLoadedListener listener) {
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            try {
+                int count = expenseDao.getLocalExpenseCount();
+                listener.onCount(count);
+            } catch (Exception e) {
+                Log.e(TAG, "getLocalExpenseCount: Failed", e);
+                listener.onCount(0);
+            }
+        });
+    }
+
+    /**
+     * Delete all local expenses.
+     */
+    public void deleteAllLocalExpenses(OnCompleteListener listener) {
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            try {
+                expenseDao.deleteAll();
+                Log.d(TAG, "deleteAllLocalExpenses: All local expenses deleted");
+                if (listener != null)
+                    listener.onSuccess();
+            } catch (Exception e) {
+                Log.e(TAG, "deleteAllLocalExpenses: Failed", e);
+                if (listener != null)
+                    listener.onError(e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Sync guest data to Firestore and optionally delete local data.
+     */
+    public void syncGuestDataToCloud(boolean deleteLocalAfterSync, OnSyncCompleteListener listener) {
+        if (!firestoreService.isUserLoggedIn()) {
+            if (listener != null)
+                listener.onError("User not logged in");
+            return;
+        }
+
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            try {
+                List<Expense> localExpenses = expenseDao.getAllExpensesSync();
+
+                if (localExpenses == null || localExpenses.isEmpty()) {
+                    if (listener != null)
+                        listener.onSuccess(0);
+                    return;
+                }
+
+                int totalCount = localExpenses.size();
+                Log.d(TAG, "syncGuestDataToCloud: Syncing " + totalCount + " expenses");
+
+                // Sync each expense to Firestore
+                for (Expense expense : localExpenses) {
+                    firestoreService.saveExpense(expense, new FirestoreService.OnExpenseSavedListener() {
+                        @Override
+                        public void onSuccess(String firestoreId) {
+                            Log.d(TAG, "syncGuestDataToCloud: Synced expense " + expense.getCategory());
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            Log.e(TAG, "syncGuestDataToCloud: Failed to sync expense", e);
+                        }
+                    });
+                }
+
+                // Delete local data if requested
+                if (deleteLocalAfterSync) {
+                    expenseDao.deleteAll();
+                    Log.d(TAG, "syncGuestDataToCloud: Deleted local data after sync");
+                }
+
+                if (listener != null)
+                    listener.onSuccess(totalCount);
+            } catch (Exception e) {
+                Log.e(TAG, "syncGuestDataToCloud: Failed", e);
+                if (listener != null)
+                    listener.onError(e.getMessage());
+            }
+        });
+    }
+
+    public void getCurrentMonthTotal(FirestoreService.OnTotalLoadedListener listener) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        long startOfMonth = calendar.getTimeInMillis();
+        long now = System.currentTimeMillis();
+
+        if (firestoreService.isUserLoggedIn()) {
+            firestoreService.getCurrentMonthTotal(startOfMonth, listener);
+        } else {
+            // Guest mode - query Room on background
+            AppDatabase.databaseWriteExecutor.execute(() -> {
+                Double total = expenseDao.getTotalExpenseBetweenSync(startOfMonth, now);
+                if (listener != null) {
+                    new android.os.Handler(android.os.Looper.getMainLooper())
+                            .post(() -> listener.onLoaded(total != null ? total : 0));
+                }
+            });
+        }
+    }
+
+    // Callback interfaces
+    public interface OnCountLoadedListener {
+        void onCount(int count);
+    }
+
+    public interface OnCompleteListener {
+        void onSuccess();
+
+        void onError(String error);
+    }
+
+    public interface OnSyncCompleteListener {
+        void onSuccess(int syncedCount);
+
+        void onError(String error);
     }
 }

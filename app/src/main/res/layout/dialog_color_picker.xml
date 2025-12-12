@@ -102,8 +102,8 @@
                 android:layout_weight="1"
                 android:max="255"
                 android:progress="124"
-                android:progressTint="#EF4444"
-                android:thumbTint="#EF4444" />
+                android:progressTint="#f03e5b"
+                android:thumbTint="#f03e5b" />
 
             <TextView
                 android:id="@+id/tvRedValue"

@@ -42,7 +42,18 @@ public interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE date BETWEEN :startDate AND :endDate")
     LiveData<List<Expense>> getExpensesByDateRange(long startDate, long endDate);
 
+    @Query("SELECT SUM(amount) FROM expenses WHERE type = 'EXPENSE' AND date BETWEEN :startDate AND :endDate")
+    Double getTotalExpenseBetweenSync(long startDate, long endDate);
+
     // Synchronous query for export
     @Query("SELECT * FROM expenses ORDER BY date DESC")
     List<Expense> getAllExpensesSync();
+
+    // Delete all expenses (for sync feature)
+    @Query("DELETE FROM expenses")
+    void deleteAll();
+
+    // Count all local expenses
+    @Query("SELECT COUNT(*) FROM expenses")
+    int getLocalExpenseCount();
 }

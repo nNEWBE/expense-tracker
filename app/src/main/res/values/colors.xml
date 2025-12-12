@@ -67,16 +67,17 @@
     <color name="income_green">#22C55E</color>
     <color name="income_green_dark">#16A34A</color>
     <color name="income_green_light">#DCFCE7</color>
-    <color name="expense_red">#F97316</color>
-    <color name="expense_red_dark">#EA580C</color>
-    <color name="expense_red_light">#FFEDD5</color>
+    <color name="expense_red">#f03e5b</color>
+    <color name="expense_red_dark">#d9304a</color>
+    <color name="expense_red_light">#FDE8EC</color>
     <color name="warning_yellow">#F59E0B</color>
+    <color name="warning_orange">#F97316</color>
     <color name="info_blue">#3B82F6</color>
     
     <!-- Budget Indicators -->
     <color name="budget_safe">#10B981</color>
     <color name="budget_warning">#F59E0B</color>
-    <color name="budget_danger">#EF4444</color>
+    <color name="budget_danger">#f03e5b</color>
     
     <!-- Chart Colors -->
     <color name="chart_1">#7B61FF</color>
@@ -156,9 +157,9 @@
     <!-- UI Colors -->
     <color name="green_50">#F0FDF4</color>
     <color name="green_200">#C6F6D5</color>
-    <color name="red_50">#FEF2F2</color>
-    <color name="red_200">#FECACA</color>
-    <color name="red_500">#EF4444</color>
+    <color name="red_50">#FDE8EC</color>
+    <color name="red_200">#FAC5CE</color>
+    <color name="red_500">#f03e5b</color>
     <color name="amber_500">#F59E0B</color>
     <color name="blue_500">#3B82F6</color>
     <color name="violet_500">#8B5CF6</color>

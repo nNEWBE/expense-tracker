@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
 import com.example.trackexpense.data.ExpenseRepository;
+import com.example.trackexpense.data.remote.FirestoreService;
 import com.example.trackexpense.data.local.Expense;
 
 import java.util.List;
@@ -44,5 +45,9 @@ public class ExpenseViewModel extends AndroidViewModel {
 
     public void update(Expense expense) {
         repository.update(expense);
+    }
+
+    public void getCurrentMonthTotal(FirestoreService.OnTotalLoadedListener listener) {
+        repository.getCurrentMonthTotal(listener);
     }
 }

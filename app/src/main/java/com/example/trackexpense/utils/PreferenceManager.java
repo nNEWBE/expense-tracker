@@ -64,6 +64,66 @@ public class PreferenceManager {
         return sharedPreferences.getFloat(KEY_WEEKLY_BUDGET, 0f);
     }
 
+    // Budget Setup Tracking
+    private static final String KEY_BUDGET_SETUP_DONE = "budget_setup_done";
+    private static final String KEY_GUEST_BUDGET = "guest_budget";
+
+    /**
+     * Mark that the user has completed budget setup (either set a budget or
+     * skipped).
+     */
+    public void setBudgetSetupDone(boolean done) {
+        sharedPreferences.edit().putBoolean(KEY_BUDGET_SETUP_DONE, done).apply();
+    }
+
+    /**
+     * Check if user has completed budget setup.
+     */
+    public boolean isBudgetSetupDone() {
+        return sharedPreferences.getBoolean(KEY_BUDGET_SETUP_DONE, false);
+    }
+
+    /**
+     * Check if user has a valid monthly budget set.
+     */
+    public boolean hasBudgetSet() {
+        return getMonthlyBudget() > 0;
+    }
+
+    /**
+     * Set guest user's monthly budget (stored locally).
+     */
+    public void setGuestMonthlyBudget(double budget) {
+        sharedPreferences.edit().putFloat(KEY_GUEST_BUDGET, (float) budget).apply();
+    }
+
+    /**
+     * Get guest user's monthly budget.
+     */
+    public double getGuestMonthlyBudget() {
+        return sharedPreferences.getFloat(KEY_GUEST_BUDGET, 0f);
+    }
+
+    /**
+     * Check if guest user has a budget set.
+     */
+    public boolean hasGuestBudgetSet() {
+        return getGuestMonthlyBudget() > 0;
+    }
+
+    /**
+     * Clear all budget-related data.
+     * Called when a new user logs in to ensure per-user budget handling.
+     */
+    public void clearBudgetData() {
+        sharedPreferences.edit()
+                .remove(KEY_MONTHLY_BUDGET)
+                .remove(KEY_WEEKLY_BUDGET)
+                .remove(KEY_BUDGET_SETUP_DONE)
+                .remove(KEY_GUEST_BUDGET)
+                .apply();
+    }
+
     // Guest Mode
     public void setGuestMode(boolean isGuest) {
         sharedPreferences.edit().putBoolean(KEY_GUEST_MODE, isGuest).apply();
@@ -254,5 +314,133 @@ public class PreferenceManager {
                 .remove(KEY_CACHED_USER_NAME)
                 .remove(KEY_CACHED_USER_EMAIL)
                 .apply();
+    }
+
+    // ========== Guest Local Notifications ==========
+    private static final String KEY_GUEST_NOTIFICATIONS = "guest_notifications";
+
+    /**
+     * Add a notification for guest user (stored locally).
+     * Format: "id|type|title|message|timestamp|isRead;..."
+     */
+    public void addGuestNotification(String type, String title, String message) {
+        String existing = sharedPreferences.getString(KEY_GUEST_NOTIFICATIONS, "");
+        String id = String.valueOf(System.currentTimeMillis());
+        String newNotification = id + "|" + type + "|" + title + "|" + message + "|" + System.currentTimeMillis()
+                + "|false";
+
+        String updated;
+        if (existing.isEmpty()) {
+            updated = newNotification;
+        } else {
+            updated = newNotification + ";" + existing; // Add at beginning (newest first)
+        }
+
+        sharedPreferences.edit().putString(KEY_GUEST_NOTIFICATIONS, updated).apply();
+    }
+
+    /**
+     * Get all guest notifications as raw string.
+     */
+    public String getGuestNotificationsRaw() {
+        return sharedPreferences.getString(KEY_GUEST_NOTIFICATIONS, "");
+    }
+
+    /**
+     * Get count of unread guest notifications.
+     */
+    public int getGuestUnreadNotificationCount() {
+        String data = getGuestNotificationsRaw();
+        if (data.isEmpty())
+            return 0;
+
+        int count = 0;
+        String[] items = data.split(";");
+        for (String item : items) {
+            String[] parts = item.split("\\|");
+            if (parts.length >= 6 && "false".equals(parts[5])) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Mark all guest notifications as read.
+     */
+    public void markAllGuestNotificationsRead() {
+        String data = getGuestNotificationsRaw();
+        if (data.isEmpty())
+            return;
+
+        StringBuilder sb = new StringBuilder();
+        String[] items = data.split(";");
+        for (int i = 0; i < items.length; i++) {
+            String[] parts = items[i].split("\\|");
+            if (parts.length >= 6) {
+                parts[5] = "true"; // Mark as read
+                sb.append(String.join("|", parts));
+                if (i < items.length - 1)
+                    sb.append(";");
+            }
+        }
+
+        sharedPreferences.edit().putString(KEY_GUEST_NOTIFICATIONS, sb.toString()).apply();
+    }
+
+    /**
+     * Mark a specific guest notification as read.
+     */
+    public void markGuestNotificationRead(String notificationId) {
+        String data = getGuestNotificationsRaw();
+        if (data.isEmpty())
+            return;
+
+        StringBuilder sb = new StringBuilder();
+        String[] items = data.split(";");
+        for (int i = 0; i < items.length; i++) {
+            String[] parts = items[i].split("\\|");
+            if (parts.length >= 6) {
+                if (parts[0].equals(notificationId)) {
+                    parts[5] = "true"; // Mark as read
+                }
+                sb.append(String.join("|", parts));
+                if (i < items.length - 1)
+                    sb.append(";");
+            }
+        }
+
+        sharedPreferences.edit().putString(KEY_GUEST_NOTIFICATIONS, sb.toString()).apply();
+    }
+
+    /**
+     * Clear all guest notifications.
+     */
+    public void clearGuestNotifications() {
+        sharedPreferences.edit().remove(KEY_GUEST_NOTIFICATIONS).apply();
+    }
+
+    /**
+     * Delete a specific guest notification by ID.
+     */
+    public void deleteGuestNotification(String notificationId) {
+        String data = getGuestNotificationsRaw();
+        if (data.isEmpty())
+            return;
+
+        StringBuilder sb = new StringBuilder();
+        String[] items = data.split(";");
+        boolean first = true;
+        for (String item : items) {
+            String[] parts = item.split("\\|");
+            if (parts.length >= 1 && !parts[0].equals(notificationId)) {
+                if (!first)
+                    sb.append(";");
+                sb.append(item);
+                first = false;
+            }
+        }
+
+        sharedPreferences.edit().putString(KEY_GUEST_NOTIFICATIONS, sb.toString()).apply();
     }
 }

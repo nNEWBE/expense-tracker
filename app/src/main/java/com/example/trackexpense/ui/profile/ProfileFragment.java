@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.trackexpense.R;
+import com.example.trackexpense.data.ExpenseRepository;
 import com.example.trackexpense.data.remote.AdminService;
 import com.example.trackexpense.ui.admin.AdminActivity;
 import com.example.trackexpense.ui.auth.WelcomeActivity;
@@ -363,6 +364,13 @@ public class ProfileFragment extends Fragment {
             if (layoutDeleteAccount != null) {
                 layoutDeleteAccount.setVisibility(View.GONE);
             }
+
+            // Show Delete All Data button for guests
+            MaterialButton btnDeleteAllData = getView().findViewById(R.id.btnDeleteAllData);
+            if (btnDeleteAllData != null) {
+                btnDeleteAllData.setVisibility(View.VISIBLE);
+                btnDeleteAllData.setOnClickListener(v -> showDeleteAllDataDialog());
+            }
         }
 
         // Load preferences
@@ -418,58 +426,229 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showCurrencyDialog() {
-        String[] currencies = { "USD", "BDT", "INR", "EUR", "GBP" };
-        int currentIndex = java.util.Arrays.asList(currencies).indexOf(preferenceManager.getCurrency());
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_currency, null);
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Select Currency")
-                .setSingleChoiceItems(currencies, currentIndex, (dialog, which) -> {
-                    preferenceManager.setCurrency(currencies[which]);
-                    loadUserData();
-                    dialog.dismiss();
-                })
-                .show();
+        android.widget.RadioGroup radioGroup = dialogView.findViewById(R.id.rgCurrency);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        com.google.android.material.button.MaterialButton btnSave = dialogView.findViewById(R.id.btnSave);
+
+        // Set current selection
+        String currentCurrency = preferenceManager.getCurrency();
+        switch (currentCurrency) {
+            case "USD":
+                radioGroup.check(R.id.rbUSD);
+                break;
+            case "BDT":
+                radioGroup.check(R.id.rbBDT);
+                break;
+            case "INR":
+                radioGroup.check(R.id.rbINR);
+                break;
+            case "EUR":
+                radioGroup.check(R.id.rbEUR);
+                break;
+            case "GBP":
+                radioGroup.check(R.id.rbGBP);
+                break;
+        }
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnSave.setOnClickListener(v -> {
+            int selectedId = radioGroup.getCheckedRadioButtonId();
+            String selectedCurrency = "USD";
+            if (selectedId == R.id.rbUSD)
+                selectedCurrency = "USD";
+            else if (selectedId == R.id.rbBDT)
+                selectedCurrency = "BDT";
+            else if (selectedId == R.id.rbINR)
+                selectedCurrency = "INR";
+            else if (selectedId == R.id.rbEUR)
+                selectedCurrency = "EUR";
+            else if (selectedId == R.id.rbGBP)
+                selectedCurrency = "GBP";
+
+            preferenceManager.setCurrency(selectedCurrency);
+            loadUserData();
+            BeautifulNotification.showSuccess(requireActivity(), "Currency updated!");
+            dialog.dismiss();
+        });
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
     }
 
     private void showBudgetDialog() {
-        TextInputEditText input = new TextInputEditText(requireContext());
-        input.setHint("Enter monthly budget");
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        input.setText(String.valueOf(preferenceManager.getMonthlyBudget()));
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_monthly_budget, null);
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Set Monthly Budget")
-                .setView(input)
-                .setPositiveButton("Save", (dialog, which) -> {
-                    try {
-                        double budget = Double.parseDouble(input.getText().toString());
-                        preferenceManager.setMonthlyBudget(budget);
-                        loadUserData();
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(requireContext(), "Invalid amount", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        com.google.android.material.textfield.TextInputLayout tilBudget = dialogView.findViewById(R.id.tilBudget);
+        com.google.android.material.textfield.TextInputEditText etBudget = dialogView.findViewById(R.id.etBudget);
+        TextView tvCurrentBudget = dialogView.findViewById(R.id.tvCurrentBudget);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        com.google.android.material.button.MaterialButton btnSave = dialogView.findViewById(R.id.btnSave);
+
+        // Quick amount chips
+        com.google.android.material.chip.Chip chip5000 = dialogView.findViewById(R.id.chip5000);
+        com.google.android.material.chip.Chip chip10000 = dialogView.findViewById(R.id.chip10000);
+        com.google.android.material.chip.Chip chip20000 = dialogView.findViewById(R.id.chip20000);
+        com.google.android.material.chip.Chip chip50000 = dialogView.findViewById(R.id.chip50000);
+
+        // Set currency prefix
+        String symbol = preferenceManager.getCurrencySymbol();
+        tilBudget.setPrefixText(symbol + " ");
+
+        // Display current budget
+        double currentBudget = preferenceManager.getMonthlyBudget();
+        tvCurrentBudget.setText(symbol + String.format("%,.0f", currentBudget));
+
+        if (currentBudget > 0) {
+            etBudget.setText(String.format("%.0f", currentBudget));
+        }
+
+        // Quick amount chip listeners
+        View.OnClickListener chipListener = v -> {
+            com.google.android.material.chip.Chip chip = (com.google.android.material.chip.Chip) v;
+            String amount = chip.getText().toString().replace(",", "");
+            etBudget.setText(amount);
+            etBudget.setSelection(amount.length());
+        };
+        chip5000.setOnClickListener(chipListener);
+        chip10000.setOnClickListener(chipListener);
+        chip20000.setOnClickListener(chipListener);
+        chip50000.setOnClickListener(chipListener);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnSave.setOnClickListener(v -> {
+            String budgetStr = etBudget.getText() != null ? etBudget.getText().toString() : "";
+            if (budgetStr.isEmpty()) {
+                tilBudget.setError("Please enter a budget");
+                return;
+            }
+
+            try {
+                double budget = Double.parseDouble(budgetStr);
+                if (budget <= 0) {
+                    tilBudget.setError("Budget must be greater than 0");
+                    return;
+                }
+
+                preferenceManager.setMonthlyBudget(budget);
+                saveBudgetToFirestore(budget);
+                loadUserData();
+                BeautifulNotification.showSuccess(requireActivity(),
+                        "Budget updated to " + symbol + String.format("%,.0f", budget));
+                dialog.dismiss();
+            } catch (NumberFormatException e) {
+                tilBudget.setError("Invalid amount");
+            }
+        });
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
+    }
+
+    private void saveBudgetToFirestore(double budget) {
+        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .getCurrentUser();
+        if (user == null)
+            return;
+
+        java.util.Map<String, Object> updates = new java.util.HashMap<>();
+        updates.put("monthlyBudget", budget);
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(user.getUid())
+                .update(updates);
     }
 
     private void showThemeDialog() {
-        String[] themes = { "Light", "Dark", "System Default" };
-        int[] themeModes = { AppCompatDelegate.MODE_NIGHT_NO, AppCompatDelegate.MODE_NIGHT_YES,
-                AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM };
-        int currentMode = preferenceManager.getThemeMode();
-        int currentIndex = currentMode == AppCompatDelegate.MODE_NIGHT_NO ? 0
-                : currentMode == AppCompatDelegate.MODE_NIGHT_YES ? 1 : 2;
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_theme, null);
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Select Theme")
-                .setSingleChoiceItems(themes, currentIndex, (dialog, which) -> {
-                    preferenceManager.setThemeMode(themeModes[which]);
-                    AppCompatDelegate.setDefaultNightMode(themeModes[which]);
-                    loadUserData();
-                    dialog.dismiss();
-                })
-                .show();
+        com.google.android.material.card.MaterialCardView cardLight = dialogView.findViewById(R.id.cardLight);
+        com.google.android.material.card.MaterialCardView cardDark = dialogView.findViewById(R.id.cardDark);
+        com.google.android.material.card.MaterialCardView cardSystem = dialogView.findViewById(R.id.cardSystem);
+        ImageView checkLight = dialogView.findViewById(R.id.checkLight);
+        ImageView checkDark = dialogView.findViewById(R.id.checkDark);
+        ImageView checkSystem = dialogView.findViewById(R.id.checkSystem);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        com.google.android.material.button.MaterialButton btnApply = dialogView.findViewById(R.id.btnApply);
+
+        int[] selectedTheme = { preferenceManager.getThemeMode() };
+
+        // Update UI based on current selection
+        Runnable updateSelection = () -> {
+            // Reset all
+            cardLight.setStrokeColor(getResources().getColor(R.color.gray_200, null));
+            cardDark.setStrokeColor(getResources().getColor(R.color.gray_200, null));
+            cardSystem.setStrokeColor(getResources().getColor(R.color.gray_200, null));
+            checkLight.setVisibility(View.GONE);
+            checkDark.setVisibility(View.GONE);
+            checkSystem.setVisibility(View.GONE);
+
+            // Highlight selected
+            if (selectedTheme[0] == AppCompatDelegate.MODE_NIGHT_NO) {
+                cardLight.setStrokeColor(getResources().getColor(R.color.primary, null));
+                checkLight.setVisibility(View.VISIBLE);
+            } else if (selectedTheme[0] == AppCompatDelegate.MODE_NIGHT_YES) {
+                cardDark.setStrokeColor(getResources().getColor(R.color.primary, null));
+                checkDark.setVisibility(View.VISIBLE);
+            } else {
+                cardSystem.setStrokeColor(getResources().getColor(R.color.primary, null));
+                checkSystem.setVisibility(View.VISIBLE);
+            }
+        };
+        updateSelection.run();
+
+        cardLight.setOnClickListener(v -> {
+            selectedTheme[0] = AppCompatDelegate.MODE_NIGHT_NO;
+            updateSelection.run();
+        });
+
+        cardDark.setOnClickListener(v -> {
+            selectedTheme[0] = AppCompatDelegate.MODE_NIGHT_YES;
+            updateSelection.run();
+        });
+
+        cardSystem.setOnClickListener(v -> {
+            selectedTheme[0] = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+            updateSelection.run();
+        });
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnApply.setOnClickListener(v -> {
+            preferenceManager.setThemeMode(selectedTheme[0]);
+            AppCompatDelegate.setDefaultNightMode(selectedTheme[0]);
+            loadUserData();
+            BeautifulNotification.showSuccess(requireActivity(), "Theme updated!");
+            dialog.dismiss();
+        });
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
     }
 
     private void exportData() {
@@ -600,5 +779,70 @@ public class ProfileFragment extends Fragment {
             default:
                 return "System Default";
         }
+    }
+
+    /**
+     * Show dialog to confirm deleting all local data for guest user.
+     */
+    private void showDeleteAllDataDialog() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_delete_confirmation, null);
+
+        // Find and configure views
+        TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        TextView tvMessage = dialogView.findViewById(R.id.tvDialogMessage);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        MaterialButton btnConfirm = dialogView.findViewById(R.id.btnConfirm);
+        ImageView ivIcon = dialogView.findViewById(R.id.ivDialogIcon);
+
+        if (tvTitle != null)
+            tvTitle.setText("Delete All Data?");
+        if (tvMessage != null)
+            tvMessage
+                    .setText("This will permanently delete all your local transactions. This action cannot be undone.");
+        if (btnConfirm != null)
+            btnConfirm.setText("Delete All");
+
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext(),
+                R.style.Theme_TrackExpense_Dialog)
+                .setView(dialogView)
+                .create();
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (btnConfirm != null) {
+            btnConfirm.setOnClickListener(v -> {
+                dialog.dismiss();
+
+                // Delete all local data
+                ExpenseRepository repository = new ExpenseRepository(requireActivity().getApplication());
+                repository.deleteAllLocalExpenses(new ExpenseRepository.OnCompleteListener() {
+                    @Override
+                    public void onSuccess() {
+                        if (isAdded()) {
+                            requireActivity().runOnUiThread(() -> {
+                                BeautifulNotification.showSuccess(requireActivity(),
+                                        "All local data deleted successfully!");
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        if (isAdded()) {
+                            requireActivity().runOnUiThread(() -> {
+                                BeautifulNotification.showError(requireActivity(), "Failed to delete data: " + error);
+                            });
+                        }
+                    }
+                });
+            });
+        }
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
     }
 }

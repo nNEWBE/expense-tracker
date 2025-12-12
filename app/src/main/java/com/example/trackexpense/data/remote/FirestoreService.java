@@ -37,6 +37,12 @@ public class FirestoreService {
         void onFailure(Exception e);
     }
 
+    public interface OnTotalLoadedListener {
+        void onLoaded(double total);
+
+        void onFailure(Exception e);
+    }
+
     private FirestoreService() {
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
@@ -208,6 +214,42 @@ public class FirestoreService {
         for (Expense expense : localExpenses) {
             saveExpense(expense, null);
         }
+    }
+
+    public void getCurrentMonthTotal(long startDate, OnTotalLoadedListener listener) {
+        if (!isUserLoggedIn()) {
+            if (listener != null)
+                listener.onLoaded(0);
+            return;
+        }
+
+        CollectionReference expensesRef = getExpensesCollection();
+        if (expensesRef == null) {
+            if (listener != null)
+                listener.onLoaded(0);
+            return;
+        }
+
+        expensesRef.whereGreaterThanOrEqualTo("date", startDate)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    double total = 0;
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        String type = doc.getString("type");
+                        if ("EXPENSE".equals(type)) {
+                            Double amount = doc.getDouble("amount");
+                            if (amount != null) {
+                                total += amount;
+                            }
+                        }
+                    }
+                    if (listener != null)
+                        listener.onLoaded(total);
+                })
+                .addOnFailureListener(e -> {
+                    if (listener != null)
+                        listener.onFailure(e);
+                });
     }
 
     // ==================== CATEGORY MANAGEMENT ====================

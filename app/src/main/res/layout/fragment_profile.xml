@@ -950,6 +950,25 @@
 
                     </com.google.android.material.card.MaterialCardView>
 
+                <!-- Delete All Data Button (Guest Only) -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDeleteAllData"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone"
+                    android:text="Delete All Local Data"
+                    android:textAllCaps="false"
+                    android:textColor="@color/expense_red"
+                    android:textSize="15sp"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_delete"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/expense_red"
+                    app:strokeColor="@color/expense_red"
+                    app:strokeWidth="1dp" />
+
                 <!-- Logout Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnLogout"

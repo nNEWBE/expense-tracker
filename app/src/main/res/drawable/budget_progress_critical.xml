@@ -7,14 +7,14 @@
             <solid android:color="#30FFFFFF" />
         </shape>
     </item>
-    <!-- Progress - Critical (Red) -->
+    <!-- Progress - Critical (Rose Red) -->
     <item android:id="@android:id/progress">
         <clip>
             <shape android:shape="rectangle">
                 <corners android:radius="4dp" />
                 <gradient
-                    android:startColor="#F44336"
-                    android:endColor="#D32F2F"
+                    android:startColor="#f03e5b"
+                    android:endColor="#d9304a"
                     android:angle="0" />
             </shape>
         </clip>
