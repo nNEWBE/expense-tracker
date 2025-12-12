@@ -15,6 +15,7 @@ public class Expense {
     private String notes;
     private String type; // "INCOME" or "EXPENSE"
     private String firestoreId; // Firestore document ID for sync
+    private boolean isPinned; // For pinning transactions to top
 
     // Constructor
     @Ignore
@@ -24,9 +25,11 @@ public class Expense {
         this.date = date;
         this.notes = notes;
         this.type = type;
+        this.isPinned = false;
     }
 
     public Expense() {
+        this.isPinned = false;
     }
 
     // Getters and Setters
@@ -84,5 +87,13 @@ public class Expense {
 
     public void setFirestoreId(String firestoreId) {
         this.firestoreId = firestoreId;
+    }
+
+    public boolean isPinned() {
+        return isPinned;
+    }
+
+    public void setPinned(boolean pinned) {
+        isPinned = pinned;
     }
 }

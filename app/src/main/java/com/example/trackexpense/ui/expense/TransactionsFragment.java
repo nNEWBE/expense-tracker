@@ -181,6 +181,17 @@ public class TransactionsFragment extends Fragment {
 
         // Delete click listener
         adapter.setOnDeleteClickListener((expense, position) -> confirmDelete(expense));
+
+        // Pin click listener
+        adapter.setOnPinClickListener((expense, position) -> togglePin(expense));
+    }
+
+    private void togglePin(Expense expense) {
+        expense.setPinned(!expense.isPinned());
+        viewModel.update(expense);
+
+        String message = expense.isPinned() ? "Transaction pinned" : "Transaction unpinned";
+        BeautifulNotification.showSuccess(requireActivity(), message);
     }
 
     private void setupPagination() {
@@ -756,6 +767,15 @@ public class TransactionsFragment extends Fragment {
                         .collect(Collectors.toList());
             }
         }
+
+        // Sort pinned transactions to top
+        filteredExpenses.sort((e1, e2) -> {
+            if (e1.isPinned() && !e2.isPinned())
+                return -1;
+            if (!e1.isPinned() && e2.isPinned())
+                return 1;
+            return Long.compare(e2.getDate(), e1.getDate()); // Newest first
+        });
 
         // Update transaction count
         if (tvTransactionCount != null) {

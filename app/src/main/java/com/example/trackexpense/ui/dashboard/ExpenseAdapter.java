@@ -38,6 +38,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
     private OnItemLongClickListener longClickListener;
     private OnEditClickListener editClickListener;
     private OnDeleteClickListener deleteClickListener;
+    private OnPinClickListener pinClickListener;
     private String currencySymbol = "$";
     private Set<Integer> expandedPositions = new HashSet<>();
     private boolean expandableEnabled = true; // Default is enabled
@@ -103,6 +104,10 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
 
     public void setOnDeleteClickListener(OnDeleteClickListener listener) {
         this.deleteClickListener = listener;
+    }
+
+    public void setOnPinClickListener(OnPinClickListener listener) {
+        this.pinClickListener = listener;
     }
 
     /**
@@ -171,17 +176,22 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
         void onDeleteClick(Expense expense, int position);
     }
 
+    public interface OnPinClickListener {
+        void onPinClick(Expense expense, int position);
+    }
+
     class ExpenseViewHolder extends RecyclerView.ViewHolder {
         private View iconBg;
-        private ImageView ivIcon, ivExpandIndicator;
+        private ImageView ivIcon, ivExpandIndicator, ivPinIndicator;
         private TextView tvCategory, tvDate, tvAmount, tvNotes;
         private LinearLayout expandableSection, notesContainer;
-        private MaterialButton btnEdit, btnDelete;
+        private MaterialButton btnEdit, btnDelete, btnPin;
 
         public ExpenseViewHolder(@NonNull View itemView) {
             super(itemView);
             iconBg = itemView.findViewById(R.id.iconBg);
             ivIcon = itemView.findViewById(R.id.ivIcon);
+            ivPinIndicator = itemView.findViewById(R.id.ivPinIndicator);
             tvCategory = itemView.findViewById(R.id.tvCategory);
             tvDate = itemView.findViewById(R.id.tvDate);
             tvAmount = itemView.findViewById(R.id.tvAmount);
@@ -191,6 +201,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
             tvNotes = itemView.findViewById(R.id.tvNotes);
             btnEdit = itemView.findViewById(R.id.btnEdit);
             btnDelete = itemView.findViewById(R.id.btnDelete);
+            btnPin = itemView.findViewById(R.id.btnPin);
         }
 
         public void bind(Expense expense, boolean isExpanded, int position) {
@@ -248,6 +259,11 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
                 tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.expense_red));
             }
 
+            // Pin indicator visibility
+            if (ivPinIndicator != null) {
+                ivPinIndicator.setVisibility(expense.isPinned() ? View.VISIBLE : View.GONE);
+            }
+
             // Handle expand indicator visibility based on expandableEnabled
             if (ivExpandIndicator != null) {
                 if (expandableEnabled) {
@@ -272,6 +288,19 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
                         } else {
                             tvNotes.setText("No notes available");
                         }
+                    }
+
+                    // Pin button
+                    if (btnPin != null) {
+                        boolean isPinned = expense.isPinned();
+                        btnPin.setText(isPinned ? "Unpin" : "Pin");
+                        btnPin.setIcon(ContextCompat.getDrawable(itemView.getContext(),
+                                isPinned ? R.drawable.ic_pin : R.drawable.ic_pin_outline));
+                        btnPin.setOnClickListener(v -> {
+                            if (pinClickListener != null) {
+                                pinClickListener.onPinClick(expense, position);
+                            }
+                        });
                     }
 
                     // Edit button
