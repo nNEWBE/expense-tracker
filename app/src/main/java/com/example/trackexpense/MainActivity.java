@@ -514,20 +514,43 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             return;
         }
 
-        new MaterialAlertDialogBuilder(this, R.style.Theme_TrackExpense_Dialog)
-                .setTitle("Import Data")
-                .setMessage(
-                        "Select a JSON or CSV file containing your transactions.\n\nRequired format:\n• JSON: Array of objects with amount, category, type, notes, date\n• CSV: Headers: amount,category,type,notes,date")
-                .setPositiveButton("Select File", (dialog, which) -> {
-                    filePickerLauncher.launch(new String[] {
-                            "application/json",
-                            "text/csv",
-                            "text/comma-separated-values",
-                            "*/*"
-                    });
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_import, null);
+
+        com.google.android.material.card.MaterialCardView cardSelectCSV = dialogView.findViewById(R.id.cardSelectCSV);
+        com.google.android.material.card.MaterialCardView cardSelectJSON = dialogView.findViewById(R.id.cardSelectJSON);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        // CSV file picker
+        cardSelectCSV.setOnClickListener(v -> {
+            dialog.dismiss();
+            filePickerLauncher.launch(new String[] {
+                    "text/csv",
+                    "text/comma-separated-values",
+                    "application/csv",
+                    "*/*"
+            });
+        });
+
+        // JSON file picker
+        cardSelectJSON.setOnClickListener(v -> {
+            dialog.dismiss();
+            filePickerLauncher.launch(new String[] {
+                    "application/json",
+                    "text/json",
+                    "*/*"
+            });
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
     }
 
     private void processImportFile(Uri uri) {

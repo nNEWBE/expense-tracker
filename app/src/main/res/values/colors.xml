@@ -161,9 +161,12 @@
     <color name="red_50">#FDE8EC</color>
     <color name="red_200">#FAC5CE</color>
     <color name="red_500">#f03e5b</color>
+    <color name="amber_50">#FFFBEB</color>
     <color name="amber_500">#F59E0B</color>
+    <color name="blue_50">#EFF6FF</color>
     <color name="blue_500">#3B82F6</color>
     <color name="violet_500">#8B5CF6</color>
     <color name="pink_light">#f5e1ec</color>
     <color name="card_background">#F8F7FC</color>
+    <color name="primary_color">@color/primary</color>
 </resources>
