@@ -9,12 +9,14 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -29,15 +31,15 @@ import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.viewmodel.ExpenseViewModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
-import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TransactionsFragment extends Fragment {
@@ -50,19 +52,19 @@ public class TransactionsFragment extends Fragment {
     private RecyclerView rvTransactions;
     private ExpenseAdapter adapter;
     private EditText etSearch;
-    private ChipGroup chipGroupFilter, chipGroupCategory;
     private TextView tvEmpty, tvTransactionCount;
-    private LinearLayout emptyState;
-    private MaterialButton btnTypeAll, btnTypeIncome, btnTypeExpense, btnLoadMore;
+    private LinearLayout emptyState, categoryChipsContainer;
+    private MaterialCardView chipAll, chipToday, chipWeek, chipMonth;
+    private MaterialCardView btnTypeAll, btnTypeIncome, btnTypeExpense;
+    private MaterialCardView chipCatAll;
+    private MaterialButton btnLoadMore;
     private ProgressBar progressLoadMore;
     private List<Expense> allExpenses = new ArrayList<>();
     private List<Expense> filteredExpenses = new ArrayList<>();
     private String currentTypeFilter = "ALL"; // ALL, INCOME, EXPENSE
     private String currentCategoryFilter = "ALL"; // ALL or specific category
+    private String currentDateFilter = "ALL"; // ALL, TODAY, WEEK, MONTH
     private int currentPage = 1;
-
-    // Category chip ID to category name mapping
-    private Map<Integer, String> categoryChipMap = new HashMap<>();
 
     // Skeleton loading
     private View skeletonView;
@@ -92,13 +94,11 @@ public class TransactionsFragment extends Fragment {
             isFirstLoad = false;
         }
 
-        initCategoryMap();
         initViews(view);
         setupRecyclerView();
         setupSearch();
-        setupFilters();
+        setupDateFilters();
         setupTypeFilters();
-        setupCategoryFilters();
         setupPagination();
         observeData();
     }
@@ -145,33 +145,29 @@ public class TransactionsFragment extends Fragment {
                 .start();
     }
 
-    private void initCategoryMap() {
-        categoryChipMap.put(R.id.chipCatAll, "ALL");
-        categoryChipMap.put(R.id.chipCatFood, "Food");
-        categoryChipMap.put(R.id.chipCatTransport, "Transport");
-        categoryChipMap.put(R.id.chipCatShopping, "Shopping");
-        categoryChipMap.put(R.id.chipCatBills, "Bills");
-        categoryChipMap.put(R.id.chipCatHealth, "Health");
-        categoryChipMap.put(R.id.chipCatEntertainment, "Entertainment");
-        categoryChipMap.put(R.id.chipCatSalary, "Salary");
-        categoryChipMap.put(R.id.chipCatOther, "Other");
-    }
-
     private void initViews(View view) {
         rvTransactions = view.findViewById(R.id.rvTransactions);
         etSearch = view.findViewById(R.id.etSearch);
-        chipGroupFilter = view.findViewById(R.id.chipGroupFilter);
-        chipGroupCategory = view.findViewById(R.id.chipGroupCategory);
         tvEmpty = view.findViewById(R.id.tvEmpty);
         tvTransactionCount = view.findViewById(R.id.tvTransactionCount);
         emptyState = view.findViewById(R.id.emptyState);
         btnLoadMore = view.findViewById(R.id.btnLoadMore);
         progressLoadMore = view.findViewById(R.id.progressLoadMore);
+        categoryChipsContainer = view.findViewById(R.id.categoryChipsContainer);
 
-        // Type filter buttons
+        // Date filter chips
+        chipAll = view.findViewById(R.id.chipAll);
+        chipToday = view.findViewById(R.id.chipToday);
+        chipWeek = view.findViewById(R.id.chipWeek);
+        chipMonth = view.findViewById(R.id.chipMonth);
+
+        // Type filter cards
         btnTypeAll = view.findViewById(R.id.btnTypeAll);
         btnTypeIncome = view.findViewById(R.id.btnTypeIncome);
         btnTypeExpense = view.findViewById(R.id.btnTypeExpense);
+
+        // Category all chip
+        chipCatAll = view.findViewById(R.id.chipCatAll);
     }
 
     private void setupRecyclerView() {
@@ -198,18 +194,318 @@ public class TransactionsFragment extends Fragment {
         displayPaginatedResults();
     }
 
-    private void setupCategoryFilters() {
-        if (chipGroupCategory != null) {
-            chipGroupCategory.setOnCheckedStateChangeListener((group, checkedIds) -> {
-                if (!checkedIds.isEmpty()) {
-                    int checkedId = checkedIds.get(0);
-                    currentCategoryFilter = categoryChipMap.getOrDefault(checkedId, "ALL");
-                } else {
-                    currentCategoryFilter = "ALL";
-                }
-                currentPage = 1; // Reset pagination
+    private void setupDateFilters() {
+        View.OnClickListener dateFilterListener = v -> {
+            int id = v.getId();
+            if (id == R.id.chipAll) {
+                currentDateFilter = "ALL";
+            } else if (id == R.id.chipToday) {
+                currentDateFilter = "TODAY";
+            } else if (id == R.id.chipWeek) {
+                currentDateFilter = "WEEK";
+            } else if (id == R.id.chipMonth) {
+                currentDateFilter = "MONTH";
+            }
+            currentPage = 1;
+            updateDateFilterUI();
+            filterExpenses();
+        };
+
+        if (chipAll != null)
+            chipAll.setOnClickListener(dateFilterListener);
+        if (chipToday != null)
+            chipToday.setOnClickListener(dateFilterListener);
+        if (chipWeek != null)
+            chipWeek.setOnClickListener(dateFilterListener);
+        if (chipMonth != null)
+            chipMonth.setOnClickListener(dateFilterListener);
+
+        updateDateFilterUI();
+    }
+
+    private void updateDateFilterUI() {
+        int primaryColor = ContextCompat.getColor(requireContext(), R.color.primary);
+        int blueColor = ContextCompat.getColor(requireContext(), R.color.blue_500);
+        int violetColor = ContextCompat.getColor(requireContext(), R.color.violet_500);
+        int amberColor = ContextCompat.getColor(requireContext(), R.color.amber_600);
+        int whiteColor = ContextCompat.getColor(requireContext(), android.R.color.white);
+
+        // All chip
+        if (chipAll != null) {
+            boolean isSelected = "ALL".equals(currentDateFilter);
+            chipAll.setCardBackgroundColor(isSelected ? primaryColor : whiteColor);
+            chipAll.setStrokeColor(primaryColor);
+            TextView tv = chipAll.findViewById(R.id.tvChipAll);
+            ImageView icon = chipAll.findViewById(R.id.iconAll);
+            if (tv != null)
+                tv.setTextColor(isSelected ? whiteColor : primaryColor);
+            if (icon != null)
+                icon.setColorFilter(isSelected ? whiteColor : primaryColor);
+        }
+
+        // Today chip
+        if (chipToday != null) {
+            boolean isSelected = "TODAY".equals(currentDateFilter);
+            chipToday.setCardBackgroundColor(
+                    isSelected ? blueColor : ContextCompat.getColor(requireContext(), R.color.blue_50));
+            TextView tv = chipToday.findViewById(R.id.tvChipToday);
+            ImageView icon = chipToday.findViewById(R.id.iconToday);
+            if (tv != null)
+                tv.setTextColor(isSelected ? whiteColor : blueColor);
+            if (icon != null)
+                icon.setColorFilter(isSelected ? whiteColor : blueColor);
+        }
+
+        // Week chip
+        if (chipWeek != null) {
+            boolean isSelected = "WEEK".equals(currentDateFilter);
+            chipWeek.setCardBackgroundColor(isSelected ? violetColor : 0xFFF5F3FF);
+            TextView tv = chipWeek.findViewById(R.id.tvChipWeek);
+            ImageView icon = chipWeek.findViewById(R.id.iconWeek);
+            if (tv != null)
+                tv.setTextColor(isSelected ? whiteColor : violetColor);
+            if (icon != null)
+                icon.setColorFilter(isSelected ? whiteColor : violetColor);
+        }
+
+        // Month chip
+        if (chipMonth != null) {
+            boolean isSelected = "MONTH".equals(currentDateFilter);
+            chipMonth.setCardBackgroundColor(
+                    isSelected ? amberColor : ContextCompat.getColor(requireContext(), R.color.amber_50));
+            TextView tv = chipMonth.findViewById(R.id.tvChipMonth);
+            ImageView icon = chipMonth.findViewById(R.id.iconMonth);
+            if (tv != null)
+                tv.setTextColor(isSelected ? whiteColor : amberColor);
+            if (icon != null)
+                icon.setColorFilter(isSelected ? whiteColor : amberColor);
+        }
+    }
+
+    private void setupCategoryChipsFromData() {
+        if (categoryChipsContainer == null)
+            return;
+
+        // Keep only the "All" chip, remove others
+        int childCount = categoryChipsContainer.getChildCount();
+        for (int i = childCount - 1; i > 0; i--) {
+            categoryChipsContainer.removeViewAt(i);
+        }
+
+        // Get unique categories from allExpenses
+        Set<String> uniqueCategories = new HashSet<>();
+        for (Expense expense : allExpenses) {
+            if (expense.getCategory() != null && !expense.getCategory().isEmpty()) {
+                uniqueCategories.add(expense.getCategory());
+            }
+        }
+
+        // Setup "All" chip click listener
+        if (chipCatAll != null) {
+            chipCatAll.setOnClickListener(v -> {
+                currentCategoryFilter = "ALL";
+                currentPage = 1;
+                updateCategoryChipsUI();
                 filterExpenses();
             });
+        }
+
+        // Create chips for each category
+        for (String category : uniqueCategories) {
+            MaterialCardView chip = createCategoryChip(category);
+            categoryChipsContainer.addView(chip);
+        }
+
+        updateCategoryChipsUI();
+    }
+
+    private MaterialCardView createCategoryChip(String category) {
+        MaterialCardView card = new MaterialCardView(requireContext());
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                (int) (36 * getResources().getDisplayMetrics().density));
+        params.setMarginEnd((int) (8 * getResources().getDisplayMetrics().density));
+        card.setLayoutParams(params);
+        card.setRadius((int) (18 * getResources().getDisplayMetrics().density));
+        card.setCardElevation(0);
+        card.setStrokeWidth((int) (1.5f * getResources().getDisplayMetrics().density));
+
+        int categoryColor = getCategoryColor(category);
+        int categoryBgColor = getCategoryBgColor(category);
+
+        card.setCardBackgroundColor(categoryBgColor);
+        card.setStrokeColor(categoryColor);
+
+        LinearLayout inner = new LinearLayout(requireContext());
+        inner.setOrientation(LinearLayout.HORIZONTAL);
+        inner.setGravity(android.view.Gravity.CENTER);
+        int padding = (int) (14 * getResources().getDisplayMetrics().density);
+        inner.setPadding(padding, 0, padding, 0);
+        inner.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT));
+
+        ImageView icon = new ImageView(requireContext());
+        int iconSize = (int) (16 * getResources().getDisplayMetrics().density);
+        icon.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
+        icon.setImageResource(getCategoryIcon(category));
+        icon.setColorFilter(categoryColor);
+
+        TextView tv = new TextView(requireContext());
+        LinearLayout.LayoutParams tvParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        tvParams.setMarginStart((int) (6 * getResources().getDisplayMetrics().density));
+        tv.setLayoutParams(tvParams);
+        tv.setText(category);
+        tv.setTextColor(categoryColor);
+        tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
+        tv.setTypeface(null, android.graphics.Typeface.BOLD);
+
+        inner.addView(icon);
+        inner.addView(tv);
+        card.addView(inner);
+
+        card.setTag(category);
+        card.setOnClickListener(v -> {
+            currentCategoryFilter = category;
+            currentPage = 1;
+            updateCategoryChipsUI();
+            filterExpenses();
+        });
+
+        return card;
+    }
+
+    private void updateCategoryChipsUI() {
+        if (categoryChipsContainer == null)
+            return;
+
+        int whiteColor = ContextCompat.getColor(requireContext(), android.R.color.white);
+        int primaryColor = ContextCompat.getColor(requireContext(), R.color.primary);
+
+        // Update "All" chip
+        if (chipCatAll != null) {
+            boolean isSelected = "ALL".equals(currentCategoryFilter);
+            chipCatAll.setCardBackgroundColor(isSelected ? primaryColor : whiteColor);
+            TextView tv = chipCatAll.findViewById(R.id.tvCatAll);
+            ImageView icon = chipCatAll.findViewById(R.id.iconCatAll);
+            if (tv != null)
+                tv.setTextColor(isSelected ? whiteColor : primaryColor);
+            if (icon != null)
+                icon.setColorFilter(isSelected ? whiteColor : primaryColor);
+        }
+
+        // Update category chips
+        for (int i = 1; i < categoryChipsContainer.getChildCount(); i++) {
+            View child = categoryChipsContainer.getChildAt(i);
+            if (child instanceof MaterialCardView && child.getTag() != null) {
+                MaterialCardView card = (MaterialCardView) child;
+                String category = (String) card.getTag();
+                boolean isSelected = category.equals(currentCategoryFilter);
+
+                int categoryColor = getCategoryColor(category);
+                int categoryBgColor = getCategoryBgColor(category);
+
+                card.setCardBackgroundColor(isSelected ? categoryColor : categoryBgColor);
+
+                LinearLayout inner = (LinearLayout) card.getChildAt(0);
+                if (inner != null && inner.getChildCount() >= 2) {
+                    ImageView icon = (ImageView) inner.getChildAt(0);
+                    TextView tv = (TextView) inner.getChildAt(1);
+                    if (icon != null)
+                        icon.setColorFilter(isSelected ? whiteColor : categoryColor);
+                    if (tv != null)
+                        tv.setTextColor(isSelected ? whiteColor : categoryColor);
+                }
+            }
+        }
+    }
+
+    private int getCategoryColor(String category) {
+        switch (category.toLowerCase()) {
+            case "food":
+                return ContextCompat.getColor(requireContext(), R.color.category_food);
+            case "transport":
+                return ContextCompat.getColor(requireContext(), R.color.category_transport);
+            case "shopping":
+                return ContextCompat.getColor(requireContext(), R.color.category_shopping);
+            case "entertainment":
+                return ContextCompat.getColor(requireContext(), R.color.category_entertainment);
+            case "health":
+                return ContextCompat.getColor(requireContext(), R.color.category_health);
+            case "bills":
+                return ContextCompat.getColor(requireContext(), R.color.category_bills);
+            case "education":
+                return ContextCompat.getColor(requireContext(), R.color.category_education);
+            case "salary":
+                return ContextCompat.getColor(requireContext(), R.color.category_salary);
+            case "freelance":
+                return ContextCompat.getColor(requireContext(), R.color.category_freelance);
+            case "investment":
+                return ContextCompat.getColor(requireContext(), R.color.category_investment);
+            case "gift":
+                return ContextCompat.getColor(requireContext(), R.color.category_gift);
+            default:
+                return ContextCompat.getColor(requireContext(), R.color.category_other);
+        }
+    }
+
+    private int getCategoryBgColor(String category) {
+        switch (category.toLowerCase()) {
+            case "food":
+                return ContextCompat.getColor(requireContext(), R.color.category_food_bg);
+            case "transport":
+                return ContextCompat.getColor(requireContext(), R.color.category_transport_bg);
+            case "shopping":
+                return ContextCompat.getColor(requireContext(), R.color.category_shopping_bg);
+            case "entertainment":
+                return ContextCompat.getColor(requireContext(), R.color.category_entertainment_bg);
+            case "health":
+                return ContextCompat.getColor(requireContext(), R.color.category_health_bg);
+            case "bills":
+                return ContextCompat.getColor(requireContext(), R.color.category_bills_bg);
+            case "education":
+                return ContextCompat.getColor(requireContext(), R.color.category_education_bg);
+            case "salary":
+                return ContextCompat.getColor(requireContext(), R.color.category_salary_bg);
+            case "freelance":
+                return ContextCompat.getColor(requireContext(), R.color.category_freelance_bg);
+            case "investment":
+                return ContextCompat.getColor(requireContext(), R.color.category_investment_bg);
+            case "gift":
+                return ContextCompat.getColor(requireContext(), R.color.category_gift_bg);
+            default:
+                return ContextCompat.getColor(requireContext(), R.color.category_other_bg);
+        }
+    }
+
+    private int getCategoryIcon(String category) {
+        switch (category.toLowerCase()) {
+            case "food":
+                return R.drawable.ic_food;
+            case "transport":
+                return R.drawable.ic_transport;
+            case "shopping":
+                return R.drawable.ic_shopping;
+            case "entertainment":
+                return R.drawable.ic_entertainment;
+            case "health":
+                return R.drawable.ic_health;
+            case "bills":
+                return R.drawable.ic_bills;
+            case "education":
+                return R.drawable.ic_education;
+            case "salary":
+                return R.drawable.ic_salary;
+            case "freelance":
+                return R.drawable.ic_freelance;
+            case "investment":
+                return R.drawable.ic_investment;
+            case "gift":
+                return R.drawable.ic_gift;
+            default:
+                return R.drawable.ic_other;
         }
     }
 
@@ -246,55 +542,49 @@ public class TransactionsFragment extends Fragment {
     }
 
     private void updateTypeFilterUI() {
-        int primaryColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.primary);
-        int incomeColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.income_green);
-        int expenseColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.expense_red);
-        int whiteColor = androidx.core.content.ContextCompat.getColor(requireContext(), android.R.color.white);
+        int primaryColor = ContextCompat.getColor(requireContext(), R.color.primary);
+        int incomeColor = ContextCompat.getColor(requireContext(), R.color.income_green);
+        int expenseColor = ContextCompat.getColor(requireContext(), R.color.expense_red);
+        int incomeBgColor = ContextCompat.getColor(requireContext(), R.color.income_green_light);
+        int expenseBgColor = ContextCompat.getColor(requireContext(), R.color.expense_red_light);
+        int whiteColor = ContextCompat.getColor(requireContext(), android.R.color.white);
 
-        // Reset all buttons to outlined style
+        // All type
         if (btnTypeAll != null) {
-            if ("ALL".equals(currentTypeFilter)) {
-                btnTypeAll.setBackgroundTintList(android.content.res.ColorStateList.valueOf(primaryColor));
-                btnTypeAll.setTextColor(whiteColor);
-                btnTypeAll.setIconTint(android.content.res.ColorStateList.valueOf(whiteColor));
-                btnTypeAll.setStrokeWidth(0);
-            } else {
-                btnTypeAll.setBackgroundTintList(android.content.res.ColorStateList.valueOf(whiteColor));
-                btnTypeAll.setTextColor(primaryColor);
-                btnTypeAll.setIconTint(android.content.res.ColorStateList.valueOf(primaryColor));
-                btnTypeAll.setStrokeColor(android.content.res.ColorStateList.valueOf(primaryColor));
-                btnTypeAll.setStrokeWidth(2);
-            }
+            boolean isSelected = "ALL".equals(currentTypeFilter);
+            btnTypeAll.setCardBackgroundColor(isSelected ? primaryColor : whiteColor);
+            btnTypeAll.setStrokeWidth(isSelected ? 0 : (int) (1.5f * getResources().getDisplayMetrics().density));
+            btnTypeAll.setStrokeColor(primaryColor);
+            TextView tv = btnTypeAll.findViewById(R.id.tvTypeAll);
+            ImageView icon = btnTypeAll.findViewById(R.id.iconTypeAll);
+            if (tv != null)
+                tv.setTextColor(isSelected ? whiteColor : primaryColor);
+            if (icon != null)
+                icon.setColorFilter(isSelected ? whiteColor : primaryColor);
         }
 
+        // Income type
         if (btnTypeIncome != null) {
-            if ("INCOME".equals(currentTypeFilter)) {
-                btnTypeIncome.setBackgroundTintList(android.content.res.ColorStateList.valueOf(incomeColor));
-                btnTypeIncome.setTextColor(whiteColor);
-                btnTypeIncome.setIconTint(android.content.res.ColorStateList.valueOf(whiteColor));
-                btnTypeIncome.setStrokeWidth(0);
-            } else {
-                btnTypeIncome.setBackgroundTintList(android.content.res.ColorStateList.valueOf(whiteColor));
-                btnTypeIncome.setTextColor(incomeColor);
-                btnTypeIncome.setIconTint(android.content.res.ColorStateList.valueOf(incomeColor));
-                btnTypeIncome.setStrokeColor(android.content.res.ColorStateList.valueOf(incomeColor));
-                btnTypeIncome.setStrokeWidth(2);
-            }
+            boolean isSelected = "INCOME".equals(currentTypeFilter);
+            btnTypeIncome.setCardBackgroundColor(isSelected ? incomeColor : incomeBgColor);
+            TextView tv = btnTypeIncome.findViewById(R.id.tvTypeIncome);
+            ImageView icon = btnTypeIncome.findViewById(R.id.iconTypeIncome);
+            if (tv != null)
+                tv.setTextColor(isSelected ? whiteColor : incomeColor);
+            if (icon != null)
+                icon.setColorFilter(isSelected ? whiteColor : incomeColor);
         }
 
+        // Expense type
         if (btnTypeExpense != null) {
-            if ("EXPENSE".equals(currentTypeFilter)) {
-                btnTypeExpense.setBackgroundTintList(android.content.res.ColorStateList.valueOf(expenseColor));
-                btnTypeExpense.setTextColor(whiteColor);
-                btnTypeExpense.setIconTint(android.content.res.ColorStateList.valueOf(whiteColor));
-                btnTypeExpense.setStrokeWidth(0);
-            } else {
-                btnTypeExpense.setBackgroundTintList(android.content.res.ColorStateList.valueOf(whiteColor));
-                btnTypeExpense.setTextColor(expenseColor);
-                btnTypeExpense.setIconTint(android.content.res.ColorStateList.valueOf(expenseColor));
-                btnTypeExpense.setStrokeColor(android.content.res.ColorStateList.valueOf(expenseColor));
-                btnTypeExpense.setStrokeWidth(2);
-            }
+            boolean isSelected = "EXPENSE".equals(currentTypeFilter);
+            btnTypeExpense.setCardBackgroundColor(isSelected ? expenseColor : expenseBgColor);
+            TextView tv = btnTypeExpense.findViewById(R.id.tvTypeExpense);
+            ImageView icon = btnTypeExpense.findViewById(R.id.iconTypeExpense);
+            if (tv != null)
+                tv.setTextColor(isSelected ? whiteColor : expenseColor);
+            if (icon != null)
+                icon.setColorFilter(isSelected ? whiteColor : expenseColor);
         }
     }
 
@@ -392,19 +682,13 @@ public class TransactionsFragment extends Fragment {
         }
     }
 
-    private void setupFilters() {
-        if (chipGroupFilter != null) {
-            chipGroupFilter.setOnCheckedStateChangeListener((group, checkedIds) -> {
-                currentPage = 1; // Reset pagination
-                filterExpenses();
-            });
-        }
-    }
-
     private void observeData() {
         viewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
             allExpenses = expenses;
             currentPage = 1;
+
+            // Setup category chips from actual data
+            setupCategoryChipsFromData();
 
             if (isFirstLoad && skeletonView != null) {
                 new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
@@ -445,34 +729,31 @@ public class TransactionsFragment extends Fragment {
                     .collect(Collectors.toList());
         }
 
-        // Date filter
-        if (chipGroupFilter != null) {
-            int checkedId = chipGroupFilter.getCheckedChipId();
-            if (checkedId != R.id.chipAll && checkedId != View.NO_ID) {
-                Calendar cal = Calendar.getInstance();
+        // Date filter (using new currentDateFilter)
+        if (!"ALL".equals(currentDateFilter)) {
+            Calendar cal = Calendar.getInstance();
 
-                if (checkedId == R.id.chipToday) {
-                    cal.set(Calendar.HOUR_OF_DAY, 0);
-                    cal.set(Calendar.MINUTE, 0);
-                    cal.set(Calendar.SECOND, 0);
-                    long startOfDay = cal.getTimeInMillis();
-                    filteredExpenses = filteredExpenses.stream()
-                            .filter(e -> e.getDate() >= startOfDay)
-                            .collect(Collectors.toList());
-                } else if (checkedId == R.id.chipWeek) {
-                    cal.add(Calendar.DAY_OF_YEAR, -7);
-                    long weekAgo = cal.getTimeInMillis();
-                    filteredExpenses = filteredExpenses.stream()
-                            .filter(e -> e.getDate() >= weekAgo)
-                            .collect(Collectors.toList());
-                } else if (checkedId == R.id.chipMonth) {
-                    cal.set(Calendar.DAY_OF_MONTH, 1);
-                    cal.set(Calendar.HOUR_OF_DAY, 0);
-                    long startOfMonth = cal.getTimeInMillis();
-                    filteredExpenses = filteredExpenses.stream()
-                            .filter(e -> e.getDate() >= startOfMonth)
-                            .collect(Collectors.toList());
-                }
+            if ("TODAY".equals(currentDateFilter)) {
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+                long startOfDay = cal.getTimeInMillis();
+                filteredExpenses = filteredExpenses.stream()
+                        .filter(e -> e.getDate() >= startOfDay)
+                        .collect(Collectors.toList());
+            } else if ("WEEK".equals(currentDateFilter)) {
+                cal.add(Calendar.DAY_OF_YEAR, -7);
+                long weekAgo = cal.getTimeInMillis();
+                filteredExpenses = filteredExpenses.stream()
+                        .filter(e -> e.getDate() >= weekAgo)
+                        .collect(Collectors.toList());
+            } else if ("MONTH".equals(currentDateFilter)) {
+                cal.set(Calendar.DAY_OF_MONTH, 1);
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                long startOfMonth = cal.getTimeInMillis();
+                filteredExpenses = filteredExpenses.stream()
+                        .filter(e -> e.getDate() >= startOfMonth)
+                        .collect(Collectors.toList());
             }
         }
 

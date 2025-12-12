@@ -167,61 +167,195 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@color/white"
-                    android:padding="12dp">
+                    android:padding="16dp">
+
+                    <!-- Date Filter Label -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Time Period"
+                        android:textColor="@color/gray_600"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
 
                     <!-- Date Filters -->
                     <HorizontalScrollView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:clipToPadding="false"
                         android:scrollbars="none">
 
-                        <com.google.android.material.chip.ChipGroup
-                            android:id="@+id/chipGroupFilter"
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            app:singleLine="true"
-                            app:singleSelection="true">
+                            android:orientation="horizontal">
 
-                            <com.google.android.material.chip.Chip
+                            <!-- All Chip -->
+                            <com.google.android.material.card.MaterialCardView
                                 android:id="@+id/chipAll"
-                                style="@style/Widget.Material3.Chip.Filter"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:checked="true"
-                                android:text="All"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="20dp" />
+                                android:layout_height="36dp"
+                                android:layout_marginEnd="8dp"
+                                app:cardBackgroundColor="@color/primary"
+                                app:cardCornerRadius="18dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/primary"
+                                app:strokeWidth="1.5dp">
 
-                            <com.google.android.material.chip.Chip
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:paddingHorizontal="14dp">
+
+                                    <ImageView
+                                        android:id="@+id/iconAll"
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:src="@drawable/ic_nav_analytics"
+                                        app:tint="@android:color/white" />
+
+                                    <TextView
+                                        android:id="@+id/tvChipAll"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="6dp"
+                                        android:text="All"
+                                        android:textColor="@android:color/white"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Today Chip -->
+                            <com.google.android.material.card.MaterialCardView
                                 android:id="@+id/chipToday"
-                                style="@style/Widget.Material3.Chip.Filter"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Today"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="20dp" />
+                                android:layout_height="36dp"
+                                android:layout_marginEnd="8dp"
+                                app:cardBackgroundColor="@color/blue_50"
+                                app:cardCornerRadius="18dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#BFDBFE"
+                                app:strokeWidth="1.5dp">
 
-                            <com.google.android.material.chip.Chip
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:paddingHorizontal="14dp">
+
+                                    <ImageView
+                                        android:id="@+id/iconToday"
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:src="@drawable/ic_today"
+                                        app:tint="@color/blue_500" />
+
+                                    <TextView
+                                        android:id="@+id/tvChipToday"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="6dp"
+                                        android:text="Today"
+                                        android:textColor="@color/blue_500"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- This Week Chip -->
+                            <com.google.android.material.card.MaterialCardView
                                 android:id="@+id/chipWeek"
-                                style="@style/Widget.Material3.Chip.Filter"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="This Week"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="20dp" />
+                                android:layout_height="36dp"
+                                android:layout_marginEnd="8dp"
+                                app:cardBackgroundColor="#F5F3FF"
+                                app:cardCornerRadius="18dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#C4B5FD"
+                                app:strokeWidth="1.5dp">
 
-                            <com.google.android.material.chip.Chip
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:paddingHorizontal="14dp">
+
+                                    <ImageView
+                                        android:id="@+id/iconWeek"
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:src="@drawable/ic_week"
+                                        app:tint="@color/violet_500" />
+
+                                    <TextView
+                                        android:id="@+id/tvChipWeek"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="6dp"
+                                        android:text="This Week"
+                                        android:textColor="@color/violet_500"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- This Month Chip -->
+                            <com.google.android.material.card.MaterialCardView
                                 android:id="@+id/chipMonth"
-                                style="@style/Widget.Material3.Chip.Filter"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="This Month"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="20dp" />
+                                android:layout_height="36dp"
+                                app:cardBackgroundColor="@color/amber_50"
+                                app:cardCornerRadius="18dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="#FDE68A"
+                                app:strokeWidth="1.5dp">
 
-                        </com.google.android.material.chip.ChipGroup>
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:paddingHorizontal="14dp">
 
+                                    <ImageView
+                                        android:id="@+id/iconMonth"
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:src="@drawable/ic_month"
+                                        app:tint="@color/amber_600" />
+
+                                    <TextView
+                                        android:id="@+id/tvChipMonth"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="6dp"
+                                        android:text="This Month"
+                                        android:textColor="@color/amber_600"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                        </LinearLayout>
                     </HorizontalScrollView>
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="@color/gray_200" />
+
+                    <!-- Type Filter Label -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Transaction Type"
+                        android:textColor="@color/gray_600"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
 
                     <!-- Type Filters -->
                     <LinearLayout
@@ -230,193 +364,190 @@
                         android:layout_marginTop="8dp"
                         android:orientation="horizontal">
 
-                        <com.google.android.material.button.MaterialButton
+                        <!-- All Type Chip -->
+                        <com.google.android.material.card.MaterialCardView
                             android:id="@+id/btnTypeAll"
-                            style="@style/Widget.MaterialComponents.Button"
-                            android:layout_width="100dp"
-                            android:layout_height="36dp"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="40dp"
                             android:layout_marginEnd="8dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:text="All"
-                            android:textAllCaps="false"
-                            android:textSize="12sp"
-                            app:backgroundTint="@color/primary"
-                            app:cornerRadius="12dp"
-                            app:icon="@drawable/ic_nav_analytics"
-                            app:iconGravity="textStart"
-                            app:iconPadding="4dp"
-                            app:iconSize="16dp" />
+                            app:cardBackgroundColor="@color/primary"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp">
 
-                        <com.google.android.material.button.MaterialButton
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:id="@+id/iconTypeAll"
+                                    android:layout_width="18dp"
+                                    android:layout_height="18dp"
+                                    android:src="@drawable/ic_nav_analytics"
+                                    app:tint="@android:color/white" />
+
+                                <TextView
+                                    android:id="@+id/tvTypeAll"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="6dp"
+                                    android:text="All"
+                                    android:textColor="@android:color/white"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Income Type Chip -->
+                        <com.google.android.material.card.MaterialCardView
                             android:id="@+id/btnTypeIncome"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="0dp"
-                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_height="40dp"
                             android:layout_marginEnd="8dp"
-                            android:layout_weight="1"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:text="Income"
-                            android:textAllCaps="false"
-                            android:textColor="@color/income_green"
-                            android:textSize="12sp"
-                            app:cornerRadius="12dp"
-                            app:icon="@drawable/ic_arrow_up"
-                            app:iconGravity="textStart"
-                            app:iconPadding="4dp"
-                            app:iconSize="16dp"
-                            app:iconTint="@color/income_green"
-                            app:strokeColor="@color/income_green" />
+                            app:cardBackgroundColor="@color/income_green_light"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="0dp"
+                            app:strokeColor="@color/income_green"
+                            app:strokeWidth="1.5dp">
 
-                        <com.google.android.material.button.MaterialButton
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:id="@+id/iconTypeIncome"
+                                    android:layout_width="18dp"
+                                    android:layout_height="18dp"
+                                    android:src="@drawable/ic_arrow_up"
+                                    app:tint="@color/income_green" />
+
+                                <TextView
+                                    android:id="@+id/tvTypeIncome"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="6dp"
+                                    android:text="Income"
+                                    android:textColor="@color/income_green"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Expense Type Chip -->
+                        <com.google.android.material.card.MaterialCardView
                             android:id="@+id/btnTypeExpense"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="0dp"
-                            android:layout_height="36dp"
                             android:layout_weight="1"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:text="Expense"
-                            android:textAllCaps="false"
-                            android:textColor="@color/expense_red"
-                            android:textSize="12sp"
-                            app:cornerRadius="12dp"
-                            app:icon="@drawable/ic_arrow_down"
-                            app:iconGravity="textStart"
-                            app:iconPadding="4dp"
-                            app:iconSize="16dp"
-                            app:iconTint="@color/expense_red"
-                            app:strokeColor="@color/expense_red" />
+                            android:layout_height="40dp"
+                            app:cardBackgroundColor="@color/expense_red_light"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="0dp"
+                            app:strokeColor="@color/expense_red"
+                            app:strokeWidth="1.5dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:id="@+id/iconTypeExpense"
+                                    android:layout_width="18dp"
+                                    android:layout_height="18dp"
+                                    android:src="@drawable/ic_arrow_down"
+                                    app:tint="@color/expense_red" />
+
+                                <TextView
+                                    android:id="@+id/tvTypeExpense"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="6dp"
+                                    android:text="Expense"
+                                    android:textColor="@color/expense_red"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
 
                     </LinearLayout>
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="@color/gray_200" />
 
                     <!-- Category Filter Label -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
                         android:text="Category"
-                        android:textColor="@color/text_secondary"
+                        android:textColor="@color/gray_600"
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
-                    <!-- Category Filters -->
+                    <!-- Dynamic Category Filters Container -->
                     <HorizontalScrollView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                        android:layout_marginTop="8dp"
+                        android:clipToPadding="false"
                         android:scrollbars="none">
 
-                        <com.google.android.material.chip.ChipGroup
-                            android:id="@+id/chipGroupCategory"
+                        <LinearLayout
+                            android:id="@+id/categoryChipsContainer"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            app:singleLine="true"
-                            app:singleSelection="true">
+                            android:orientation="horizontal">
 
-                            <com.google.android.material.chip.Chip
+                            <!-- "All" Category Chip - Always present -->
+                            <com.google.android.material.card.MaterialCardView
                                 android:id="@+id/chipCatAll"
-                                style="@style/Widget.Material3.Chip.Filter"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:checked="true"
-                                android:text="All"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="16dp"
-                                app:chipStrokeColor="@color/primary"
-                                app:chipStrokeWidth="1.5dp" />
+                                android:layout_height="36dp"
+                                android:layout_marginEnd="8dp"
+                                app:cardBackgroundColor="@color/primary"
+                                app:cardCornerRadius="18dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/primary"
+                                app:strokeWidth="1.5dp">
 
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/chipCatFood"
-                                style="@style/Widget.Material3.Chip.Filter"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Food"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="16dp"
-                                app:chipStrokeColor="@color/category_food"
-                                app:chipStrokeWidth="1.5dp" />
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:paddingHorizontal="14dp">
 
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/chipCatTransport"
-                                style="@style/Widget.Material3.Chip.Filter"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Transport"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="16dp"
-                                app:chipStrokeColor="@color/category_transport"
-                                app:chipStrokeWidth="1.5dp" />
+                                    <ImageView
+                                        android:id="@+id/iconCatAll"
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:src="@drawable/ic_nav_analytics"
+                                        app:tint="@android:color/white" />
 
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/chipCatShopping"
-                                style="@style/Widget.Material3.Chip.Filter"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Shopping"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="16dp"
-                                app:chipStrokeColor="@color/category_shopping"
-                                app:chipStrokeWidth="1.5dp" />
+                                    <TextView
+                                        android:id="@+id/tvCatAll"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="6dp"
+                                        android:text="All"
+                                        android:textColor="@android:color/white"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
 
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/chipCatBills"
-                                style="@style/Widget.Material3.Chip.Filter"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Bills"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="16dp"
-                                app:chipStrokeColor="@color/category_bills"
-                                app:chipStrokeWidth="1.5dp" />
+                            <!-- Dynamic categories will be added here programmatically -->
 
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/chipCatHealth"
-                                style="@style/Widget.Material3.Chip.Filter"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Health"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="16dp"
-                                app:chipStrokeColor="@color/category_health"
-                                app:chipStrokeWidth="1.5dp" />
-
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/chipCatEntertainment"
-                                style="@style/Widget.Material3.Chip.Filter"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Entertainment"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="16dp"
-                                app:chipStrokeColor="@color/category_entertainment"
-                                app:chipStrokeWidth="1.5dp" />
-
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/chipCatSalary"
-                                style="@style/Widget.Material3.Chip.Filter"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Salary"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="16dp"
-                                app:chipStrokeColor="@color/category_salary"
-                                app:chipStrokeWidth="1.5dp" />
-
-                            <com.google.android.material.chip.Chip
-                                android:id="@+id/chipCatOther"
-                                style="@style/Widget.Material3.Chip.Filter"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Other"
-                                app:chipBackgroundColor="@color/chip_filter_bg"
-                                app:chipCornerRadius="16dp"
-                                app:chipStrokeColor="@color/category_other"
-                                app:chipStrokeWidth="1.5dp" />
-
-                        </com.google.android.material.chip.ChipGroup>
-
+                        </LinearLayout>
                     </HorizontalScrollView>
 
                 </LinearLayout>
