@@ -547,10 +547,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .setView(dialogView)
                 .create();
 
-        // Request new category
+        // Check if user is admin - hide request button for admin
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(currentUser.getUid())
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        Boolean isAdmin = documentSnapshot.getBoolean("isAdmin");
+                        if (isAdmin != null && isAdmin) {
+                            // Hide request card for admin
+                            cardRequest.setVisibility(View.GONE);
+                        }
+                    });
+        }
+
+        // Request new category - check for guest mode
         cardRequest.setOnClickListener(v -> {
-            dialog.dismiss();
-            showRequestCategoryDialog();
+            if (preferenceManager.isGuestMode()) {
+                // Guest users cannot submit requests
+                BeautifulNotification.showWarning(this, "Please log in to request new categories");
+            } else {
+                dialog.dismiss();
+                showRequestCategoryDialog();
+            }
         });
 
         btnClose.setOnClickListener(v -> dialog.dismiss());
@@ -651,24 +672,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             return;
         }
 
-        com.example.trackexpense.data.model.CategoryRequest request = new com.example.trackexpense.data.model.CategoryRequest(
-                user.getUid(),
-                user.getDisplayName() != null ? user.getDisplayName() : "User",
-                user.getEmail() != null ? user.getEmail() : "",
-                categoryName,
-                type,
-                reason);
+        // Use HashMap for direct Firestore serialization
+        java.util.Map<String, Object> request = new java.util.HashMap<>();
+        request.put("userId", user.getUid());
+        request.put("userName", user.getDisplayName() != null ? user.getDisplayName() : "User");
+        request.put("userEmail", user.getEmail() != null ? user.getEmail() : "");
+        request.put("categoryName", categoryName);
+        request.put("categoryType", type);
+        request.put("reason", reason);
+        request.put("status", "PENDING");
+        request.put("createdAt", System.currentTimeMillis());
+        request.put("updatedAt", System.currentTimeMillis());
 
         com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("category_requests")
                 .add(request)
                 .addOnSuccessListener(documentReference -> {
+                    android.util.Log.d("CategoryRequest", "Request saved with ID: " + documentReference.getId());
                     // Also create a notification for admin
-                    sendAdminNotification(categoryName, type, user.getDisplayName());
+                    sendAdminNotification(categoryName, type,
+                            user.getDisplayName() != null ? user.getDisplayName() : "User");
                     BeautifulNotification.showSuccess(this, "Request submitted! Admin will review it.");
                 })
                 .addOnFailureListener(e -> {
-                    BeautifulNotification.showError(this, "Failed to submit request");
+                    android.util.Log.e("CategoryRequest", "Failed to save request", e);
+                    BeautifulNotification.showError(this, "Failed to submit request: " + e.getMessage());
                 });
     }
 
