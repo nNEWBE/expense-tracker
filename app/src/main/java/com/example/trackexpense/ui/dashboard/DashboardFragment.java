@@ -705,12 +705,9 @@ public class DashboardFragment extends Fragment {
                     if (isAdded()) {
                         requireActivity().runOnUiThread(() -> {
                             notificationsList = new ArrayList<>(notifications);
-                            if (isNotificationPanelOpen && appNotificationAdapter != null) {
-                                appNotificationAdapter.setNotifications(notificationsList);
-                                updateNotificationCount();
-                                checkEmptyState();
-                            }
-                            updateNotificationBadge();
+
+                            // Also load category requests
+                            loadCategoryRequestsAsNotifications(currentUser.getUid());
                         });
                     }
                 }
@@ -871,14 +868,9 @@ public class DashboardFragment extends Fragment {
                     if (isAdded()) {
                         requireActivity().runOnUiThread(() -> {
                             notificationsList = new ArrayList<>(notifications);
-                            updateNotificationBadge();
 
-                            // Update UI if panel is open
-                            if (isNotificationPanelOpen && appNotificationAdapter != null) {
-                                appNotificationAdapter.setNotifications(notificationsList);
-                                updateNotificationCount();
-                                checkEmptyState();
-                            }
+                            // Also load category requests
+                            loadCategoryRequestsAsNotifications(currentUser.getUid());
                         });
                     }
                 }
@@ -892,5 +884,155 @@ public class DashboardFragment extends Fragment {
             // Guest user: Load from local storage
             loadGuestNotifications();
         }
+    }
+
+    /**
+     * Load category requests and display them as notifications.
+     * - For admin users: Show all pending requests
+     * - For regular users: Show their own requests with status
+     */
+    private void loadCategoryRequestsAsNotifications(String userId) {
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
+                .getInstance();
+
+        // First check if user is admin
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(userDoc -> {
+                    Boolean isAdmin = userDoc.getBoolean("isAdmin");
+
+                    if (isAdmin != null && isAdmin) {
+                        // Admin: Load all pending requests
+                        loadAdminCategoryRequests(db);
+                    } else {
+                        // Regular user: Load their own requests
+                        loadUserCategoryRequests(db, userId);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("DashboardFragment", "Error checking admin status", e);
+                    updateNotificationBadge();
+                });
+    }
+
+    /**
+     * Load all pending category requests for admin users.
+     */
+    private void loadAdminCategoryRequests(com.google.firebase.firestore.FirebaseFirestore db) {
+        db.collection("category_requests")
+                .whereEqualTo("status", "PENDING")
+                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!isAdded())
+                        return;
+
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : querySnapshot) {
+                        String requestId = doc.getId();
+                        String categoryName = doc.getString("categoryName");
+                        String categoryType = doc.getString("categoryType");
+                        String userName = doc.getString("userName");
+                        String status = doc.getString("status");
+
+                        // Create notification from request
+                        AppNotification requestNotification = new AppNotification(
+                                "admin",
+                                "CATEGORY_REQUEST",
+                                "📂 Category Request: " + categoryName,
+                                userName + " requested a new " +
+                                        (categoryType != null ? categoryType.toLowerCase() : "") +
+                                        " category. Tap to review.");
+                        requestNotification.setId("request_" + requestId);
+                        requestNotification.setRead(false);
+
+                        // Check if already in list
+                        boolean exists = false;
+                        for (AppNotification n : notificationsList) {
+                            if (n.getId() != null && n.getId().equals("request_" + requestId)) {
+                                exists = true;
+                                break;
+                            }
+                        }
+                        if (!exists) {
+                            notificationsList.add(0, requestNotification); // Add at top
+                        }
+                    }
+
+                    // Update UI
+                    updateNotificationBadge();
+                    if (isNotificationPanelOpen && appNotificationAdapter != null) {
+                        appNotificationAdapter.setNotifications(notificationsList);
+                        updateNotificationCount();
+                        checkEmptyState();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("DashboardFragment", "Error loading admin category requests", e);
+                    updateNotificationBadge();
+                });
+    }
+
+    /**
+     * Load user's own category requests to show status updates.
+     */
+    private void loadUserCategoryRequests(com.google.firebase.firestore.FirebaseFirestore db, String userId) {
+        db.collection("category_requests")
+                .whereEqualTo("userId", userId)
+                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .limit(10) // Only show recent requests
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!isAdded())
+                        return;
+
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : querySnapshot) {
+                        String requestId = doc.getId();
+                        String categoryName = doc.getString("categoryName");
+                        String status = doc.getString("status");
+
+                        // Format status for display
+                        String statusEmoji = "⏳";
+                        String statusText = "Pending";
+                        if ("APPROVED".equals(status)) {
+                            statusEmoji = "✅";
+                            statusText = "Approved";
+                        } else if ("REJECTED".equals(status)) {
+                            statusEmoji = "❌";
+                            statusText = "Rejected";
+                        }
+
+                        // Create notification from request
+                        AppNotification requestNotification = new AppNotification(
+                                userId,
+                                "CATEGORY_REQUEST_STATUS",
+                                statusEmoji + " Category Request: " + categoryName,
+                                "Your request is " + statusText.toLowerCase() + ".");
+                        requestNotification.setId("request_" + requestId);
+                        requestNotification.setRead(!"PENDING".equals(status)); // Pending = unread
+
+                        // Check if already in list
+                        boolean exists = false;
+                        for (AppNotification n : notificationsList) {
+                            if (n.getId() != null && n.getId().equals("request_" + requestId)) {
+                                exists = true;
+                                break;
+                            }
+                        }
+                        if (!exists) {
+                            notificationsList.add(0, requestNotification); // Add at top
+                        }
+                    }
+
+                    // Update UI
+                    updateNotificationBadge();
+                    if (isNotificationPanelOpen && appNotificationAdapter != null) {
+                        appNotificationAdapter.setNotifications(notificationsList);
+                        updateNotificationCount();
+                        checkEmptyState();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("DashboardFragment", "Error loading user category requests", e);
+                    updateNotificationBadge();
+                });
     }
 }

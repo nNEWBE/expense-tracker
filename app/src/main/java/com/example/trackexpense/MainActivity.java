@@ -689,59 +689,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .add(request)
                 .addOnSuccessListener(documentReference -> {
                     android.util.Log.d("CategoryRequest", "Request saved with ID: " + documentReference.getId());
-                    // Also create a notification for admin
-                    sendAdminNotification(categoryName, type,
-                            user.getDisplayName() != null ? user.getDisplayName() : "User");
                     BeautifulNotification.showSuccess(this, "Request submitted! Admin will review it.");
                 })
                 .addOnFailureListener(e -> {
                     android.util.Log.e("CategoryRequest", "Failed to save request", e);
                     BeautifulNotification.showError(this, "Failed to submit request: " + e.getMessage());
-                });
-    }
-
-    private void sendAdminNotification(String categoryName, String type, String userName) {
-        // Query all admin users and send notification to their notifications
-        // subcollection
-        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
-                .getInstance();
-
-        db.collection("users")
-                .whereEqualTo("isAdmin", true)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    for (com.google.firebase.firestore.QueryDocumentSnapshot adminDoc : querySnapshot) {
-                        String adminId = adminDoc.getId();
-
-                        // Create notification matching AppNotification model structure
-                        java.util.Map<String, Object> notification = new java.util.HashMap<>();
-                        notification.put("type", "CATEGORY_REQUEST");
-                        notification.put("title", "📂 New Category Request");
-                        notification.put("message", userName + " requested a new " + type.toLowerCase()
-                                + " category: \"" + categoryName + "\"");
-                        notification.put("isRead", false);
-                        notification.put("read", false);
-                        notification.put("createdAt", new java.util.Date());
-                        notification.put("userId", adminId);
-                        notification.put("iconResource", com.example.trackexpense.R.drawable.ic_nav_categories);
-                        notification.put("colorResource", com.example.trackexpense.R.color.warning_yellow);
-
-                        // Send to admin's notifications subcollection
-                        db.collection("users")
-                                .document(adminId)
-                                .collection("notifications")
-                                .add(notification)
-                                .addOnSuccessListener(ref -> {
-                                    android.util.Log.d("AdminNotification", "Notification sent to admin: " + adminId);
-                                })
-                                .addOnFailureListener(e -> {
-                                    android.util.Log.e("AdminNotification",
-                                            "Failed to send notification to admin: " + adminId, e);
-                                });
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    android.util.Log.e("AdminNotification", "Failed to query admin users", e);
                 });
     }
 
