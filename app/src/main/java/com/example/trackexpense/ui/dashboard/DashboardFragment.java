@@ -918,9 +918,9 @@ public class DashboardFragment extends Fragment {
      * Load all pending category requests for admin users.
      */
     private void loadAdminCategoryRequests(com.google.firebase.firestore.FirebaseFirestore db) {
+        android.util.Log.d("CategoryRequests", "Loading admin category requests...");
         db.collection("category_requests")
                 .whereEqualTo("status", "PENDING")
-                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     if (!isAdded())
@@ -966,8 +966,13 @@ public class DashboardFragment extends Fragment {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("DashboardFragment", "Error loading admin category requests", e);
+                    android.util.Log.e("CategoryRequests", "FAILED to load admin requests: " + e.getMessage(), e);
                     updateNotificationBadge();
+                    if (isNotificationPanelOpen && appNotificationAdapter != null) {
+                        appNotificationAdapter.setNotifications(notificationsList);
+                        updateNotificationCount();
+                        checkEmptyState();
+                    }
                 });
     }
 
@@ -975,10 +980,9 @@ public class DashboardFragment extends Fragment {
      * Load user's own category requests to show status updates.
      */
     private void loadUserCategoryRequests(com.google.firebase.firestore.FirebaseFirestore db, String userId) {
+        android.util.Log.d("CategoryRequests", "Loading user category requests for: " + userId);
         db.collection("category_requests")
                 .whereEqualTo("userId", userId)
-                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                .limit(10) // Only show recent requests
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     if (!isAdded())
@@ -1031,8 +1035,13 @@ public class DashboardFragment extends Fragment {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("DashboardFragment", "Error loading user category requests", e);
+                    android.util.Log.e("CategoryRequests", "FAILED to load user requests: " + e.getMessage(), e);
                     updateNotificationBadge();
+                    if (isNotificationPanelOpen && appNotificationAdapter != null) {
+                        appNotificationAdapter.setNotifications(notificationsList);
+                        updateNotificationCount();
+                        checkEmptyState();
+                    }
                 });
     }
 }
