@@ -173,6 +173,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // Disable swipe gesture - drawer only opens via menu button
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+
+        // Improve drawer scrolling performance
+        drawerLayout.setDrawerElevation(0f);
+
+        // Add smooth drawer listener to reduce frame drops
+        drawerLayout.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+                // Reduce overdraw during animation
+                super.onDrawerSlide(drawerView, slideOffset);
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                // Refresh header data when drawer opens
+                setupDrawerHeader();
+            }
+        });
     }
 
     private void setupDrawerHeader() {
@@ -309,13 +328,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
 
-        if (itemId == R.id.nav_dashboard) {
-            navController.navigate(R.id.dashboardFragment);
-        } else if (itemId == R.id.nav_analytics) {
-            navController.navigate(R.id.transactionsFragment);
-        } else if (itemId == R.id.nav_budget) {
-            showBudgetDialog();
-        } else if (itemId == R.id.nav_export) {
+        if (itemId == R.id.nav_export) {
             showExportDialog();
         } else if (itemId == R.id.nav_categories) {
             showCategoriesDialog();
@@ -379,19 +392,32 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     // ==================== EXPORT DATA ====================
     private void showExportDialog() {
-        String[] options = { "Export as CSV", "Export as JSON" };
-
-        new MaterialAlertDialogBuilder(this, R.style.Theme_TrackExpense_Dialog)
-                .setTitle("📊 Export Data")
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0) {
-                        exportAsCSV();
-                    } else {
-                        exportAsJSON();
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_export, null);
+        
+        com.google.android.material.card.MaterialCardView cardCSV = dialogView.findViewById(R.id.cardCSV);
+        com.google.android.material.card.MaterialCardView cardJSON = dialogView.findViewById(R.id.cardJSON);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        
+        cardCSV.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportAsCSV();
+        });
+        
+        cardJSON.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportAsJSON();
+        });
+        
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
     }
 
     private void exportAsCSV() {
@@ -495,101 +521,168 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     // ==================== NOTIFICATIONS ====================
     private void showNotificationsDialog() {
-        boolean notificationsEnabled = preferenceManager.isNotificationsEnabled();
-        String[] options = { "Daily expense reminder", "Budget alerts", "Weekly summary" };
-        boolean[] checked = { notificationsEnabled, true, true };
-
-        new MaterialAlertDialogBuilder(this, R.style.Theme_TrackExpense_Dialog)
-                .setTitle("🔔 Notifications")
-                .setMultiChoiceItems(options, checked, (dialog, which, isChecked) -> {
-                    if (which == 0) {
-                        preferenceManager.setNotificationsEnabled(isChecked);
-                    }
-                })
-                .setPositiveButton("Save", (dialog, which) -> {
-                    BeautifulNotification.showSuccess(this, "Notification settings saved!");
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_notifications, null);
+        
+        com.google.android.material.switchmaterial.SwitchMaterial switchDaily = dialogView.findViewById(R.id.switchDaily);
+        com.google.android.material.switchmaterial.SwitchMaterial switchBudget = dialogView.findViewById(R.id.switchBudget);
+        com.google.android.material.switchmaterial.SwitchMaterial switchWeekly = dialogView.findViewById(R.id.switchWeekly);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        com.google.android.material.button.MaterialButton btnSave = dialogView.findViewById(R.id.btnSave);
+        
+        // Load current preferences
+        switchDaily.setChecked(preferenceManager.isNotificationsEnabled());
+        
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        
+        btnSave.setOnClickListener(v -> {
+            preferenceManager.setNotificationsEnabled(switchDaily.isChecked());
+            BeautifulNotification.showSuccess(this, "Notification settings saved!");
+            dialog.dismiss();
+        });
+        
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
     }
 
     // ==================== THEME ====================
     private void showThemeDialog() {
-        String[] themes = { "☀️ Light Mode", "🌙 Dark Mode", "📱 System Default" };
-        int currentTheme = preferenceManager.getThemeMode();
-        int checkedItem = 2; // default to system
-
-        if (currentTheme == AppCompatDelegate.MODE_NIGHT_NO) {
-            checkedItem = 0;
-        } else if (currentTheme == AppCompatDelegate.MODE_NIGHT_YES) {
-            checkedItem = 1;
-        } else if (currentTheme == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
-            checkedItem = 2;
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_theme, null);
+        
+        com.google.android.material.card.MaterialCardView cardLight = dialogView.findViewById(R.id.cardLight);
+        com.google.android.material.card.MaterialCardView cardDark = dialogView.findViewById(R.id.cardDark);
+        com.google.android.material.card.MaterialCardView cardSystem = dialogView.findViewById(R.id.cardSystem);
+        ImageView checkLight = dialogView.findViewById(R.id.checkLight);
+        ImageView checkDark = dialogView.findViewById(R.id.checkDark);
+        ImageView checkSystem = dialogView.findViewById(R.id.checkSystem);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        com.google.android.material.button.MaterialButton btnApply = dialogView.findViewById(R.id.btnApply);
+        
+        int[] selectedTheme = { preferenceManager.getThemeMode() };
+        
+        Runnable updateSelection = () -> {
+            int gray = ContextCompat.getColor(this, R.color.gray_200);
+            int primary = ContextCompat.getColor(this, R.color.primary);
+            
+            cardLight.setStrokeColor(gray);
+            cardDark.setStrokeColor(gray);
+            cardSystem.setStrokeColor(gray);
+            checkLight.setVisibility(View.GONE);
+            checkDark.setVisibility(View.GONE);
+            checkSystem.setVisibility(View.GONE);
+            
+            if (selectedTheme[0] == AppCompatDelegate.MODE_NIGHT_NO) {
+                cardLight.setStrokeColor(primary);
+                checkLight.setVisibility(View.VISIBLE);
+            } else if (selectedTheme[0] == AppCompatDelegate.MODE_NIGHT_YES) {
+                cardDark.setStrokeColor(primary);
+                checkDark.setVisibility(View.VISIBLE);
+            } else {
+                cardSystem.setStrokeColor(primary);
+                checkSystem.setVisibility(View.VISIBLE);
+            }
+        };
+        updateSelection.run();
+        
+        cardLight.setOnClickListener(v -> {
+            selectedTheme[0] = AppCompatDelegate.MODE_NIGHT_NO;
+            updateSelection.run();
+        });
+        
+        cardDark.setOnClickListener(v -> {
+            selectedTheme[0] = AppCompatDelegate.MODE_NIGHT_YES;
+            updateSelection.run();
+        });
+        
+        cardSystem.setOnClickListener(v -> {
+            selectedTheme[0] = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+            updateSelection.run();
+        });
+        
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        
+        btnApply.setOnClickListener(v -> {
+            preferenceManager.setThemeMode(selectedTheme[0]);
+            AppCompatDelegate.setDefaultNightMode(selectedTheme[0]);
+            BeautifulNotification.showSuccess(this, "Theme updated!");
+            dialog.dismiss();
+        });
+        
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
-
-        new MaterialAlertDialogBuilder(this, R.style.Theme_TrackExpense_Dialog)
-                .setTitle("🎨 Choose Theme")
-                .setSingleChoiceItems(themes, checkedItem, (dialog, which) -> {
-                    int mode;
-                    switch (which) {
-                        case 0:
-                            mode = AppCompatDelegate.MODE_NIGHT_NO;
-                            break;
-                        case 1:
-                            mode = AppCompatDelegate.MODE_NIGHT_YES;
-                            break;
-                        default:
-                            mode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
-                            break;
-                    }
-                    preferenceManager.setThemeMode(mode);
-                    AppCompatDelegate.setDefaultNightMode(mode);
-                    dialog.dismiss();
-                    BeautifulNotification.showSuccess(this, "Theme updated!");
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        dialog.show();
     }
 
     // ==================== BACKUP & RESTORE ====================
     private void showBackupDialog() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_backup, null);
+        
+        TextView tvLastBackup = dialogView.findViewById(R.id.tvLastBackup);
+        com.google.android.material.card.MaterialCardView cardBackup = dialogView.findViewById(R.id.cardBackup);
+        com.google.android.material.card.MaterialCardView cardRestore = dialogView.findViewById(R.id.cardRestore);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        
         long lastBackup = preferenceManager.getLastBackupTime();
         String lastBackupText = lastBackup > 0
-                ? new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault()).format(new Date(lastBackup))
+                ? new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(new Date(lastBackup))
                 : "Never";
-
-        new MaterialAlertDialogBuilder(this, R.style.Theme_TrackExpense_Dialog)
-                .setTitle("☁️ Backup & Restore")
-                .setMessage("Last backup: " + lastBackupText
-                        + "\n\nBackup your data to prevent loss. You can restore your data on any device.")
-                .setPositiveButton("Backup Now", (dialog, which) -> {
-                    // Trigger export as backup
-                    exportAsJSON();
-                    preferenceManager.setLastBackupTime(System.currentTimeMillis());
-                })
-                .setNeutralButton("Restore", (dialog, which) -> {
-                    BeautifulNotification.showInfo(this, "Restore feature coming soon!");
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        tvLastBackup.setText(lastBackupText);
+        
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        
+        cardBackup.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportAsJSON();
+            preferenceManager.setLastBackupTime(System.currentTimeMillis());
+        });
+        
+        cardRestore.setOnClickListener(v -> {
+            dialog.dismiss();
+            BeautifulNotification.showInfo(this, "Restore feature coming soon!");
+        });
+        
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
     }
 
     // ==================== HELP & FAQ ====================
     private void showHelpDialog() {
-        String helpText = "📌 Quick Tips:\n\n" +
-                "• Tap the + button to add expenses or income\n" +
-                "• Swipe left on transactions to delete\n" +
-                "• Set budget goals to track spending\n" +
-                "• Enable notifications for daily reminders\n" +
-                "• Export your data regularly for backup\n\n" +
-                "📧 Need more help? Contact support!";
-
-        new MaterialAlertDialogBuilder(this, R.style.Theme_TrackExpense_Dialog)
-                .setTitle("❓ Help & FAQ")
-                .setMessage(helpText)
-                .setPositiveButton("Got it!", null)
-                .setNeutralButton("Contact Support", (dialog, which) -> sendFeedback())
-                .show();
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_help, null);
+        
+        com.google.android.material.button.MaterialButton btnClose = dialogView.findViewById(R.id.btnClose);
+        com.google.android.material.button.MaterialButton btnContact = dialogView.findViewById(R.id.btnContact);
+        
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        
+        btnContact.setOnClickListener(v -> {
+            dialog.dismiss();
+            sendFeedback();
+        });
+        
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
     }
 
     // ==================== FEEDBACK ====================
