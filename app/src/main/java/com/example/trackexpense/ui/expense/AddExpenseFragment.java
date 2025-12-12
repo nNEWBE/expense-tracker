@@ -940,6 +940,65 @@ public class AddExpenseFragment extends Fragment {
     }
 
     private void performSave(Expense expense) {
+        // Check if guest mode - no limit for guests
+        if (preferenceManager.isGuestMode()) {
+            saveExpenseDirectly(expense);
+            return;
+        }
+
+        // Check daily transaction limit from Firestore
+        com.google.firebase.auth.FirebaseUser currentUser = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .getCurrentUser();
+        if (currentUser == null) {
+            saveExpenseDirectly(expense);
+            return;
+        }
+
+        String userId = currentUser.getUid();
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
+                .getInstance();
+
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(userDoc -> {
+                    String todayDate = new java.text.SimpleDateFormat("yyyy-MM-dd",
+                            java.util.Locale.getDefault()).format(new java.util.Date());
+                    int todayCount = 0;
+
+                    String lastTransactionDate = userDoc.getString("lastTransactionDate");
+                    Long storedCount = userDoc.getLong("dailyTransactionCount");
+
+                    if (todayDate.equals(lastTransactionDate) && storedCount != null) {
+                        todayCount = storedCount.intValue();
+                    }
+
+                    if (todayCount >= 50) {
+                        runOnUiThread(() -> BeautifulNotification.showWarning(requireActivity(),
+                                "Daily limit reached (50 transactions/day). Try again tomorrow."));
+                        return;
+                    }
+
+                    final int newCount = todayCount + 1;
+
+                    // Update count and save transaction
+                    java.util.Map<String, Object> updates = new java.util.HashMap<>();
+                    updates.put("lastTransactionDate", todayDate);
+                    updates.put("dailyTransactionCount", newCount);
+
+                    db.collection("users").document(userId)
+                            .update(updates)
+                            .addOnSuccessListener(v -> runOnUiThread(() -> saveExpenseDirectly(expense)))
+                            .addOnFailureListener(e -> {
+                                // If update fails, try set with merge
+                                db.collection("users").document(userId)
+                                        .set(updates, com.google.firebase.firestore.SetOptions.merge())
+                                        .addOnSuccessListener(v -> runOnUiThread(() -> saveExpenseDirectly(expense)))
+                                        .addOnFailureListener(e2 -> runOnUiThread(() -> saveExpenseDirectly(expense)));
+                            });
+                })
+                .addOnFailureListener(e -> runOnUiThread(() -> saveExpenseDirectly(expense)));
+    }
+
+    private void saveExpenseDirectly(Expense expense) {
         viewModel.insert(expense);
 
         // Show notification (wrapped in try-catch)
