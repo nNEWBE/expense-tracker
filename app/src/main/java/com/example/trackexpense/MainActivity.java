@@ -754,33 +754,139 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             java.util.List<java.util.Map<String, Object>> transactions) {
         com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
                 .getInstance();
-        com.google.firebase.firestore.WriteBatch batch = db.batch();
 
-        int count = 0;
+        // Step 1: Check today's import count
+        long todayStart = getTodayStartTimestamp();
+
+        db.collection("users").document(userId).collection("expenses")
+                .whereGreaterThanOrEqualTo("createdAt", todayStart)
+                .get()
+                .addOnSuccessListener(todaySnapshot -> {
+                    int todayImportCount = 0;
+                    java.util.Set<String> existingHashes = new java.util.HashSet<>();
+
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : todaySnapshot) {
+                        // Count today's imports
+                        if (doc.contains("importedAt")) {
+                            todayImportCount++;
+                        }
+                        // Build hash of existing transactions for duplicate detection
+                        String hash = buildTransactionHash(doc);
+                        if (hash != null) {
+                            existingHashes.add(hash);
+                        }
+                    }
+
+                    // Check daily limit
+                    int remainingLimit = 50 - todayImportCount;
+                    if (remainingLimit <= 0) {
+                        runOnUiThread(() -> BeautifulNotification.showWarning(this,
+                                "Daily import limit reached (50/day). Try again tomorrow."));
+                        return;
+                    }
+
+                    // Step 2: Also fetch ALL existing transactions for duplicate check
+                    fetchAllTransactionsForDuplicateCheck(db, userId, existingHashes, transactions, remainingLimit);
+                })
+                .addOnFailureListener(e -> {
+                    runOnUiThread(() -> BeautifulNotification.showError(this,
+                            "Failed to check import limits: " + e.getMessage()));
+                });
+    }
+
+    private void fetchAllTransactionsForDuplicateCheck(
+            com.google.firebase.firestore.FirebaseFirestore db,
+            String userId,
+            java.util.Set<String> existingHashes,
+            java.util.List<java.util.Map<String, Object>> transactions,
+            int remainingLimit) {
+
+        db.collection("users").document(userId).collection("expenses")
+                .get()
+                .addOnSuccessListener(allSnapshot -> {
+                    // Build complete hash set of all existing transactions
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : allSnapshot) {
+                        String hash = buildTransactionHash(doc);
+                        if (hash != null) {
+                            existingHashes.add(hash);
+                        }
+                    }
+
+                    // Filter out duplicates
+                    java.util.List<java.util.Map<String, Object>> uniqueTransactions = new java.util.ArrayList<>();
+                    int duplicateCount = 0;
+
+                    for (java.util.Map<String, Object> transaction : transactions) {
+                        String hash = buildTransactionHashFromMap(transaction);
+                        if (!existingHashes.contains(hash)) {
+                            uniqueTransactions.add(transaction);
+                            existingHashes.add(hash); // Prevent duplicates within same import
+                        } else {
+                            duplicateCount++;
+                        }
+                    }
+
+                    if (uniqueTransactions.isEmpty()) {
+                        final int skipped = duplicateCount;
+                        runOnUiThread(() -> BeautifulNotification.showWarning(this,
+                                "All " + skipped + " transactions already exist. No new data to import."));
+                        return;
+                    }
+
+                    // Apply daily limit
+                    int toImport = Math.min(uniqueTransactions.size(), remainingLimit);
+                    java.util.List<java.util.Map<String, Object>> finalTransactions = uniqueTransactions.subList(0,
+                            toImport);
+
+                    final int skippedDuplicates = duplicateCount;
+                    final int skippedLimit = uniqueTransactions.size() - toImport;
+
+                    // Proceed with import
+                    performBatchImport(db, userId, finalTransactions, skippedDuplicates, skippedLimit);
+                })
+                .addOnFailureListener(e -> {
+                    runOnUiThread(() -> BeautifulNotification.showError(this,
+                            "Failed to check for duplicates: " + e.getMessage()));
+                });
+    }
+
+    private void performBatchImport(
+            com.google.firebase.firestore.FirebaseFirestore db,
+            String userId,
+            java.util.List<java.util.Map<String, Object>> transactions,
+            int skippedDuplicates,
+            int skippedLimit) {
+
+        com.google.firebase.firestore.WriteBatch batch = db.batch();
+        long now = System.currentTimeMillis();
+
         for (java.util.Map<String, Object> transaction : transactions) {
-            // Add userId and createdAt
             transaction.put("userId", userId);
-            transaction.put("createdAt", System.currentTimeMillis());
+            transaction.put("createdAt", now);
+            transaction.put("importedAt", now); // Mark as imported for daily tracking
 
             com.google.firebase.firestore.DocumentReference docRef = db.collection("users").document(userId)
                     .collection("expenses").document();
             batch.set(docRef, transaction);
-            count++;
-
-            // Firestore batch limit is 500
-            if (count >= 500)
-                break;
         }
 
-        final int importedCount = count;
+        final int importedCount = transactions.size();
 
         batch.commit()
                 .addOnSuccessListener(v -> {
                     runOnUiThread(() -> {
-                        BeautifulNotification.showSuccess(this,
-                                "Successfully imported " + importedCount + " transactions!");
+                        // Build detailed message
+                        StringBuilder message = new StringBuilder();
+                        message.append("Imported ").append(importedCount).append(" transactions!");
 
-                        // Send in-app notification
+                        if (skippedDuplicates > 0) {
+                            message.append("\n").append(skippedDuplicates).append(" duplicates skipped.");
+                        }
+                        if (skippedLimit > 0) {
+                            message.append("\n").append(skippedLimit).append(" skipped (daily limit).");
+                        }
+
+                        BeautifulNotification.showSuccess(this, message.toString());
                         sendImportNotification(userId, importedCount);
                     });
                 })
@@ -788,6 +894,50 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     runOnUiThread(() -> BeautifulNotification.showError(this,
                             "Import failed: " + e.getMessage()));
                 });
+    }
+
+    private long getTodayStartTimestamp() {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
+    }
+
+    private String buildTransactionHash(com.google.firebase.firestore.QueryDocumentSnapshot doc) {
+        try {
+            Double amount = doc.getDouble("amount");
+            String category = doc.getString("category");
+            String type = doc.getString("type");
+            Long date = doc.getLong("date");
+
+            if (amount == null)
+                return null;
+
+            return String.format(Locale.US, "%.2f|%s|%s|%d",
+                    amount,
+                    category != null ? category : "",
+                    type != null ? type : "",
+                    date != null ? date : 0L);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String buildTransactionHashFromMap(java.util.Map<String, Object> transaction) {
+        try {
+            Object amountObj = transaction.get("amount");
+            double amount = amountObj instanceof Number ? ((Number) amountObj).doubleValue() : 0;
+            String category = (String) transaction.getOrDefault("category", "");
+            String type = (String) transaction.getOrDefault("type", "");
+            Object dateObj = transaction.get("date");
+            long date = dateObj instanceof Number ? ((Number) dateObj).longValue() : 0L;
+
+            return String.format(Locale.US, "%.2f|%s|%s|%d", amount, category, type, date);
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private void sendImportNotification(String userId, int count) {
