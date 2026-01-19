@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary Theme - Purple Gradient -->
-    <color name="primary">#447896</color>
-    <color name="primary_variant">#345467</color>
-    <color name="primary_dark">#233F50</color>
-    <color name="primary_light">#5AA1CD</color>
+    <!-- Primary Theme - Matches App Logo (Dark Teal Wallet) -->
+    <color name="primary">#2D5A6A</color>
+    <color name="primary_variant">#1A3A4A</color>
+    <color name="primary_dark">#102835</color>
+    <color name="primary_light">#4FC3F7</color>
     <color name="on_primary">#FFFFFF</color>
     
     <!-- Gradient Colors -->
-    <color name="gradient_start">#9C7BFF</color>
-    <color name="gradient_end">#7B61FF</color>
-    <color name="gradient_card_start">#8B5CF6</color>
-    <color name="gradient_card_end">#6366F1</color>
+    <color name="gradient_start">#2D5A6A</color>
+    <color name="gradient_end">#1A3A4A</color>
+    <color name="gradient_card_start">#3C6B7A</color>
+    <color name="gradient_card_end">#2D5A6A</color>
     
     <!-- Secondary Colors -->
-    <color name="secondary">#F97316</color>
-    <color name="secondary_variant">#EA580C</color>
+    <color name="secondary">#4FC3F7</color>
+    <color name="secondary_variant">#0288D1</color>
     <color name="on_secondary">#FFFFFF</color>
     
     <!-- Background Colors -->
