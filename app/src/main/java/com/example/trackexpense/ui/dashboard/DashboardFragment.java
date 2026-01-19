@@ -83,6 +83,9 @@ public class DashboardFragment extends Fragment {
     // Category requests
     private List<AppNotification> categoryRequestsList = new ArrayList<>();
     private boolean isUserAdmin = false;
+    private boolean isAdminStatusLoaded = false; // Cache admin status to avoid repeated checks
+    private long adminStatusCacheTime = 0;
+    private static final long ADMIN_STATUS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
     // Handler for notification animation
     private android.os.Handler notificationHandler;
@@ -196,6 +199,11 @@ public class DashboardFragment extends Fragment {
             cardBudget.animate().cancel();
         }
 
+        // Cleanup real-time notification listener
+        if (notificationRepository != null) {
+            notificationRepository.removeListener();
+        }
+
         super.onDestroyView();
     }
 
@@ -256,6 +264,70 @@ public class DashboardFragment extends Fragment {
 
         // Load notification counts immediately
         loadAllNotificationCounts();
+
+        // Setup real-time listener for notification updates
+        setupNotificationListener();
+    }
+
+    private com.google.firebase.firestore.ListenerRegistration notificationListenerRegistration;
+
+    /**
+     * Setup real-time listener for notifications to update badge immediately
+     */
+    private void setupNotificationListener() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || notificationRepository == null)
+            return;
+
+        // Listen for real-time updates
+        notificationRepository.listenToNotifications(new NotificationRepository.OnNotificationsLoadedListener() {
+            @Override
+            public void onLoaded(List<AppNotification> notifications) {
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> {
+                        // Create a map of current local read status to preserve
+                        java.util.Map<String, Boolean> localReadStatus = new java.util.HashMap<>();
+                        for (AppNotification n : notificationsList) {
+                            if (n.getId() != null && n.isRead()) {
+                                localReadStatus.put(n.getId(), true);
+                            }
+                        }
+
+                        // Merge: if locally marked as read, preserve that status
+                        for (AppNotification n : notifications) {
+                            if (n.getId() != null && localReadStatus.containsKey(n.getId())) {
+                                n.setRead(true); // Preserve local read status
+                            }
+                        }
+
+                        // Update notification count in badge
+                        int unreadCount = 0;
+                        for (AppNotification n : notifications) {
+                            if (!n.isRead())
+                                unreadCount++;
+                        }
+                        updateBadgeDisplay(unreadCount);
+
+                        // Always update our local list with merged data
+                        notificationsList = new ArrayList<>(notifications);
+
+                        // If panel is open and showing alerts, update the adapter
+                        if (isNotificationPanelOpen && isAlertsTabActive) {
+                            if (appNotificationAdapter != null) {
+                                appNotificationAdapter.setNotifications(notificationsList);
+                            }
+                            updateNotificationCount();
+                            checkEmptyState();
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                android.util.Log.e("DashboardFragment", "Notification listener error: " + error);
+            }
+        });
     }
 
     private void checkAdminStatus() {
@@ -274,44 +346,51 @@ public class DashboardFragment extends Fragment {
     private void loadAllNotificationCounts() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            // Guest mode - load from local
+            // Guest mode - load from local (instant)
             int count = preferenceManager.getGuestUnreadNotificationCount();
             updateBadgeDisplay(count);
             return;
         }
 
-        // Load regular notifications count
-        if (notificationRepository != null) {
-            notificationRepository.getUnreadCount(alertsCount -> {
-                // Load category requests count
-                loadCategoryRequestsCount(user.getUid(), requestsCount -> {
-                    if (isAdded()) {
-                        requireActivity().runOnUiThread(() -> {
-                            int totalCount = alertsCount + requestsCount;
-                            updateBadgeDisplay(totalCount);
+        if (notificationRepository == null)
+            return;
 
-                            // Update tab badges
-                            if (tvAlertsBadge != null) {
-                                if (alertsCount > 0) {
-                                    tvAlertsBadge.setVisibility(View.VISIBLE);
-                                    tvAlertsBadge.setText(alertsCount > 99 ? "99+" : String.valueOf(alertsCount));
-                                } else {
-                                    tvAlertsBadge.setVisibility(View.GONE);
-                                }
-                            }
-                            if (tvRequestsBadge != null) {
-                                if (requestsCount > 0) {
-                                    tvRequestsBadge.setVisibility(View.VISIBLE);
-                                    tvRequestsBadge.setText(requestsCount > 99 ? "99+" : String.valueOf(requestsCount));
-                                } else {
-                                    tvRequestsBadge.setVisibility(View.GONE);
-                                }
-                            }
-                        });
-                    }
-                });
-            });
+        // OPTIMIZATION: Show cached count IMMEDIATELY for instant UI feedback
+        int cachedCount = notificationRepository.getCachedUnreadCountSync();
+        if (cachedCount >= 0) {
+            updateBadgeDisplay(cachedCount); // Instant display
         }
+
+        // Then fetch fresh count in background
+        notificationRepository.getUnreadCount(alertsCount -> {
+            // Load category requests count
+            loadCategoryRequestsCount(user.getUid(), requestsCount -> {
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> {
+                        int totalCount = alertsCount + requestsCount;
+                        updateBadgeDisplay(totalCount);
+
+                        // Update tab badges
+                        if (tvAlertsBadge != null) {
+                            if (alertsCount > 0) {
+                                tvAlertsBadge.setVisibility(View.VISIBLE);
+                                tvAlertsBadge.setText(alertsCount > 99 ? "99+" : String.valueOf(alertsCount));
+                            } else {
+                                tvAlertsBadge.setVisibility(View.GONE);
+                            }
+                        }
+                        if (tvRequestsBadge != null) {
+                            if (requestsCount > 0) {
+                                tvRequestsBadge.setVisibility(View.VISIBLE);
+                                tvRequestsBadge.setText(requestsCount > 99 ? "99+" : String.valueOf(requestsCount));
+                            } else {
+                                tvRequestsBadge.setVisibility(View.GONE);
+                            }
+                        }
+                    });
+                }
+            });
+        });
     }
 
     private interface CountCallback {
@@ -645,7 +724,7 @@ public class DashboardFragment extends Fragment {
     private void updateFilterUI() {
         if (btnFilterAll == null)
             return;
-        
+
         int whiteColor = androidx.core.content.ContextCompat.getColor(requireContext(), android.R.color.white);
         int primaryColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.primary);
         int incomeColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.income_green);
@@ -660,24 +739,30 @@ public class DashboardFragment extends Fragment {
         btnFilterAll.setStrokeColor(primaryColor);
         TextView tvAll = btnFilterAll.findViewById(R.id.tvFilterAll);
         android.widget.ImageView iconAll = btnFilterAll.findViewById(R.id.iconFilterAll);
-        if (tvAll != null) tvAll.setTextColor(allSelected ? whiteColor : primaryColor);
-        if (iconAll != null) iconAll.setColorFilter(allSelected ? whiteColor : primaryColor);
+        if (tvAll != null)
+            tvAll.setTextColor(allSelected ? whiteColor : primaryColor);
+        if (iconAll != null)
+            iconAll.setColorFilter(allSelected ? whiteColor : primaryColor);
 
         // Income filter
         boolean incomeSelected = "INCOME".equals(currentFilter);
         btnFilterIncome.setCardBackgroundColor(incomeSelected ? incomeColor : incomeBgColor);
         TextView tvIncome = btnFilterIncome.findViewById(R.id.tvFilterIncome);
         android.widget.ImageView iconIncome = btnFilterIncome.findViewById(R.id.iconFilterIncome);
-        if (tvIncome != null) tvIncome.setTextColor(incomeSelected ? whiteColor : incomeColor);
-        if (iconIncome != null) iconIncome.setColorFilter(incomeSelected ? whiteColor : incomeColor);
+        if (tvIncome != null)
+            tvIncome.setTextColor(incomeSelected ? whiteColor : incomeColor);
+        if (iconIncome != null)
+            iconIncome.setColorFilter(incomeSelected ? whiteColor : incomeColor);
 
         // Expense filter
         boolean expenseSelected = "EXPENSE".equals(currentFilter);
         btnFilterExpense.setCardBackgroundColor(expenseSelected ? expenseColor : expenseBgColor);
         TextView tvExpense = btnFilterExpense.findViewById(R.id.tvFilterExpense);
         android.widget.ImageView iconExpense = btnFilterExpense.findViewById(R.id.iconFilterExpense);
-        if (tvExpense != null) tvExpense.setTextColor(expenseSelected ? whiteColor : expenseColor);
-        if (iconExpense != null) iconExpense.setColorFilter(expenseSelected ? whiteColor : expenseColor);
+        if (tvExpense != null)
+            tvExpense.setTextColor(expenseSelected ? whiteColor : expenseColor);
+        if (iconExpense != null)
+            iconExpense.setColorFilter(expenseSelected ? whiteColor : expenseColor);
     }
 
     private int dpToPx(float dp) {
@@ -810,46 +895,95 @@ public class DashboardFragment extends Fragment {
                             return;
                         }
 
-                        // Mark as read when clicked (for regular notifications)
+                        // Mark as read IMMEDIATELY and update UI for instant feedback
                         if (!notification.isRead()) {
+                            notification.setRead(true); // Update local object immediately
+                            appNotificationAdapter.notifyDataSetChanged(); // Update UI now
+
                             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
                             if (currentUser != null) {
                                 notificationRepository.markAsRead(notification.getId(), null);
                             } else {
                                 preferenceManager.markGuestNotificationRead(notification.getId());
-                                notification.setRead(true);
-                                appNotificationAdapter.notifyDataSetChanged();
-                                updateNotificationBadge();
                             }
+                            loadAllNotificationCounts(); // Update badge
                         }
+
+                        // Show notification details dialog
+                        showNotificationDetailsDialog(notification);
                     }
                 });
 
         // Close button
         view.findViewById(R.id.btnCloseNotifications).setOnClickListener(v -> hideNotificationPanel());
 
-        // Dim background click to close
-        notificationDimBackground.setOnClickListener(v -> hideNotificationPanel());
+        // NOTE: Do NOT close panel when clicking dim background - only close via back
+        // button or close button
+        // notificationDimBackground.setOnClickListener(v -> hideNotificationPanel());
+        // // REMOVED
 
-        // Clear all button - delete all from Firebase
+        // Make panel consume clicks so they don't pass through to dim background
+        if (notificationPanel != null) {
+            notificationPanel.setClickable(true);
+            notificationPanel.setFocusable(true);
+        }
+
+        // Mark all read button
+        View markAllReadBtn = view.findViewById(R.id.tvMarkAllRead);
+        if (markAllReadBtn != null) {
+            markAllReadBtn.setOnClickListener(v -> {
+                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                if (currentUser != null && notificationRepository != null) {
+                    // Update all local notifications to read immediately
+                    for (AppNotification notification : notificationsList) {
+                        notification.setRead(true);
+                    }
+                    appNotificationAdapter.notifyDataSetChanged();
+
+                    // Update badge immediately
+                    updateBadgeDisplay(0);
+                    if (tvAlertsBadge != null)
+                        tvAlertsBadge.setVisibility(View.GONE);
+
+                    // Sync to Firebase in background
+                    notificationRepository.markAllAsRead(null);
+                } else {
+                    // Guest: Mark all local as read
+                    for (AppNotification notification : notificationsList) {
+                        notification.setRead(true);
+                        preferenceManager.markGuestNotificationRead(notification.getId());
+                    }
+                    appNotificationAdapter.notifyDataSetChanged();
+                    updateBadgeDisplay(0);
+                }
+            });
+        }
+
         // Clear all button - delete all
         view.findViewById(R.id.btnClearAll).setOnClickListener(v -> {
             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
             if (currentUser != null) {
-                // Logged-in: Delete from Firebase
+                // IMMEDIATELY clear UI for instant feedback
+                notificationsList.clear();
+                appNotificationAdapter.setNotifications(notificationsList);
+                updateNotificationCount();
+                checkEmptyState();
+                updateBadgeDisplay(0); // Immediately update badge
+                if (tvAlertsBadge != null)
+                    tvAlertsBadge.setVisibility(View.GONE);
+
+                // Delete from Firebase in background
                 notificationRepository.deleteAllNotifications(new NotificationRepository.OnCompleteListener() {
                     @Override
                     public void onSuccess() {
-                        notificationsList.clear();
-                        appNotificationAdapter.setNotifications(notificationsList);
-                        updateNotificationCount();
-                        checkEmptyState();
+                        // Already updated UI, just log
+                        android.util.Log.d("DashboardFragment", "All notifications deleted from Firebase");
                     }
 
                     @Override
                     public void onError(String error) {
                         if (isAdded()) {
-                            android.widget.Toast.makeText(requireContext(), "Failed to clear notifications",
+                            android.widget.Toast.makeText(requireContext(), "Failed to sync deletion",
                                     android.widget.Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -861,7 +995,7 @@ public class DashboardFragment extends Fragment {
                 appNotificationAdapter.setNotifications(notificationsList);
                 updateNotificationCount();
                 checkEmptyState();
-                updateNotificationBadge();
+                updateBadgeDisplay(0);
             }
         });
 
@@ -905,8 +1039,10 @@ public class DashboardFragment extends Fragment {
             if (icTabRequests != null)
                 icTabRequests.setColorFilter(whiteAlpha);
 
-            // Show alerts notifications
-            appNotificationAdapter.setNotifications(notificationsList);
+            // Show alerts notifications - use existing list to preserve read status
+            if (appNotificationAdapter != null) {
+                appNotificationAdapter.setNotifications(notificationsList);
+            }
             updateNotificationCount();
         } else {
             // Requests tab active
@@ -928,7 +1064,9 @@ public class DashboardFragment extends Fragment {
                 icTabRequests.setColorFilter(primaryColor);
 
             // Show category requests
-            appNotificationAdapter.setNotifications(categoryRequestsList);
+            if (appNotificationAdapter != null) {
+                appNotificationAdapter.setNotifications(categoryRequestsList);
+            }
             if (tvNotificationCount != null) {
                 int count = categoryRequestsList.size();
                 tvNotificationCount.setText(count + (count == 1 ? " request" : " requests"));
@@ -1107,23 +1245,220 @@ public class DashboardFragment extends Fragment {
     }
 
     /**
+     * Show notification details in a modern dialog.
+     * Called when a notification item is clicked.
+     */
+    private void showNotificationDetailsDialog(AppNotification notification) {
+        if (!isAdded())
+            return;
+
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(requireContext());
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_notification_details, null);
+        builder.setView(dialogView);
+
+        android.app.AlertDialog dialog = builder.create();
+
+        // Get views
+        android.widget.ImageView ivIcon = dialogView.findViewById(R.id.ivDialogIcon);
+        View iconBackground = dialogView.findViewById(R.id.iconBackground);
+        TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        TextView tvType = dialogView.findViewById(R.id.tvDialogType);
+        TextView tvMessage = dialogView.findViewById(R.id.tvDialogMessage);
+        TextView tvAmount = dialogView.findViewById(R.id.tvDialogAmount);
+        TextView tvCategory = dialogView.findViewById(R.id.tvDialogCategory);
+        TextView tvTime = dialogView.findViewById(R.id.tvDialogTime);
+        View amountContainer = dialogView.findViewById(R.id.amountContainer);
+        View categoryContainer = dialogView.findViewById(R.id.categoryContainer);
+        android.widget.ImageView btnClose = dialogView.findViewById(R.id.btnCloseDialog);
+        com.google.android.material.button.MaterialButton btnDelete = dialogView
+                .findViewById(R.id.btnDeleteNotification);
+        com.google.android.material.button.MaterialButton btnDismiss = dialogView.findViewById(R.id.btnDismissDialog);
+
+        // Set icon and colors
+        int colorRes = notification.getColorResource();
+        int color = androidx.core.content.ContextCompat.getColor(requireContext(), colorRes);
+        if (ivIcon != null) {
+            ivIcon.setImageResource(notification.getIconResource());
+            ivIcon.setColorFilter(color);
+        }
+        if (iconBackground != null) {
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            bg.setColor(getNotificationTypeBackgroundColor(notification.getType()));
+            iconBackground.setBackground(bg);
+        }
+
+        // Set texts
+        if (tvTitle != null)
+            tvTitle.setText(notification.getTitle());
+        if (tvType != null)
+            tvType.setText(getNotificationTypeDisplayName(notification.getType()));
+        if (tvMessage != null)
+            tvMessage.setText(notification.getMessage());
+
+        // Set time
+        if (tvTime != null && notification.getCreatedAt() != null) {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy • h:mm a",
+                    java.util.Locale.getDefault());
+            tvTime.setText(sdf.format(notification.getCreatedAt()));
+        }
+
+        // Show amount if present
+        if (notification.getAmount() > 0 && amountContainer != null) {
+            amountContainer.setVisibility(View.VISIBLE);
+            if (tvAmount != null) {
+                String symbol = preferenceManager.getCurrencySymbol();
+                tvAmount.setText(String.format("%s%,.0f", symbol, notification.getAmount()));
+            }
+        }
+
+        // Show category if present
+        if (notification.getCategory() != null && !notification.getCategory().isEmpty() && categoryContainer != null) {
+            categoryContainer.setVisibility(View.VISIBLE);
+            if (tvCategory != null)
+                tvCategory.setText(notification.getCategory());
+        }
+
+        // Close button actions
+        if (btnClose != null)
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        if (btnDismiss != null)
+            btnDismiss.setOnClickListener(v -> dialog.dismiss());
+
+        // Delete button - delete and dismiss
+        if (btnDelete != null) {
+            btnDelete.setOnClickListener(v -> {
+                dialog.dismiss();
+                // Find position and delete
+                int position = notificationsList.indexOf(notification);
+                if (position >= 0) {
+                    FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                    if (currentUser != null) {
+                        notificationRepository.deleteNotification(notification.getId(),
+                                new NotificationRepository.OnCompleteListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        if (isAdded()) {
+                                            notificationsList.remove(notification);
+                                            appNotificationAdapter.setNotifications(notificationsList);
+                                            updateNotificationCount();
+                                            checkEmptyState();
+                                            loadAllNotificationCounts();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onError(String error) {
+                                    }
+                                });
+                    } else {
+                        preferenceManager.deleteGuestNotification(notification.getId());
+                        notificationsList.remove(notification);
+                        appNotificationAdapter.setNotifications(notificationsList);
+                        updateNotificationCount();
+                        checkEmptyState();
+                        updateNotificationBadge();
+                    }
+                }
+            });
+        }
+
+        // Show dialog
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
+    }
+
+    private String getNotificationTypeDisplayName(String type) {
+        if (type == null)
+            return "Notification";
+        switch (type) {
+            case AppNotification.TYPE_TRANSACTION_CREATED:
+                return "New Transaction";
+            case AppNotification.TYPE_TRANSACTION_UPDATED:
+                return "Transaction Updated";
+            case AppNotification.TYPE_TRANSACTION_DELETED:
+                return "Transaction Deleted";
+            case AppNotification.TYPE_BUDGET_EXCEEDED:
+                return "Budget Alert";
+            case AppNotification.TYPE_BUDGET_WARNING:
+                return "Budget Warning";
+            default:
+                return "Notification";
+        }
+    }
+
+    private int getNotificationTypeBackgroundColor(String type) {
+        int colorRes;
+        if (type == null) {
+            colorRes = R.color.category_other_bg;
+        } else {
+            switch (type) {
+                case AppNotification.TYPE_TRANSACTION_CREATED:
+                    colorRes = R.color.category_health_bg;
+                    break;
+                case AppNotification.TYPE_TRANSACTION_UPDATED:
+                    colorRes = R.color.category_transport_bg;
+                    break;
+                case AppNotification.TYPE_TRANSACTION_DELETED:
+                case AppNotification.TYPE_BUDGET_EXCEEDED:
+                    colorRes = R.color.category_travel_bg;
+                    break;
+                case AppNotification.TYPE_BUDGET_WARNING:
+                    colorRes = R.color.category_bills_bg;
+                    break;
+                default:
+                    colorRes = R.color.category_other_bg;
+            }
+        }
+        return androidx.core.content.ContextCompat.getColor(requireContext(), colorRes);
+    }
+
+    /**
      * Refresh notifications from Firebase and update the UI.
      * Called when the notification panel is opened.
+     * 
+     * OPTIMIZED: Shows cached data IMMEDIATELY, then refreshes in background.
+     * Uses parallel loading for notifications and category requests.
      */
     private void refreshNotificationsFromFirebase() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
         if (currentUser != null && notificationRepository != null) {
-            // Logged-in user: Load from Firebase
+            String userId = currentUser.getUid();
+
+            // STEP 1: Show cached notifications IMMEDIATELY for instant feedback
+            List<AppNotification> cachedData = notificationRepository.getCachedNotificationsSync();
+            if (cachedData != null && !cachedData.isEmpty()) {
+                notificationsList = new ArrayList<>(cachedData);
+                if (isAlertsTabActive && appNotificationAdapter != null) {
+                    appNotificationAdapter.setNotifications(notificationsList);
+                    updateNotificationCount();
+                }
+            }
+
+            // STEP 2: Load fresh notifications and category requests in PARALLEL
+            final int[] completedLoads = { 0 };
+            final int totalLoads = 2;
+
+            Runnable checkAllLoaded = () -> {
+                if (completedLoads[0] >= totalLoads) {
+                    if (isAdded()) {
+                        updateUIAfterLoad();
+                    }
+                }
+            };
+
+            // Load 1: Get notifications (uses cache for instant display)
             notificationRepository.getNotifications(new NotificationRepository.OnNotificationsLoadedListener() {
                 @Override
                 public void onLoaded(List<AppNotification> notifications) {
                     if (isAdded()) {
                         requireActivity().runOnUiThread(() -> {
                             notificationsList = new ArrayList<>(notifications);
-
-                            // Also load category requests
-                            loadCategoryRequestsAsNotifications(currentUser.getUid());
+                            completedLoads[0]++;
+                            checkAllLoaded.run();
                         });
                     }
                 }
@@ -1131,10 +1466,22 @@ public class DashboardFragment extends Fragment {
                 @Override
                 public void onError(String error) {
                     android.util.Log.e("DashboardFragment", "Error refreshing notifications: " + error);
+                    completedLoads[0]++;
+                    if (isAdded()) {
+                        requireActivity().runOnUiThread(checkAllLoaded);
+                    }
+                }
+            });
+
+            // Load 2: Get category requests (in parallel)
+            loadCategoryRequestsAsNotificationsParallel(userId, () -> {
+                completedLoads[0]++;
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(checkAllLoaded);
                 }
             });
         } else {
-            // Guest user: Load from local storage
+            // Guest user: Load from local storage (already fast)
             loadGuestNotifications();
         }
     }
@@ -1308,27 +1655,55 @@ public class DashboardFragment extends Fragment {
      * - For regular users: Show their own requests with status
      */
     private void loadCategoryRequestsAsNotifications(String userId) {
+        loadCategoryRequestsAsNotificationsParallel(userId, null);
+    }
+
+    /**
+     * Load category requests with callback support for parallel loading.
+     * Uses cached admin status to avoid repeated Firestore calls.
+     * 
+     * @param userId     User ID to load requests for
+     * @param onComplete Optional callback when loading completes
+     */
+    private void loadCategoryRequestsAsNotificationsParallel(String userId, Runnable onComplete) {
         com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
                 .getInstance();
 
-        // First check if user is admin
-        db.collection("users").document(userId).get()
-                .addOnSuccessListener(userDoc -> {
-                    Boolean isAdmin = userDoc.getBoolean("isAdmin");
-                    isUserAdmin = isAdmin != null && isAdmin;
+        // OPTIMIZATION: Check if admin status is already cached and valid
+        boolean isAdminCacheValid = isAdminStatusLoaded &&
+                (System.currentTimeMillis() - adminStatusCacheTime) < ADMIN_STATUS_CACHE_DURATION;
 
-                    if (isUserAdmin) {
-                        // Admin: Load all pending requests
-                        loadAdminCategoryRequests(db);
-                    } else {
-                        // Regular user: Load their own requests
-                        loadUserCategoryRequests(db, userId);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    android.util.Log.e("DashboardFragment", "Error checking admin status", e);
-                    updateUIAfterLoad();
-                });
+        if (isAdminCacheValid) {
+            // Use cached admin status - skip the Firestore call for admin check
+            android.util.Log.d("DashboardFragment", "Using cached admin status: " + isUserAdmin);
+            if (isUserAdmin) {
+                loadAdminCategoryRequestsWithCallback(db, onComplete);
+            } else {
+                loadUserCategoryRequestsWithCallback(db, userId, onComplete);
+            }
+        } else {
+            // First check if user is admin (cache for future use)
+            db.collection("users").document(userId).get()
+                    .addOnSuccessListener(userDoc -> {
+                        Boolean isAdmin = userDoc.getBoolean("isAdmin");
+                        isUserAdmin = isAdmin != null && isAdmin;
+                        isAdminStatusLoaded = true;
+                        adminStatusCacheTime = System.currentTimeMillis();
+
+                        android.util.Log.d("DashboardFragment", "Cached admin status: " + isUserAdmin);
+
+                        if (isUserAdmin) {
+                            loadAdminCategoryRequestsWithCallback(db, onComplete);
+                        } else {
+                            loadUserCategoryRequestsWithCallback(db, userId, onComplete);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        android.util.Log.e("DashboardFragment", "Error checking admin status", e);
+                        if (onComplete != null)
+                            onComplete.run();
+                    });
+        }
     }
 
     /**
@@ -1452,5 +1827,119 @@ public class DashboardFragment extends Fragment {
             }
             checkEmptyState();
         }
+    }
+
+    /**
+     * Load admin category requests with callback support for parallel loading.
+     */
+    private void loadAdminCategoryRequestsWithCallback(
+            com.google.firebase.firestore.FirebaseFirestore db, Runnable onComplete) {
+        android.util.Log.d("CategoryRequests", "Loading admin category requests (parallel)...");
+        categoryRequestsList.clear();
+
+        db.collection("category_requests")
+                .whereEqualTo("status", "PENDING")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!isAdded()) {
+                        if (onComplete != null)
+                            onComplete.run();
+                        return;
+                    }
+
+                    android.util.Log.d("CategoryRequests", "Found " + querySnapshot.size() + " pending requests");
+
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : querySnapshot) {
+                        String requestId = doc.getId();
+                        String categoryName = doc.getString("categoryName");
+                        String categoryType = doc.getString("categoryType");
+                        String userName = doc.getString("userName");
+                        String reason = doc.getString("reason");
+                        String status = doc.getString("status");
+
+                        // Create notification from request with metadata
+                        AppNotification requestNotification = new AppNotification(
+                                "admin",
+                                "CATEGORY_REQUEST",
+                                categoryName,
+                                userName + " - " + (categoryType != null ? categoryType : "Unknown") + " category");
+                        requestNotification.setId(requestId);
+                        requestNotification.setRead(false);
+
+                        requestNotification.setExtraData(userName + "|" + categoryType + "|" +
+                                (reason != null ? reason : "") + "|" + status);
+
+                        categoryRequestsList.add(requestNotification);
+                    }
+
+                    if (onComplete != null)
+                        onComplete.run();
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("CategoryRequests", "FAILED to load admin requests: " + e.getMessage(), e);
+                    if (onComplete != null)
+                        onComplete.run();
+                });
+    }
+
+    /**
+     * Load user category requests with callback support for parallel loading.
+     */
+    private void loadUserCategoryRequestsWithCallback(
+            com.google.firebase.firestore.FirebaseFirestore db, String userId, Runnable onComplete) {
+        android.util.Log.d("CategoryRequests", "Loading user category requests (parallel) for: " + userId);
+        categoryRequestsList.clear();
+
+        db.collection("category_requests")
+                .whereEqualTo("userId", userId)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!isAdded()) {
+                        if (onComplete != null)
+                            onComplete.run();
+                        return;
+                    }
+
+                    android.util.Log.d("CategoryRequests", "Found " + querySnapshot.size() + " user requests");
+
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : querySnapshot) {
+                        String requestId = doc.getId();
+                        String categoryName = doc.getString("categoryName");
+                        String categoryType = doc.getString("categoryType");
+                        String userName = doc.getString("userName");
+                        String reason = doc.getString("reason");
+                        String status = doc.getString("status");
+
+                        // Format status for display
+                        String statusText = "Pending";
+                        if ("APPROVED".equals(status)) {
+                            statusText = "Approved";
+                        } else if ("REJECTED".equals(status)) {
+                            statusText = "Rejected";
+                        }
+
+                        // Create notification from request
+                        AppNotification requestNotification = new AppNotification(
+                                userId,
+                                "CATEGORY_REQUEST_STATUS",
+                                categoryName,
+                                statusText + " - " + (categoryType != null ? categoryType : "Unknown") + " category");
+                        requestNotification.setId(requestId);
+                        requestNotification.setRead(!"PENDING".equals(status));
+
+                        requestNotification.setExtraData(userName + "|" + categoryType + "|" +
+                                (reason != null ? reason : "") + "|" + status);
+
+                        categoryRequestsList.add(requestNotification);
+                    }
+
+                    if (onComplete != null)
+                        onComplete.run();
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("CategoryRequests", "FAILED to load user requests: " + e.getMessage(), e);
+                    if (onComplete != null)
+                        onComplete.run();
+                });
     }
 }

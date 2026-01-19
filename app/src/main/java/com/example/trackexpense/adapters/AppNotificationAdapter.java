@@ -8,7 +8,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.trackexpense.R;
@@ -22,7 +21,8 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Adapter for displaying Firebase-backed app notifications.
+ * Lightweight adapter for displaying notifications.
+ * Optimized for fast rendering with minimal view binding complexity.
  */
 public class AppNotificationAdapter extends RecyclerView.Adapter<AppNotificationAdapter.NotificationViewHolder> {
 
@@ -44,33 +44,12 @@ public class AppNotificationAdapter extends RecyclerView.Adapter<AppNotification
         this.currencySymbol = symbol;
     }
 
+    /**
+     * Fast update method - directly replaces list without DiffUtil for speed
+     */
     public void setNotifications(List<AppNotification> newNotifications) {
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
-            @Override
-            public int getOldListSize() {
-                return notifications.size();
-            }
-
-            @Override
-            public int getNewListSize() {
-                return newNotifications.size();
-            }
-
-            @Override
-            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-                String oldId = notifications.get(oldItemPosition).getId();
-                String newId = newNotifications.get(newItemPosition).getId();
-                return oldId != null && oldId.equals(newId);
-            }
-
-            @Override
-            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-                return notifications.get(oldItemPosition).equals(newNotifications.get(newItemPosition));
-            }
-        });
-
         this.notifications = new ArrayList<>(newNotifications);
-        diffResult.dispatchUpdatesTo(this);
+        notifyDataSetChanged();
     }
 
     public void removeNotification(int position) {
@@ -106,7 +85,6 @@ public class AppNotificationAdapter extends RecyclerView.Adapter<AppNotification
         private final TextView tvTitle;
         private final TextView tvMessage;
         private final TextView tvTime;
-        private final TextView tvType;
         private final ImageView ivIcon;
         private final ImageView btnDelete;
         private final View iconBackground;
@@ -117,7 +95,6 @@ public class AppNotificationAdapter extends RecyclerView.Adapter<AppNotification
             tvTitle = itemView.findViewById(R.id.tvNotificationTitle);
             tvMessage = itemView.findViewById(R.id.tvNotificationMessage);
             tvTime = itemView.findViewById(R.id.tvNotificationTime);
-            tvType = itemView.findViewById(R.id.tvNotificationType);
             ivIcon = itemView.findViewById(R.id.ivNotificationIcon);
             btnDelete = itemView.findViewById(R.id.btnDeleteNotification);
             iconBackground = itemView.findViewById(R.id.iconBackground);
@@ -129,41 +106,39 @@ public class AppNotificationAdapter extends RecyclerView.Adapter<AppNotification
             tvTitle.setText(notification.getTitle());
             tvMessage.setText(notification.getMessage());
 
-            // Set time
+            // Set time - compact format
             Date createdAt = notification.getCreatedAt();
             if (createdAt != null) {
-                tvTime.setText(getTimeAgo(createdAt.getTime()));
+                tvTime.setText(getCompactTimeAgo(createdAt.getTime()));
             } else {
-                tvTime.setText("Just now");
+                tvTime.setText("Now");
             }
-
-            // Set type badge
-            String typeText = getTypeDisplayText(notification.getType());
-            tvType.setText(typeText);
-            tvType.setTextColor(ContextCompat.getColor(itemView.getContext(), notification.getColorResource()));
-
-            // Set type badge background
-            android.graphics.drawable.GradientDrawable typeBg = new android.graphics.drawable.GradientDrawable();
-            typeBg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-            typeBg.setCornerRadius(dpToPx(8));
-            typeBg.setColor(getTypeBackgroundColor(notification.getType()));
-            tvType.setBackground(typeBg);
 
             // Set icon
             ivIcon.setImageResource(notification.getIconResource());
-            ivIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), notification.getColorResource()));
+            int iconColor = ContextCompat.getColor(itemView.getContext(), notification.getColorResource());
+            ivIcon.setColorFilter(iconColor);
 
             // Set icon background
             android.graphics.drawable.GradientDrawable iconBg = new android.graphics.drawable.GradientDrawable();
-            iconBg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-            iconBg.setCornerRadius(dpToPx(14));
+            iconBg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
             iconBg.setColor(getTypeBackgroundColor(notification.getType()));
             iconBackground.setBackground(iconBg);
 
             // Show/hide unread indicator
             if (unreadIndicator != null) {
-                unreadIndicator.setVisibility(notification.isRead() ? View.GONE : View.VISIBLE);
+                if (!notification.isRead()) {
+                    unreadIndicator.setVisibility(View.VISIBLE);
+                    unreadIndicator.setBackgroundTintList(
+                            android.content.res.ColorStateList.valueOf(iconColor));
+                } else {
+                    unreadIndicator.setVisibility(View.GONE);
+                }
             }
+
+            // Make unread items slightly bolder
+            tvTitle.setAlpha(notification.isRead() ? 0.7f : 1.0f);
+            tvMessage.setAlpha(notification.isRead() ? 0.6f : 0.8f);
 
             // Delete button click
             btnDelete.setOnClickListener(v -> {
@@ -172,29 +147,12 @@ public class AppNotificationAdapter extends RecyclerView.Adapter<AppNotification
                 }
             });
 
-            // Item click
+            // Item click - opens details dialog
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onClick(notification);
                 }
             });
-        }
-
-        private String getTypeDisplayText(String type) {
-            switch (type) {
-                case AppNotification.TYPE_TRANSACTION_CREATED:
-                    return "Created";
-                case AppNotification.TYPE_TRANSACTION_UPDATED:
-                    return "Updated";
-                case AppNotification.TYPE_TRANSACTION_DELETED:
-                    return "Deleted";
-                case AppNotification.TYPE_BUDGET_EXCEEDED:
-                    return "Alert";
-                case AppNotification.TYPE_BUDGET_WARNING:
-                    return "Warning";
-                default:
-                    return "Info";
-            }
         }
 
         private int getTypeBackgroundColor(String type) {
@@ -219,12 +177,10 @@ public class AppNotificationAdapter extends RecyclerView.Adapter<AppNotification
             return ContextCompat.getColor(itemView.getContext(), colorRes);
         }
 
-        private int dpToPx(int dp) {
-            float density = itemView.getContext().getResources().getDisplayMetrics().density;
-            return Math.round(dp * density);
-        }
-
-        private String getTimeAgo(long timestamp) {
+        /**
+         * Compact time format: 2m, 3h, 1d, Dec 12
+         */
+        private String getCompactTimeAgo(long timestamp) {
             long now = System.currentTimeMillis();
             long diff = now - timestamp;
 
@@ -233,15 +189,15 @@ public class AppNotificationAdapter extends RecyclerView.Adapter<AppNotification
             long days = TimeUnit.MILLISECONDS.toDays(diff);
 
             if (minutes < 1) {
-                return "Just now";
+                return "Now";
             } else if (minutes < 60) {
-                return minutes + " min ago";
+                return minutes + "m";
             } else if (hours < 24) {
-                return hours + " hour" + (hours > 1 ? "s" : "") + " ago";
+                return hours + "h";
             } else if (days < 7) {
-                return days + " day" + (days > 1 ? "s" : "") + " ago";
+                return days + "d";
             } else {
-                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd", Locale.getDefault());
+                SimpleDateFormat sdf = new SimpleDateFormat("MMM d", Locale.getDefault());
                 return sdf.format(new Date(timestamp));
             }
         }

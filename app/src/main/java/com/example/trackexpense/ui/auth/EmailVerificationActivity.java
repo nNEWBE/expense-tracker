@@ -200,6 +200,26 @@ public class EmailVerificationActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
+
+        // Modern back press handling
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Confirm before going back (signs out)
+                new android.app.AlertDialog.Builder(EmailVerificationActivity.this)
+                        .setTitle("Cancel Verification?")
+                        .setMessage("Your account will not be verified. You can verify later by logging in again.")
+                        .setPositiveButton("Stay", null)
+                        .setNegativeButton("Leave", (dialog, which) -> {
+                            mAuth.signOut();
+                            Intent intent = new Intent(EmailVerificationActivity.this, WelcomeActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                            finish();
+                        })
+                        .show();
+            }
+        });
     }
 
     private void startAutoVerificationCheck() {
@@ -393,23 +413,6 @@ public class EmailVerificationActivity extends AppCompatActivity {
         if (verificationCheckHandler != null && verificationCheckRunnable != null) {
             verificationCheckHandler.removeCallbacks(verificationCheckRunnable);
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        // Confirm before going back (signs out)
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("Cancel Verification?")
-                .setMessage("Your account will not be verified. You can verify later by logging in again.")
-                .setPositiveButton("Stay", null)
-                .setNegativeButton("Leave", (dialog, which) -> {
-                    mAuth.signOut();
-                    Intent intent = new Intent(this, WelcomeActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    finish();
-                })
-                .show();
     }
 
     private void showSetBudgetDialog() {

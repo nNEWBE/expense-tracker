@@ -846,7 +846,7 @@ public class AddExpenseFragment extends Fragment {
             // Button styling for exceeded state
             btnProceed.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
                     getResources().getColor(R.color.expense_red, null)));
-            btnProceed.setText("Proceed Anyway");
+            btnProceed.setText("Anyway");
         } else {
             tvDialogTitle.setText("Budget Warning");
             tvDialogMessage.setText("You are approaching your monthly spending limit.");

@@ -250,6 +250,15 @@ public class RegisterActivity extends AppCompatActivity {
             }
             etPassword.setSelection(etPassword.getText().length());
         });
+
+        // Modern back press handling
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                startActivity(new Intent(RegisterActivity.this, WelcomeActivity.class));
+                finish();
+            }
+        });
     }
 
     private void registerUser() {
@@ -498,11 +507,5 @@ public class RegisterActivity extends AppCompatActivity {
             btnRegister.setVisibility(View.VISIBLE);
             progressBar.setVisibility(View.GONE);
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        startActivity(new Intent(this, WelcomeActivity.class));
-        finish();
     }
 }

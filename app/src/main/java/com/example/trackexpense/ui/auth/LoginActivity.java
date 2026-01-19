@@ -13,7 +13,6 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -257,6 +256,15 @@ public class LoginActivity extends AppCompatActivity {
                         android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
             }
             etPassword.setSelection(etPassword.getText().length());
+        });
+
+        // Modern back press handling
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                startActivity(new Intent(LoginActivity.this, WelcomeActivity.class));
+                finish();
+            }
         });
     }
 
@@ -627,11 +635,5 @@ public class LoginActivity extends AppCompatActivity {
             btnLogin.setVisibility(View.VISIBLE);
             progressBar.setVisibility(View.GONE);
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        startActivity(new Intent(this, WelcomeActivity.class));
-        finish();
     }
 }

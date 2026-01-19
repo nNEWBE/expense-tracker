@@ -148,6 +148,15 @@ public class VerifyEmailActivity extends AppCompatActivity {
         });
 
         btnVerify.setOnClickListener(v -> verifyOtp());
+
+        // Modern back press handling
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                mAuth.signOut();
+                navigateToLogin();
+            }
+        });
     }
 
     private void displayPhoneNumber() {
@@ -415,11 +424,5 @@ public class VerifyEmailActivity extends AppCompatActivity {
         if (resendTimer != null) {
             resendTimer.cancel();
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        mAuth.signOut();
-        navigateToLogin();
     }
 }

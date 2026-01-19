@@ -1461,15 +1461,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .show();
     }
 
-    @Override
-    public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
     private void scheduleDailyReminder() {
         if (!preferenceManager.isNotificationsEnabled())
             return;
