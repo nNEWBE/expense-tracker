@@ -79,8 +79,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
 
         preferenceManager = new PreferenceManager(this);
-        expenseViewModel = new androidx.lifecycle.ViewModelProvider(this)
-                .get(com.example.trackexpense.viewmodel.ExpenseViewModel.class);
+        // expenseViewModel is initialized lazily
+        // expenseViewModel = new androidx.lifecycle.ViewModelProvider(this)
+        // .get(com.example.trackexpense.viewmodel.ExpenseViewModel.class);
 
         // Apply theme
         applyTheme();
@@ -847,7 +848,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     Boolean isAdminField = userDoc.getBoolean("isAdmin");
                     boolean isAdmin = isAdminField != null && isAdminField;
 
-                    String todayDate = getTodayDateString();
+                    String todayDate = getTodayDateStringHelper();
                     int todayImportCount = 0;
 
                     // Get stored import data
@@ -884,59 +885,59 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void importTransactionsLocally(java.util.List<java.util.Map<String, Object>> transactions) {
-        String todayDate = getTodayDateStringHelper();
-        String lastImportDate = preferenceManager.getGuestLastImportDate();
-        int todayCount = 0;
+        runOnUiThread(() -> {
+            // Lazy initialization of ViewModel to prevent startup crashes
+            if (expenseViewModel == null) {
+                expenseViewModel = new androidx.lifecycle.ViewModelProvider(this)
+                        .get(com.example.trackexpense.viewmodel.ExpenseViewModel.class);
+            }
 
-        if (todayDate.equals(lastImportDate)) {
-            todayCount = preferenceManager.getGuestDailyImportCount();
-        } else {
-            // New day, reset count
-            preferenceManager.setGuestLastImportDate(todayDate);
-            preferenceManager.setGuestDailyImportCount(0);
-        }
+            String todayDate = getTodayDateStringHelper();
+            String lastImportDate = preferenceManager.getGuestLastImportDate();
+            int todayCount = 0;
 
-        int remainingLimit = 5 - todayCount;
-        if (remainingLimit <= 0) {
-            runOnUiThread(
-                    () -> BeautifulNotification.showWarning(this, "Guest limit reached (5/day). Login for more."));
-            return;
-        }
+            if (todayDate.equals(lastImportDate)) {
+                todayCount = preferenceManager.getGuestDailyImportCount();
+            } else {
+                preferenceManager.setGuestLastImportDate(todayDate);
+                preferenceManager.setGuestDailyImportCount(0);
+            }
 
-        // Filter valid transactions and duplicates?
-        // For local, we can just insert. Duplicates? We should check duplicates if
-        // possible but for guest local, maybe simple insertion is okay?
-        // Or check existence.
+            int remainingLimit = 5 - todayCount;
+            if (remainingLimit <= 0) {
+                BeautifulNotification.showWarning(this, "Guest limit reached (5/day). Login for more.");
+                return;
+            }
 
-        // Improve: limit processing to remainingLimit
-        java.util.List<java.util.Map<String, Object>> toImport = new java.util.ArrayList<>();
-        int count = 0;
-        for (java.util.Map<String, Object> t : transactions) {
-            if (count >= remainingLimit)
-                break;
-            toImport.add(t);
-            count++;
-        }
+            java.util.List<java.util.Map<String, Object>> toImport = new java.util.ArrayList<>();
+            int count = 0;
+            for (java.util.Map<String, Object> t : transactions) {
+                if (count >= remainingLimit)
+                    break;
+                toImport.add(t);
+                count++;
+            }
 
-        final int currentTodayCount = todayCount;
-        expenseViewModel.importExpensesLocally(toImport,
-                new com.example.trackexpense.data.ExpenseRepository.ImportCallback() {
-                    @Override
-                    public void onSuccess(int importedCount) {
-                        preferenceManager.setGuestDailyImportCount(currentTodayCount + importedCount);
-                        runOnUiThread(() -> {
-                            BeautifulNotification.showSuccess(MainActivity.this,
-                                    "Imported " + importedCount + " transactions locally");
-                            // Refresh UI or reload data handled by ViewModel observers
-                        });
-                    }
+            final int currentTodayCount = todayCount;
+            expenseViewModel.importExpensesLocally(toImport,
+                    new com.example.trackexpense.data.ExpenseRepository.ImportCallback() {
+                        @Override
+                        public void onSuccess(int importedCount) {
+                            preferenceManager.setGuestDailyImportCount(currentTodayCount + importedCount);
+                            runOnUiThread(() -> {
+                                BeautifulNotification.showSuccess(MainActivity.this,
+                                        "Imported " + importedCount + " transactions locally");
+                            });
+                        }
 
-                    @Override
-                    public void onError(String error) {
-                        runOnUiThread(
-                                () -> BeautifulNotification.showError(MainActivity.this, "Import failed: " + error));
-                    }
-                });
+                        @Override
+                        public void onError(String error) {
+                            runOnUiThread(
+                                    () -> BeautifulNotification.showError(MainActivity.this,
+                                            "Import failed: " + error));
+                        }
+                    });
+        });
     }
 
     private void fetchAllTransactionsForDuplicateCheck(
@@ -1048,7 +1049,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void updateDailyImportCount(com.google.firebase.firestore.FirebaseFirestore db,
             String userId, int newCount) {
-        String todayDate = getTodayDateString();
+        String todayDate = getTodayDateStringHelper();
 
         java.util.Map<String, Object> updates = new java.util.HashMap<>();
         updates.put("lastImportDate", todayDate);
@@ -1061,11 +1062,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     db.collection("users").document(userId)
                             .set(updates, com.google.firebase.firestore.SetOptions.merge());
                 });
-    }
-
-    private String getTodayDateString() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        return sdf.format(new Date());
     }
 
     private String buildTransactionHash(com.google.firebase.firestore.QueryDocumentSnapshot doc) {
