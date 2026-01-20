@@ -259,6 +259,26 @@ public class PreferenceManager {
         return sharedPreferences.getLong(KEY_LAST_BACKUP, 0);
     }
 
+    // Guest Import Limits
+    private static final String KEY_GUEST_DAILY_IMPORT_COUNT = "guest_daily_import_count";
+    private static final String KEY_GUEST_LAST_IMPORT_DATE = "guest_last_import_date";
+
+    public int getGuestDailyImportCount() {
+        return sharedPreferences.getInt(KEY_GUEST_DAILY_IMPORT_COUNT, 0);
+    }
+
+    public void setGuestDailyImportCount(int count) {
+        sharedPreferences.edit().putInt(KEY_GUEST_DAILY_IMPORT_COUNT, count).apply();
+    }
+
+    public String getGuestLastImportDate() {
+        return sharedPreferences.getString(KEY_GUEST_LAST_IMPORT_DATE, "");
+    }
+
+    public void setGuestLastImportDate(String date) {
+        sharedPreferences.edit().putString(KEY_GUEST_LAST_IMPORT_DATE, date).apply();
+    }
+
     // Category Caching for Guest Users
     private static final String KEY_CACHED_EXPENSE_CATEGORIES = "cached_expense_categories";
     private static final String KEY_CACHED_INCOME_CATEGORIES = "cached_income_categories";

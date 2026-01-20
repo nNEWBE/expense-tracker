@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private PreferenceManager preferenceManager;
+    private com.example.trackexpense.viewmodel.ExpenseViewModel expenseViewModel;
 
     // Custom bottom nav views
     private View navDashboard, navTransaction, navAnalytics, navProfile;
@@ -77,6 +78,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
 
         preferenceManager = new PreferenceManager(this);
+        expenseViewModel = new androidx.lifecycle.ViewModelProvider(this)
+                .get(com.example.trackexpense.viewmodel.ExpenseViewModel.class);
 
         // Apply theme
         applyTheme();
@@ -513,17 +516,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     // ==================== IMPORT DATA ====================
     private void showImportDialog() {
-        // Check if guest mode
-        if (preferenceManager.isGuestMode()) {
-            BeautifulNotification.showWarning(this, "Please log in to import data");
-            return;
-        }
-
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            BeautifulNotification.showWarning(this, "Please log in to import data");
-            return;
-        }
+        // Allow both guest and logged in users
+        // Check limits before showing? Or just show and handle later.
+        // We'll show the dialog.
 
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_import, null);
 
@@ -566,7 +561,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void processImportFile(Uri uri) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
+        // Allow guest or logged in
+        if (currentUser == null && !preferenceManager.isGuestMode()) {
             BeautifulNotification.showError(this, "Please log in to import data");
             return;
         }
@@ -604,8 +600,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     return;
                 }
 
-                // Import to Firestore
-                importTransactionsToFirestore(currentUser.getUid(), transactions);
+                if (preferenceManager.isGuestMode()) {
+                    importTransactionsLocally(transactions);
+                } else if (currentUser != null) {
+                    importTransactionsToFirestore(currentUser.getUid(), transactions);
+                }
 
             } catch (Exception e) {
                 android.util.Log.e("Import", "Error importing file", e);
@@ -809,16 +808,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     }
 
                     // Check daily limit (Admin: unlimited, Normal user: 20/day)
-                    int remainingLimit;
-                    if (isAdmin) {
-                        remainingLimit = Integer.MAX_VALUE; // Unlimited for admin
-                    } else {
-                        remainingLimit = 20 - todayImportCount;
-                        if (remainingLimit <= 0) {
-                            runOnUiThread(() -> BeautifulNotification.showWarning(this,
-                                    "Daily import limit reached (20/day). Only Admins have unlimited access."));
-                            return;
-                        }
+                    int dailyLimit = isAdmin ? Integer.MAX_VALUE : 20;
+                    int remainingLimit = dailyLimit - todayImportCount;
+
+                    if (remainingLimit <= 0) {
+                        // Double check this message. User complained about "showing warning of 5".
+                        // The limit for LOGGED IN users is 20.
+                        runOnUiThread(() -> BeautifulNotification.showWarning(this,
+                                "Daily import limit reached (" + dailyLimit
+                                        + "/day). Only Admins have unlimited access."));
+                        return;
                     }
 
                     final int currentDayCount = todayImportCount;
@@ -829,6 +828,62 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .addOnFailureListener(e -> {
                     runOnUiThread(() -> BeautifulNotification.showError(this,
                             "Failed to check import limits: " + e.getMessage()));
+                });
+    }
+
+    private void importTransactionsLocally(java.util.List<java.util.Map<String, Object>> transactions) {
+        String todayDate = getTodayDateStringHelper();
+        String lastImportDate = preferenceManager.getGuestLastImportDate();
+        int todayCount = 0;
+
+        if (todayDate.equals(lastImportDate)) {
+            todayCount = preferenceManager.getGuestDailyImportCount();
+        } else {
+            // New day, reset count
+            preferenceManager.setGuestLastImportDate(todayDate);
+            preferenceManager.setGuestDailyImportCount(0);
+        }
+
+        int remainingLimit = 5 - todayCount;
+        if (remainingLimit <= 0) {
+            runOnUiThread(
+                    () -> BeautifulNotification.showWarning(this, "Guest limit reached (5/day). Login for more."));
+            return;
+        }
+
+        // Filter valid transactions and duplicates?
+        // For local, we can just insert. Duplicates? We should check duplicates if
+        // possible but for guest local, maybe simple insertion is okay?
+        // Or check existence.
+
+        // Improve: limit processing to remainingLimit
+        java.util.List<java.util.Map<String, Object>> toImport = new java.util.ArrayList<>();
+        int count = 0;
+        for (java.util.Map<String, Object> t : transactions) {
+            if (count >= remainingLimit)
+                break;
+            toImport.add(t);
+            count++;
+        }
+
+        final int currentTodayCount = todayCount;
+        expenseViewModel.importExpensesLocally(toImport,
+                new com.example.trackexpense.data.ExpenseRepository.ImportCallback() {
+                    @Override
+                    public void onSuccess(int importedCount) {
+                        preferenceManager.setGuestDailyImportCount(currentTodayCount + importedCount);
+                        runOnUiThread(() -> {
+                            BeautifulNotification.showSuccess(MainActivity.this,
+                                    "Imported " + importedCount + " transactions locally");
+                            // Refresh UI or reload data handled by ViewModel observers
+                        });
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        runOnUiThread(
+                                () -> BeautifulNotification.showError(MainActivity.this, "Import failed: " + error));
+                    }
                 });
     }
 
@@ -1560,5 +1615,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         new String[] { Manifest.permission.POST_NOTIFICATIONS }, 101);
             }
         }
+    }
+
+    private String getTodayDateStringHelper() {
+        return new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
     }
 }

@@ -338,6 +338,76 @@ public class ExpenseRepository {
         }
     }
 
+    // Local Import for Guest
+    public interface ImportCallback {
+        void onSuccess(int importedCount);
+
+        void onError(String error);
+    }
+
+    public void importExpensesLocally(java.util.List<java.util.Map<String, Object>> transactions,
+            ImportCallback callback) {
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            int count = 0;
+            try {
+                for (java.util.Map<String, Object> t : transactions) {
+                    Expense expense = new Expense();
+                    // expense.setSynced(false); // Not needed/doesn't exist
+
+                    // Parse fields
+                    if (t.containsKey("amount")) {
+                        Object amountObj = t.get("amount");
+                        if (amountObj instanceof Number) {
+                            expense.setAmount(((Number) amountObj).doubleValue());
+                        } else if (amountObj instanceof String) {
+                            try {
+                                expense.setAmount(Double.parseDouble((String) amountObj));
+                            } catch (Exception ignored) {
+                            }
+                        }
+                    }
+
+                    if (t.containsKey("category"))
+                        expense.setCategory((String) t.get("category"));
+                    if (t.containsKey("type"))
+                        expense.setType((String) t.get("type"));
+                    if (t.containsKey("date")) {
+                        Object dateObj = t.get("date");
+                        if (dateObj instanceof Number) {
+                            expense.setDate(((Number) dateObj).longValue());
+                        } else {
+                            expense.setDate(System.currentTimeMillis());
+                        }
+                    } else {
+                        expense.setDate(System.currentTimeMillis());
+                    }
+
+                    if (t.containsKey("note"))
+                        expense.setNotes((String) t.get("note"));
+
+                    // Validate
+                    if (expense.getAmount() > 0 && expense.getCategory() != null && expense.getType() != null) {
+                        expenseDao.insert(expense);
+                        count++;
+                    }
+                }
+
+                final int importedCount = count;
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                    if (callback != null)
+                        callback.onSuccess(importedCount);
+                });
+
+            } catch (Exception e) {
+                Log.e(TAG, "importExpensesLocally: Failed", e);
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                    if (callback != null)
+                        callback.onError(e.getMessage());
+                });
+            }
+        });
+    }
+
     // Callback interfaces
     public interface OnCountLoadedListener {
         void onCount(int count);

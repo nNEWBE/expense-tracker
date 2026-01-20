@@ -54,4 +54,9 @@ public class ExpenseViewModel extends AndroidViewModel {
     public void getCurrentMonthTotal(FirestoreService.OnTotalLoadedListener listener) {
         repository.getCurrentMonthTotal(listener);
     }
+
+    public void importExpensesLocally(java.util.List<java.util.Map<String, Object>> transactions,
+            ExpenseRepository.ImportCallback callback) {
+        repository.importExpensesLocally(transactions, callback);
+    }
 }
