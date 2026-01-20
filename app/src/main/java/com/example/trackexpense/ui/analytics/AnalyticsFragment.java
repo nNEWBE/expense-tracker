@@ -560,6 +560,7 @@ public class AnalyticsFragment extends Fragment {
         pieChart.setUsePercentValues(true);
         pieChart.getDescription().setEnabled(false);
         pieChart.setHoleRadius(68f); // Slightly adjusted for better proportion
+        pieChart.setHoleColor(ContextCompat.getColor(requireContext(), R.color.card_background));
         pieChart.setTransparentCircleRadius(73f);
         pieChart.setTransparentCircleColor(ContextCompat.getColor(requireContext(), R.color.card_background));
         pieChart.setTransparentCircleAlpha(80); // More visible ring

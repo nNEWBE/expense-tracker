@@ -484,7 +484,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginTop="-24dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="3dp"
                 app:strokeWidth="0dp">
@@ -495,7 +495,7 @@
                     android:gravity="center"
                     android:orientation="horizontal"
                     android:paddingVertical="16dp"
-                    android:background="@android:color/white"
+                    android:background="?attr/colorSurface"
                     android:paddingHorizontal="12dp">
 
                     <!-- All Filter -->
