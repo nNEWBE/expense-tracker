@@ -513,22 +513,80 @@ public class ProfileFragment extends Fragment {
      * Show confirmation dialog for currency conversion with exchange rate info.
      */
     private void showCurrencyConversionConfirmDialog(String fromCurrency, String toCurrency, double rate) {
-        String message = String.format(
-                "Convert all amounts from %s to %s?\n\n" +
-                        "Exchange Rate: 1 %s = %.4f %s\n\n" +
-                        "This will update:\n" +
-                        "• All your transactions\n" +
-                        "• Your monthly budget",
-                fromCurrency, toCurrency, fromCurrency, rate, toCurrency);
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_currency_conversion, null);
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Confirm Currency Conversion")
-                .setMessage(message)
-                .setPositiveButton("Convert", (d, which) -> {
-                    performCurrencyConversion(fromCurrency, toCurrency, rate);
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        // Get views
+        TextView tvFromCurrency = dialogView.findViewById(R.id.tvFromCurrency);
+        TextView tvToCurrency = dialogView.findViewById(R.id.tvToCurrency);
+        TextView tvFromSymbol = dialogView.findViewById(R.id.tvFromSymbol);
+        TextView tvToSymbol = dialogView.findViewById(R.id.tvToSymbol);
+        TextView tvFromAmount = dialogView.findViewById(R.id.tvFromAmount);
+        TextView tvToAmount = dialogView.findViewById(R.id.tvToAmount);
+        TextView tvExchangeRate = dialogView.findViewById(R.id.tvExchangeRate);
+        View pulseRing = dialogView.findViewById(R.id.pulseRing);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        com.google.android.material.button.MaterialButton btnConvert = dialogView.findViewById(R.id.btnConvert);
+
+        // Get currency symbols
+        String fromSymbol = getCurrencySymbol(fromCurrency);
+        String toSymbol = getCurrencySymbol(toCurrency);
+
+        // Set values
+        tvFromCurrency.setText(fromCurrency);
+        tvToCurrency.setText(toCurrency);
+        tvFromSymbol.setText(fromSymbol);
+        tvToSymbol.setText(toSymbol);
+        tvFromAmount.setText("1.00");
+        tvToAmount.setText(String.format("%.4f", rate));
+        tvExchangeRate.setText(String.format("1 %s = %.4f %s", fromCurrency, rate, toCurrency));
+
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext(),
+                R.style.Theme_TrackExpense_Dialog)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        // Pulse animation for the ring
+        android.animation.ObjectAnimator pulse = android.animation.ObjectAnimator.ofFloat(pulseRing, "alpha", 0.3f, 1f,
+                0.3f);
+        pulse.setDuration(1500);
+        pulse.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        pulse.start();
+
+        btnCancel.setOnClickListener(v -> {
+            pulse.cancel();
+            dialog.dismiss();
+        });
+
+        btnConvert.setOnClickListener(v -> {
+            pulse.cancel();
+            dialog.dismiss();
+            performCurrencyConversion(fromCurrency, toCurrency, rate);
+        });
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
+    }
+
+    /**
+     * Get currency symbol for a currency code.
+     */
+    private String getCurrencySymbol(String currency) {
+        switch (currency) {
+            case "BDT":
+                return "৳";
+            case "INR":
+                return "₹";
+            case "EUR":
+                return "€";
+            case "GBP":
+                return "£";
+            default:
+                return "$";
+        }
     }
 
     /**
