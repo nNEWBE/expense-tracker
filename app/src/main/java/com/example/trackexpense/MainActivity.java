@@ -796,9 +796,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Step 1: Check daily import count from user document in Firestore
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(userDoc -> {
-                    // Check if user is admin
-                    String role = userDoc.getString("role");
-                    boolean isAdmin = "admin".equalsIgnoreCase(role);
+                    // Check if user is admin (matches Firestore rules: isAdmin boolean field)
+                    Boolean isAdminField = userDoc.getBoolean("isAdmin");
+                    boolean isAdmin = isAdminField != null && isAdminField;
 
                     String todayDate = getTodayDateString();
                     int todayImportCount = 0;

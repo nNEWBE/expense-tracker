@@ -969,9 +969,9 @@ public class AddExpenseFragment extends Fragment {
 
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(userDoc -> {
-                    // Check if user is admin
-                    String role = userDoc.getString("role");
-                    boolean isAdmin = "admin".equalsIgnoreCase(role);
+                    // Check if user is admin (matches Firestore rules: isAdmin boolean field)
+                    Boolean isAdminField = userDoc.getBoolean("isAdmin");
+                    boolean isAdmin = isAdminField != null && isAdminField;
 
                     String todayDate = new java.text.SimpleDateFormat("yyyy-MM-dd",
                             java.util.Locale.getDefault()).format(new java.util.Date());
