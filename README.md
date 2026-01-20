@@ -2,10 +2,10 @@
   <img src="assets/logo.png" alt="TrackExpense Logo" width="120" height="120">
 </p>
 
-<h1 align="center">💰 TrackExpense</h1>
+<h1 align="center">TrackExpense</h1>
 
 <p align="center">
-  <strong>Your Personal Finance Companion 📊</strong>
+  <strong>Your Personal Finance Companion</strong>
 </p>
 
 <p align="center">
@@ -13,12 +13,24 @@
 </p>
 
 <p align="center">
-  <a href="#-features">Features</a> •
-  <a href="#-tech-stack">Tech Stack</a> •
-  <a href="#-installation">Installation</a> •
-  <a href="#-screenshots">Screenshots</a> •
-  <a href="#-contributing">Contributing</a> •
-  <a href="#-license">License</a>
+  <a href="#-features">
+    <img src="https://img.shields.io/badge/✨_Features-2D5A6A?style=for-the-badge&logoColor=white" alt="Features">
+  </a>
+  <a href="#-tech-stack">
+    <img src="https://img.shields.io/badge/🛠️_Tech_Stack-2D5A6A?style=for-the-badge&logoColor=white" alt="Tech Stack">
+  </a>
+  <a href="#-installation">
+    <img src="https://img.shields.io/badge/🚀_Installation-2D5A6A?style=for-the-badge&logoColor=white" alt="Installation">
+  </a>
+  <a href="#-screenshots">
+    <img src="https://img.shields.io/badge/📸_Screenshots-2D5A6A?style=for-the-badge&logoColor=white" alt="Screenshots">
+  </a>
+  <a href="#-contributing">
+    <img src="https://img.shields.io/badge/🤝_Contributing-2D5A6A?style=for-the-badge&logoColor=white" alt="Contributing">
+  </a>
+  <a href="#-license">
+    <img src="https://img.shields.io/badge/📄_License-2D5A6A?style=for-the-badge&logoColor=white" alt="License">
+  </a>
 </p>
 
 <p align="center">
@@ -211,13 +223,14 @@ cd expense-tracker
 
 ## 📸 Screenshots
 
-| 🏠 Dashboard | 💳 Transactions | 📊 Analytics |
-|:------------:|:---------------:|:------------:|
-| Home overview with balance | Transaction list with filters | Charts and statistics |
-
-| 👤 Profile | 🔔 Notifications | 👨‍💼 Admin Panel |
-|:----------:|:----------------:|:--------------:|
-| User settings | In-app alerts | Category management |
+| ☀️ Light Mode | 🌙 Dark Mode |
+|:---:|:---:|
+| **Dashboard** <br> <img src="screen-shots/Dashboard(Light).png" width="300" /> | **Dashboard** <br> <img src="screen-shots/Dashboard(Dark).png" width="300" /> |
+| **Transactions** <br> <img src="screen-shots/Transactions(Light).png" width="300" /> | **Transactions** <br> <img src="screen-shots/Transactions(Dark).png" width="300" /> |
+| **Analytics** <br> <img src="screen-shots/Analytics(Light).png" width="300" /> | **Analytics** <br> <img src="screen-shots/Analytics(Dark).png" width="300" /> |
+| **Profile** <br> <img src="screen-shots/Profile(Light).png" width="300" /> | **Profile** <br> <img src="screen-shots/Profile(Dark).png" width="300" /> |
+| **Admin - Categories** <br> <img src="screen-shots/Admin Dashboard Categories(Light).png" width="300" /> | **Admin - Categories** <br> <img src="screen-shots/Admin Dashboard Categories(Dark).png" width="300" /> |
+| **Admin - Users** <br> <img src="screen-shots/Admin Dashboard Users(Light).png" width="300" /> | **Admin - Users** <br> <img src="screen-shots/Admin Dashboard Users(Dark).png" width="300" /> |
 
 ---
 
