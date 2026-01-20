@@ -1,6 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Primary Theme Colors (Dark Mode) -->
+    <color name="primary">#4FC3F7</color>
+    <color name="primary_variant">#29B6F6</color>
+    <color name="primary_dark">#0288D1</color>
+    <color name="primary_light">#81D4FA</color>
+    <color name="on_primary">#000000</color>
+    
+    <!-- Gradient Colors (Dark Mode) -->
+    <color name="gradient_start">#1A3A4A</color>
+    <color name="gradient_end">#0F2933</color>
+    <color name="gradient_card_start">#2D5A6A</color>
+    <color name="gradient_card_end">#1A3A4A</color>
+    
+    <!-- Secondary Colors (Dark Mode) -->
+    <color name="secondary">#4FC3F7</color>
+    <color name="secondary_variant">#29B6F6</color>
+    <color name="on_secondary">#000000</color>
+    
+    <!-- Background Colors (Dark Mode) -->
+    <color name="background_light">#0F0D1A</color>
+    <color name="surface_light">#1A1625</color>
+    <color name="on_background_light">#E8E7F0</color>
+    <color name="on_surface_light">#E8E7F0</color>
+    
+    <color name="background_dark">#0F0D1A</color>
+    <color name="surface_dark">#1A1625</color>
+    <color name="on_background_dark">#E8E7F0</color>
+    <color name="on_surface_dark">#E8E7F0</color>
+    
+    <!-- Category Background Colors (Darker for Dark Mode) -->
+    <color name="category_food_bg">#2D1F14</color>
+    <color name="category_transport_bg">#1A2433</color>
+    <color name="category_shopping_bg">#2D1A26</color>
+    <color name="category_entertainment_bg">#1F1A2D</color>
+    <color name="category_health_bg">#142D24</color>
+    <color name="category_bills_bg">#2D2A14</color>
+    <color name="category_education_bg">#142D2D</color>
+    <color name="category_travel_bg">#2D1A1E</color>
+    <color name="category_groceries_bg">#1A2D1A</color>
+    <color name="category_subscription_bg">#241A2D</color>
+    <color name="category_salary_bg">#142D28</color>
+    <color name="category_freelance_bg">#2D2614</color>
+    <color name="category_investment_bg">#1A1A2D</color>
+    <color name="category_gift_bg">#2D1426</color>
+    <color name="category_other_bg">#1E2126</color>
+    
+    <!-- Status Colors (Same vibrant for Dark Mode visibility) -->
+    <color name="income_green">#22C55E</color>
+    <color name="income_green_dark">#16A34A</color>
+    <color name="income_green_light">#1A2D1E</color>
+    <color name="expense_red">#f03e5b</color>
+    <color name="expense_red_dark">#d9304a</color>
+    <color name="expense_red_light">#2D1A1E</color>
+    
+    <!-- Text Colors (Dark Mode) -->
+    <color name="text_primary">#E8E7F0</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_hint">#6B7280</color>
+    <color name="divider">#2D2D3A</color>
+    
     <!-- Navigation Colors (Dark Mode) -->
-    <color name="nav_active_color">#1A3A4A</color>
+    <color name="nav_active_color">#4FC3F7</color>
     <color name="nav_inactive_color">#6B7280</color>
+    
+    <!-- Chip Filter Colors (Dark Mode) -->
+    <color name="chip_filter_bg">#252233</color>
+    
+    <!-- Skeleton Colors (Dark Mode) -->
+    <color name="skeleton_base">#252233</color>
+    <color name="skeleton_highlight">#353347</color>
+    <color name="skeleton_base_darker">#1E1B2D</color>
+    <color name="skeleton_header_base">#20FFFFFF</color>
+    <color name="skeleton_header_highlight">#30FFFFFF</color>
+    <color name="skeleton_header_base_alt">#15FFFFFF</color>
+    <color name="skeleton_header_highlight_alt">#25FFFFFF</color>
+    <color name="skeleton_card_income">#15FFFFFF</color>
+    <color name="skeleton_card_expense">#20FFFFFF</color>
+    <color name="skeleton_header_base_light">#25FFFFFF</color>
+    <color name="skeleton_header_highlight_light">#35FFFFFF</color>
+    <color name="skeleton_card_bg_transparent">#15FFFFFF</color>
+    <color name="skeleton_card_bg_semitransparent">#20FFFFFF</color>
+    <color name="skeleton_divider">#252233</color>
+    
+    <!-- Specific User Interface Colors (Dark Mode) -->
+    <color name="dark_teal_bg">#1A3A4A</color>
+    <color name="gray_800">#E0E0E0</color>
+    <color name="gray_text_secondary">#9CA3AF</color>
+    <color name="gray_50">#1A1625</color>
+    <color name="gray_100">#252233</color>
+    <color name="gray_200">#353347</color>
+    <color name="gray_300">#454560</color>
+    <color name="gray_400">#6B7280</color>
+    <color name="gray_500">#9CA3AF</color>
+    <color name="gray_600">#D1D5DB</color>
+    <color name="gray_700">#E5E7EB</color>
+    <color name="slate_500">#94A3B8</color>
+    
+    <!-- UI Colors (Dark Mode) -->
+    <color name="green_50">#1A2D1E</color>
+    <color name="green_200">#1E4D2E</color>
+    <color name="red_50">#2D1A1E</color>
+    <color name="red_200">#4D1E2E</color>
+    <color name="amber_50">#2D2614</color>
+    <color name="amber_100">#3D3518</color>
+    <color name="blue_50">#1A2433</color>
+    <color name="pink_light">#2D1A26</color>
+    <color name="card_background">#1A1625</color>
+    
+    <!-- Black/White with Alpha (Dark Mode adjustments) -->
+    <color name="black_03_alpha">#08FFFFFF</color>
+    <color name="black_06_alpha">#10FFFFFF</color>
+    <color name="black_12_alpha">#20FFFFFF</color>
+    <color name="black_50_alpha">#80FFFFFF</color>
+    
+    <!-- Transparent overlays  -->
+    <color name="white_12_alpha">#20FFFFFF</color>
+    <color name="white_18_alpha">#30FFFFFF</color>
+    <color name="white_25_alpha">#40FFFFFF</color>
+    <color name="white_37_alpha">#60FFFFFF</color>
+    <color name="white_50_alpha">#80FFFFFF</color>
+    <color name="white_70_alpha">#B0FFFFFF</color>
 </resources>

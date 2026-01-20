@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Base Dark Theme -->
     <style name="Theme.TrackExpense" parent="Theme.Material3.Dark.NoActionBar">
         <!-- Primary colors -->
         <item name="colorPrimary">@color/primary</item>
@@ -17,43 +18,174 @@
         <item name="colorOnBackground">@color/on_background_dark</item>
         <item name="colorOnSurface">@color/on_surface_dark</item>
         
-        <!-- Status bar -->
-        <item name="android:statusBarColor">@color/background_dark</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <!-- Surface variants for Material 3 -->
+        <item name="colorSurfaceVariant">@color/surface_dark</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_dark</item>
+        <item name="colorSurfaceContainer">@color/surface_dark</item>
+        <item name="colorSurfaceContainerHigh">#252233</item>
+        <item name="colorSurfaceContainerHighest">#2D2A3A</item>
+        <item name="colorSurfaceContainerLow">#151320</item>
+        <item name="colorSurfaceContainerLowest">#0F0D1A</item>
         
-        <!-- Navigation bar -->
-        <item name="android:navigationBarColor">@color/surface_dark</item>
+        <!-- Outline colors -->
+        <item name="colorOutline">#3D3D50</item>
+        <item name="colorOutlineVariant">#2D2D40</item>
+        
+        <!-- True fullscreen - hide all system bars -->
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
         
         <!-- Component styles -->
         <item name="bottomNavigationStyle">@style/Widget.TrackExpense.BottomNavigation.Dark</item>
         <item name="materialCardViewStyle">@style/Widget.TrackExpense.CardView.Dark</item>
         <item name="android:windowAnimationStyle">@null</item>
+        
+        <!-- Dialog theme -->
+        <item name="alertDialogTheme">@style/Theme.TrackExpense.Dialog.Dark</item>
+        <item name="materialAlertDialogTheme">@style/Theme.TrackExpense.Dialog.Dark</item>
+        
+        <!-- Text input style -->
+        <item name="textInputStyle">@style/Widget.TrackExpense.TextInputLayout.Dark</item>
     </style>
 
-    <!-- Bottom Navigation Style -->
+    <!-- Bottom Navigation Style - Dark -->
     <style name="Widget.TrackExpense.BottomNavigation.Dark" parent="Widget.Material3.BottomNavigationView">
         <item name="backgroundTint">@color/surface_dark</item>
         <item name="itemIconTint">@color/bottom_nav_color_dark</item>
         <item name="itemTextColor">@color/bottom_nav_color_dark</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.TrackExpense.BottomNavigation.ActiveIndicator.Dark</item>
         <item name="labelVisibilityMode">labeled</item>
     </style>
 
-    <!-- Card Style -->
+    <style name="Widget.TrackExpense.BottomNavigation.ActiveIndicator.Dark" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">#304FC3F7</item>
+    </style>
+
+    <!-- Card Style - Dark -->
     <style name="Widget.TrackExpense.CardView.Dark" parent="Widget.Material3.CardView.Elevated">
         <item name="cardBackgroundColor">@color/surface_dark</item>
         <item name="cardCornerRadius">16dp</item>
         <item name="cardElevation">0dp</item>
+        <item name="strokeColor">#2D2D40</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <!-- Button Style - Dark -->
+    <style name="Widget.TrackExpense.Button" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/primary</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <!-- Dialog Theme - Dark -->
+    <style name="Theme.TrackExpense.Dialog.Dark" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorSurface">@color/surface_dark</item>
+        <item name="colorOnSurface">@color/on_surface_dark</item>
+        <item name="android:background">@color/surface_dark</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/MaterialAlertDialog.Body.Text.Dark</item>
+    </style>
+
+    <style name="MaterialAlertDialog.Body.Text.Dark" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
+        <item name="android:textColor">@color/on_surface_dark</item>
     </style>
 
     <!-- Material Date Picker Theme - Dark -->
     <style name="ThemeOverlay_App_DatePicker" parent="ThemeOverlay.Material3.MaterialCalendar">
         <item name="colorPrimary">@color/primary</item>
-        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorOnPrimary">@android:color/black</item>
         <item name="colorSurface">@color/surface_dark</item>
         <item name="colorOnSurface">@color/on_surface_dark</item>
         <item name="colorOutline">@color/primary</item>
         <item name="android:windowBackground">@color/surface_dark</item>
         <item name="android:colorBackground">@color/surface_dark</item>
+        <item name="colorSurfaceContainer">@color/surface_dark</item>
+        <item name="colorSurfaceContainerHigh">#252233</item>
+        <item name="colorSurfaceContainerHighest">#2D2A3A</item>
+        <item name="colorSurfaceContainerLow">#151320</item>
+        <item name="colorSurfaceContainerLowest">#0F0D1A</item>
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.MediumComponent</item>
+    </style>
+
+    <style name="ShapeAppearance.App.MediumComponent" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <!-- Text Input Layout - Dark -->
+    <style name="Widget.TrackExpense.TextInputLayout.Dark" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">@color/surface_dark</item>
+        <item name="boxStrokeColor">@color/primary</item>
+        <item name="hintTextColor">@color/primary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+    </style>
+
+    <!-- Quick Amount Card Style - Dark -->
+    <style name="Widget.TrackExpense.QuickAmountCard" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardBackgroundColor">@color/surface_dark</item>
+        <item name="cardCornerRadius">21dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="strokeColor">#3D3D50</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:layout_marginEnd">10dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+    </style>
+
+    <!-- Bottom Sheet Dialog Theme - Dark -->
+    <style name="BottomSheetDialogTheme" parent="Theme.Design.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/BottomSheetStyle.Dark</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="android:colorBackground">@color/surface_dark</item>
+    </style>
+
+    <style name="BottomSheetStyle.Dark" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <!-- Chip Quick Amount - Dark -->
+    <style name="Widget.TrackExpense.Chip.QuickAmount" parent="android:Widget.TextView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:background">@drawable/bg_chip_neutral</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingHorizontal">16dp</item>
+        <item name="android:textColor">@color/on_surface_dark</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- Modern Bottom Nav Indicator - Dark -->
+    <style name="App.BottomNavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">#304FC3F7</item>
+        <item name="android:width">64dp</item>
+        <item name="android:height">32dp</item>
+    </style>
+
+    <!-- Splash Theme -->
+    <style name="Theme.TrackExpense.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/background_dark</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/app_logo</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/background_dark</item>
+        <item name="postSplashScreenTheme">@style/Theme.TrackExpense</item>
+    </style>
+
+    <!-- FAB Shape Appearance -->
+    <style name="ShapeAppearance.TrackExpense.FAB" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <!-- Admin Tab Text Style -->
+    <style name="TabTextStyle" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="textAllCaps">false</item>
+        <item name="android:textColor">@color/on_surface_dark</item>
     </style>
 </resources>
