@@ -423,7 +423,7 @@ public class AnalyticsFragment extends Fragment {
         // Category name
         TextView tvName = new TextView(requireContext());
         tvName.setText(category);
-        tvName.setTextColor(ContextCompat.getColor(requireContext(), R.color.on_background_light));
+        tvName.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary));
         tvName.setTextSize(14);
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
 
@@ -477,7 +477,7 @@ public class AnalyticsFragment extends Fragment {
     private android.graphics.drawable.Drawable createProgressDrawable(int color) {
         android.graphics.drawable.LayerDrawable layerDrawable = new android.graphics.drawable.LayerDrawable(
                 new android.graphics.drawable.Drawable[] {
-                        createRoundedDrawable(Color.parseColor("#F3F4F6")),
+                        createRoundedDrawable(ContextCompat.getColor(requireContext(), R.color.gray_100)),
                         createRoundedDrawable(color)
                 });
         layerDrawable.setId(0, android.R.id.background);
@@ -489,7 +489,7 @@ public class AnalyticsFragment extends Fragment {
 
         android.graphics.drawable.LayerDrawable result = new android.graphics.drawable.LayerDrawable(
                 new android.graphics.drawable.Drawable[] {
-                        createRoundedDrawable(Color.parseColor("#F3F4F6")),
+                        createRoundedDrawable(ContextCompat.getColor(requireContext(), R.color.gray_100)),
                         clip
                 });
         result.setId(0, android.R.id.background);
@@ -561,7 +561,7 @@ public class AnalyticsFragment extends Fragment {
         pieChart.getDescription().setEnabled(false);
         pieChart.setHoleRadius(68f); // Slightly adjusted for better proportion
         pieChart.setTransparentCircleRadius(73f);
-        pieChart.setTransparentCircleColor(Color.WHITE);
+        pieChart.setTransparentCircleColor(ContextCompat.getColor(requireContext(), R.color.card_background));
         pieChart.setTransparentCircleAlpha(80); // More visible ring
         pieChart.setDrawCenterText(false);
         pieChart.setEntryLabelColor(Color.TRANSPARENT);

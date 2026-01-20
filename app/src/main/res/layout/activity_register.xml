@@ -44,7 +44,7 @@
         android:layout_marginTop="140dp"
         android:alpha="0"
         android:translationY="100dp"
-        app:cardBackgroundColor="@android:color/white"
+        app:cardBackgroundColor="?attr/colorSurface"
         app:cardCornerRadius="30dp"
         app:cardElevation="0dp">
 
@@ -73,7 +73,7 @@
                     android:layout_gravity="center"
                     android:alpha="0"
                     android:text="Get Started"
-                    android:textColor="@color/nav_active_color"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="26sp"
                     android:textStyle="bold" />
 
@@ -85,7 +85,7 @@
                     android:layout_marginTop="32dp"
                     android:alpha="0"
                     android:text="Full Name"
-                    android:textColor="@color/gray_neutral"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="14sp" />
 
                 <LinearLayout
@@ -110,7 +110,7 @@
                         android:layout_marginStart="12dp"
                         android:background="@null"
                         android:inputType="textPersonName"
-                        android:textColor="#333333"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="16sp" />
 
                 </LinearLayout>
@@ -123,7 +123,7 @@
                     android:layout_marginTop="20dp"
                     android:alpha="0"
                     android:text="Email"
-                    android:textColor="@color/gray_neutral"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="14sp" />
 
                 <LinearLayout
@@ -148,7 +148,7 @@
                         android:layout_marginStart="12dp"
                         android:background="@null"
                         android:inputType="textEmailAddress"
-                        android:textColor="#333333"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="16sp" />
 
                 </LinearLayout>
@@ -161,7 +161,7 @@
                     android:layout_marginTop="20dp"
                     android:alpha="0"
                     android:text="Password"
-                    android:textColor="@color/gray_neutral"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="14sp" />
 
                 <LinearLayout
@@ -187,7 +187,7 @@
                         android:layout_weight="1"
                         android:background="@null"
                         android:inputType="textPassword"
-                        android:textColor="#333333"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="16sp" />
 
                     <ImageView
@@ -312,7 +312,7 @@
                     android:alpha="0"
                     android:padding="8dp"
                     android:text="← Back"
-                    android:textColor="@color/gray_neutral"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="14sp" />
 
             </LinearLayout>

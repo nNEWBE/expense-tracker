@@ -44,7 +44,7 @@
         android:layout_marginTop="140dp"
         android:alpha="0"
         android:translationY="100dp"
-        app:cardBackgroundColor="@android:color/white"
+        app:cardBackgroundColor="?attr/colorSurface"
         app:cardCornerRadius="30dp"
         app:cardElevation="0dp">
 
@@ -73,7 +73,7 @@
                     android:layout_gravity="center"
                     android:alpha="0"
                     android:text="Welcome back"
-                    android:textColor="@color/nav_active_color"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="26sp"
                     android:textStyle="bold" />
 
@@ -85,7 +85,7 @@
                     android:layout_marginTop="40dp"
                     android:alpha="0"
                     android:text="Email"
-                    android:textColor="@color/gray_neutral"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="14sp" />
 
                 <LinearLayout
@@ -110,8 +110,8 @@
                         android:layout_marginStart="12dp"
                         android:background="@null"
                         android:inputType="textEmailAddress"
-                        android:textColor="#333333"
-                        android:textColorHint="#CCCCCC"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?attr/colorOutline"
                         android:textSize="16sp" />
 
                 </LinearLayout>
@@ -166,7 +166,7 @@
                         android:layout_weight="1"
                         android:background="@null"
                         android:inputType="textPassword"
-                        android:textColor="#333333"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="16sp" />
 
                     <ImageView
