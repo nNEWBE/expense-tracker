@@ -1,229 +1,275 @@
 <p align="center">
-  <img src="app/src/main/res/drawable/app_logo.png" alt="TrackExpense Logo" width="120" height="120" style="border-radius: 24px;">
+  <img src="assets/logo.png" alt="TrackExpense Logo" width="120" height="120">
 </p>
 
-<h1 align="center">TrackExpense</h1>
+<h1 align="center">💰 TrackExpense</h1>
+
 <p align="center">
-  <strong>Your Personal Finance Companion</strong>
+  <strong>Your Personal Finance Companion 📊</strong>
 </p>
+
 <p align="center">
-  A modern, feature-rich Android application to track your income, expenses, and budgets with beautiful analytics.
+  <em>A modern, feature-rich Android application to effortlessly track your income, expenses, and budgets with beautiful analytics and insights.</em>
+</p>
+
+<p align="center">
+  <a href="#-features">Features</a> •
+  <a href="#-tech-stack">Tech Stack</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#-screenshots">Screenshots</a> •
+  <a href="#-contributing">Contributing</a> •
+  <a href="#-license">License</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Platform">
+  <img src="https://img.shields.io/badge/Language-Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Language">
+  <img src="https://img.shields.io/badge/Min%20SDK-24%20(Android%207.0)-blue?style=for-the-badge" alt="Min SDK">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
 </p>
 
 ---
 
 ## 📱 About The App
 
-**TrackExpense** is a comprehensive personal finance management application designed to help you take control of your money. With an intuitive interface and powerful features, it makes tracking your daily expenses and income effortless.
+**TrackExpense** is a comprehensive personal finance management application designed to help you take complete control of your money. With an intuitive interface, powerful features, and beautiful visualizations, managing your daily expenses and income has never been easier.
+
+Whether you're tracking daily coffee purchases ☕ or planning your monthly budget 📅, TrackExpense has got you covered!
 
 ---
 
-## ✨ Key Features
+## ✨ Features
 
 ### 🔐 Authentication & Security
-- **Email/Password Login** with Firebase Authentication
-- **Google Sign-In** for quick access
-- **Email Verification** for account security
-- **Guest Mode** - Explore the app without registration (limited to 5 transactions/day)
-- **Password Recovery** via email reset link
-- **Secure Session Management**
+| Feature | Description |
+|---------|-------------|
+| 📧 Email/Password Login | Secure Firebase Authentication |
+| 🔑 Google Sign-In | One-tap OAuth integration |
+| ✉️ Email Verification | Mandatory account verification |
+| 👤 Guest Mode | Explore without registration (5 transactions/day) |
+| 🔄 Password Recovery | Email-based reset link |
+| 🛡️ Secure Sessions | Token-based session management |
 
 ### 🏠 Dashboard
-- **Real-time Financial Overview** - Total Balance, Income & Expenses
-- **Monthly Budget Card** with progress tracking
-- **Recent Transactions** with filter options
-- **Time-based Personalized Greeting**
-- **Animated Card Flip** between balance and budget views
+| Feature | Description |
+|---------|-------------|
+| 💵 Financial Overview | Real-time Balance, Income & Expenses |
+| 📊 Budget Card | Progress tracking with visual indicators |
+| 📋 Recent Transactions | Quick view with filter options |
+| 👋 Personalized Greeting | Time-based welcome messages |
+| 🎴 Animated Card Flip | Beautiful 3D flip animations |
 
 ### 💰 Transaction Management
-- **Add Income & Expenses** with categorization
-- **Quick Amount Chips** for fast entry (৳100, ৳500, ৳1000, ৳5000)
-- **Category Selection** with beautiful icons and colors
-- **Date Picker** for backdated entries
-- **Edit & Delete** with swipe gestures
-- **Search & Filter** by type, date range, and category
-- **Budget Warnings** when approaching or exceeding limits
+| Feature | Description |
+|---------|-------------|
+| ➕ Add Income & Expenses | Categorized transaction entry |
+| ⚡ Quick Amount Chips | Fast entry with preset amounts |
+| 🏷️ Category Selection | 20+ beautiful categories with icons |
+| 📅 Date Picker | Material Design date selection |
+| ✏️ Edit & Delete | Swipe gestures for quick actions |
+| 🔍 Search & Filter | By type, date range, and category |
+| ⚠️ Budget Warnings | Alerts when approaching limits |
 
 ### 📊 Analytics & Reports
-- **Pie Charts** - Visual expense breakdown by category
-- **Bar Charts** - Income vs Expense comparison
-- **Category Progress Bars** with color indicators
-- **Statistics Cards** - Transaction count, averages, highest amounts
-- **Time Period Filters** - Week, Month, Year, All Time
+| Feature | Description |
+|---------|-------------|
+| 🥧 Pie Charts | Visual expense breakdown by category |
+| 📈 Bar Charts | Income vs Expense comparison |
+| 📉 Progress Bars | Category-wise spending indicators |
+| 🔢 Statistics Cards | Transaction count, averages, maximums |
+| ⏰ Time Filters | Week, Month, Year, All Time views |
 
 ### 🔔 Notifications
-- **In-App Notification Panel** with slide-in animation
-- **Transaction Alerts** - Created, Updated, Deleted
-- **Budget Alerts** - Warning at 90%, Exceeded notifications
-- **Category Request Status** updates
-- **Mark All Read** and bulk actions
+| Feature | Description |
+|---------|-------------|
+| 📬 In-App Panel | Slide-in notification center |
+| 🔴 Unread Badge | Real-time notification count |
+| ✅ Bulk Actions | Mark all read, clear all |
+| 🚨 Budget Alerts | Warning at 90%, exceeded notifications |
+| 📝 Category Updates | Request status notifications |
 
 ### 👤 Profile & Settings
-- **Editable Display Name** and profile avatar
-- **Currency Selection** - BDT, USD, EUR, GBP, INR
-- **Theme Modes** - Light, Dark, System Default
-- **Budget Configuration** with quick presets
-- **Account Management** - Logout, Delete Account
+| Feature | Description |
+|---------|-------------|
+| ✏️ Editable Profile | Display name and avatar |
+| 💱 Currency Selection | BDT, USD, EUR, GBP, INR |
+| 🌓 Theme Modes | Light, Dark, System Default |
+| 💸 Budget Configuration | Monthly limits with presets |
+| 🚪 Account Management | Logout, Delete Account |
 
 ### 📁 Data Management
-- **Export Data** as CSV or JSON files
-- **Import Data** from external files
-- **Cloud Sync** with Firebase Firestore
-- **Offline Support** - Full functionality without internet
-- **Guest Data Migration** when registering
+| Feature | Description |
+|---------|-------------|
+| 📤 Export Data | CSV and JSON formats |
+| 📥 Import Data | Restore from backup files |
+| ☁️ Cloud Sync | Real-time Firebase sync |
+| 📴 Offline Support | Full functionality without internet |
+| 🔄 Guest Migration | Transfer data on registration |
 
 ### 👨‍💼 Admin Panel
-- **User Management** - View and manage all users
-- **Category Management** - Add, edit, delete categories
-- **Category Request System** - Approve/reject user requests
-- **Transaction Oversight** - View all system transactions
+| Feature | Description |
+|---------|-------------|
+| 👥 User Management | View and manage all users |
+| 📂 Category Management | Add, edit, delete categories |
+| 📋 Request System | Approve/reject user requests |
+| 📊 Transaction Oversight | System-wide transaction view |
 
 ### 🎨 Beautiful UI/UX
-- **Material Design 3** components
-- **Skeleton Loading** states
-- **Smooth Animations** - Card flips, panel slides, counters
-- **Responsive Design** for all screen sizes
-- **Custom Toast Notifications** with icons
+| Feature | Description |
+|---------|-------------|
+| 🎭 Material Design 3 | Modern Android components |
+| 💀 Skeleton Loading | Smooth loading placeholders |
+| ✨ Animations | Card flips, slides, counters |
+| 📱 Responsive Design | Adapts to all screen sizes |
+| 🍞 Custom Toasts | Beautiful notification messages |
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| **Language** | Java |
-| **Platform** | Android (API 24 - 34) |
-| **Architecture** | MVVM (Model-View-ViewModel) |
-| **UI Framework** | XML Layouts + Material Design 3 |
-| **Local Database** | Room Persistence Library |
-| **Cloud Database** | Firebase Firestore |
-| **Authentication** | Firebase Auth (Email + Google) |
-| **Charts** | MPAndroidChart |
-| **Navigation** | Android Jetpack Navigation |
-| **Background Tasks** | WorkManager |
-| **Notifications** | Firebase Cloud Messaging + Local |
+<table>
+<tr>
+<td align="center"><strong>🔧 Component</strong></td>
+<td align="center"><strong>🚀 Technology</strong></td>
+</tr>
+<tr><td>📝 Language</td><td>Java</td></tr>
+<tr><td>📱 Platform</td><td>Android (API 24 - 34)</td></tr>
+<tr><td>🏗️ Architecture</td><td>MVVM (Model-View-ViewModel)</td></tr>
+<tr><td>🎨 UI Framework</td><td>XML Layouts + Material Design 3</td></tr>
+<tr><td>💾 Local Database</td><td>Room Persistence Library</td></tr>
+<tr><td>☁️ Cloud Database</td><td>Firebase Firestore</td></tr>
+<tr><td>🔐 Authentication</td><td>Firebase Auth (Email + Google)</td></tr>
+<tr><td>📊 Charts</td><td>MPAndroidChart</td></tr>
+<tr><td>🧭 Navigation</td><td>Android Jetpack Navigation</td></tr>
+<tr><td>⚙️ Background Tasks</td><td>WorkManager</td></tr>
+<tr><td>🔔 Notifications</td><td>FCM + Local Notifications</td></tr>
+</table>
 
 ---
 
 ## 📋 Requirements
 
-### Minimum Requirements
-- **Android Version**: 7.0 (Nougat) or higher
-- **API Level**: 24+
-- **Storage**: ~50 MB
-- **Internet**: Required for cloud sync (optional for offline mode)
+### 📱 Minimum Requirements
+- **Android Version:** 7.0 (Nougat) or higher
+- **API Level:** 24+
+- **Storage:** ~50 MB
+- **Internet:** Required for cloud sync (optional for offline mode)
 
-### Development Requirements
-- **Android Studio**: Arctic Fox or later
-- **JDK**: 11 or higher
-- **Gradle**: 8.0+
-- **Firebase Project** with Authentication and Firestore enabled
+### 💻 Development Requirements
+- **Android Studio:** Arctic Fox or later
+- **JDK:** 11 or higher
+- **Gradle:** 8.0+
+- **Firebase Project:** With Auth and Firestore enabled
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Installation
 
-### Installation
+### 📥 Clone the Repository
+```bash
+git clone https://github.com/nNEWBE/expense-tracker.git
+cd expense-tracker
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/nNEWBE/expense-tracker.git
-   ```
+### 🔧 Configure Firebase
+1. Create a project at [Firebase Console](https://console.firebase.google.com) 🔥
+2. Download `google-services.json` and place in `app/` folder
+3. Enable Email/Password and Google Sign-In authentication
+4. Create a Firestore database
 
-2. **Open in Android Studio**
-   - File → Open → Select the project folder
-
-3. **Configure Firebase**
-   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
-   - Download `google-services.json` and place it in the `app/` folder
-   - Enable Email/Password and Google Sign-In authentication
-   - Create a Firestore database
-
-4. **Build and Run**
-   ```bash
-   ./gradlew assembleDebug
-   ```
+### 🏃 Build and Run
+```bash
+./gradlew assembleDebug
+```
 
 ---
 
 ## 📂 Project Structure
 
 ```
-app/src/main/java/com/example/trackexpense/
-├── MainActivity.java              # Main entry point
-├── adapters/                      # RecyclerView Adapters
-├── data/
-│   ├── local/                     # Room Database
-│   ├── model/                     # Data Models
-│   ├── remote/                    # Firebase Services
-│   └── repository/                # Data Repositories
-├── ui/
-│   ├── admin/                     # Admin Panel
-│   ├── analytics/                 # Charts & Reports
-│   ├── auth/                      # Login & Register
-│   ├── dashboard/                 # Home Dashboard
-│   ├── expense/                   # Transaction Screens
-│   ├── profile/                   # User Profile
-│   └── splash/                    # Splash Screen
-├── utils/                         # Utility Classes
-└── viewmodel/                     # ViewModels
+📦 app/src/main/java/com/example/trackexpense/
+├── 📄 MainActivity.java          # Main entry point
+├── 📁 adapters/                   # RecyclerView Adapters
+├── 📁 data/
+│   ├── 📁 local/                  # Room Database
+│   ├── 📁 model/                  # Data Models
+│   ├── 📁 remote/                 # Firebase Services
+│   └── 📁 repository/             # Data Repositories
+├── 📁 ui/
+│   ├── 📁 admin/                  # Admin Panel
+│   ├── 📁 analytics/              # Charts & Reports
+│   ├── 📁 auth/                   # Login & Register
+│   ├── 📁 dashboard/              # Home Dashboard
+│   ├── 📁 expense/                # Transaction Screens
+│   ├── 📁 profile/                # User Profile
+│   └── 📁 splash/                 # Splash Screen
+├── 📁 utils/                      # Utility Classes
+└── 📁 viewmodel/                  # ViewModels
 ```
 
 ---
 
 ## 📸 Screenshots
 
-| Dashboard | Transactions | Analytics |
-|-----------|--------------|-----------|
+| 🏠 Dashboard | 💳 Transactions | 📊 Analytics |
+|:------------:|:---------------:|:------------:|
 | Home overview with balance | Transaction list with filters | Charts and statistics |
 
-| Profile | Notifications | Admin Panel |
-|---------|---------------|-------------|
+| 👤 Profile | 🔔 Notifications | 👨‍💼 Admin Panel |
+|:----------:|:----------------:|:--------------:|
 | User settings | In-app alerts | Category management |
 
 ---
 
-## 🌟 Future Enhancements
+## 🌟 Future Roadmap
 
-- 🧠 **AI-Powered Insights** - Smart spending predictions
-- 📅 **Recurring Transactions** - Automated entries
-- 🤝 **Shared Wallets** - Family/group expense tracking
-- 📱 **Home Screen Widgets** - Quick access
-- 🔒 **Biometric Authentication** - Fingerprint/Face unlock
-- 🌍 **Multi-Language Support** - Global localization
-- 📄 **Receipt Scanning** - OCR for auto-entry
+| Feature | Status |
+|---------|--------|
+| 🧠 AI-Powered Insights | 🔜 Planned |
+| 📅 Recurring Transactions | 🔜 Planned |
+| 🤝 Shared Wallets | 🔜 Planned |
+| 📱 Home Screen Widgets | 🔜 Planned |
+| 🔒 Biometric Authentication | 🔜 Planned |
+| 🌍 Multi-Language Support | 🔜 Planned |
+| 📄 Receipt Scanning (OCR) | 🔜 Planned |
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are what make the open source community amazing! Any contributions you make are **greatly appreciated** 🙏
 
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. 🍴 Fork the Project
+2. 🌿 Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. 💾 Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. 📤 Push to the Branch (`git push origin feature/AmazingFeature`)
+5. 🔃 Open a Pull Request
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Distributed under the **MIT License**. See `LICENSE` for more information.
 
 ---
 
 ## 👨‍💻 Author
 
 <p align="center">
-  <strong>Shuvo</strong>
+  <strong>👤 Shuvo</strong>
 </p>
+
 <p align="center">
-  Made with ❤️ for better financial management
+  Made with ❤️ and ☕ for better financial management
 </p>
 
 ---
 
 <p align="center">
-  ⭐ Star this repository if you find it helpful!
+  ⭐ <strong>Star this repository if you find it helpful!</strong> ⭐
+</p>
+
+<p align="center">
+  <a href="https://github.com/nNEWBE/expense-tracker/issues">🐛 Report Bug</a> •
+  <a href="https://github.com/nNEWBE/expense-tracker/issues">💡 Request Feature</a>
 </p>
