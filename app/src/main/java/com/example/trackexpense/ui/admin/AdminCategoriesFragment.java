@@ -188,7 +188,7 @@ public class AdminCategoriesFragment extends Fragment {
     }
 
     private void showAddCategoryDialog(CategoryModel existingCategory) {
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_category, null);
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_form_category, null);
 
         TextView tvTitle = dialogView.findViewById(R.id.tvDialogTitle);
         TextInputEditText etName = dialogView.findViewById(R.id.etName);

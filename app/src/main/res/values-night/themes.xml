@@ -44,4 +44,16 @@
         <item name="cardCornerRadius">16dp</item>
         <item name="cardElevation">0dp</item>
     </style>
+
+    <!-- Material Date Picker Theme - Dark -->
+    <style name="ThemeOverlay_App_DatePicker" parent="ThemeOverlay.Material3.MaterialCalendar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSurface">@color/surface_dark</item>
+        <item name="colorOnSurface">@color/on_surface_dark</item>
+        <item name="colorOutline">@color/primary</item>
+        <item name="android:windowBackground">@color/surface_dark</item>
+        <item name="android:colorBackground">@color/surface_dark</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.MediumComponent</item>
+    </style>
 </resources>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Simple wallet icon for notifications (single color, works with tinting) -->
+    
+    <!-- Wallet body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M21,7H3C2.45,7 2,7.45 2,8v10c0,0.55 0.45,1 1,1h18c0.55,0 1,-0.45 1,-1V8C22,7.45 21.55,7 21,7z" />
+    
+    <!-- Wallet fold line -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M4,7V6c0,-1.1 0.9,-2 2,-2h10" />
+    
+    <!-- Clasp -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,12h3v4h-3c-1.1,0 -2,-0.9 -2,-2S16.9,12 18,12z" />
+    
+    <!-- Clasp button -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M19,14m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+
+</vector>

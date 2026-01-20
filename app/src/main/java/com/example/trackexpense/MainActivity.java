@@ -271,12 +271,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 navController.navigate(R.id.addExpenseFragment);
             });
 
-            // Set up click listeners for custom nav items - only navigate if not already
-            // there
+            // Fast NavOptions for instant bottom navigation
+            // Using launchSingleTop to avoid recreating fragments, and popUpTo dashboard to
+            // maintain clean back stack
+            androidx.navigation.NavOptions.Builder fastNavOptionsBuilder = new androidx.navigation.NavOptions.Builder()
+                    .setEnterAnim(R.anim.bottom_nav_enter)
+                    .setExitAnim(R.anim.bottom_nav_exit)
+                    .setPopEnterAnim(R.anim.bottom_nav_enter)
+                    .setPopExitAnim(R.anim.bottom_nav_exit)
+                    .setLaunchSingleTop(true)
+                    .setPopUpTo(R.id.dashboardFragment, false);
+
+            // Set up click listeners for custom nav items - instant navigation
             navDashboard.setOnClickListener(v -> {
                 if (navController.getCurrentDestination() != null &&
                         navController.getCurrentDestination().getId() != R.id.dashboardFragment) {
                     androidx.navigation.NavOptions navOptions = new androidx.navigation.NavOptions.Builder()
+                            .setEnterAnim(R.anim.bottom_nav_enter)
+                            .setExitAnim(R.anim.bottom_nav_exit)
+                            .setPopEnterAnim(R.anim.bottom_nav_enter)
+                            .setPopExitAnim(R.anim.bottom_nav_exit)
+                            .setLaunchSingleTop(true)
                             .setPopUpTo(R.id.dashboardFragment, true)
                             .build();
                     navController.navigate(R.id.dashboardFragment, null, navOptions);
@@ -286,21 +301,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             navTransaction.setOnClickListener(v -> {
                 if (navController.getCurrentDestination() != null &&
                         navController.getCurrentDestination().getId() != R.id.transactionsFragment) {
-                    navController.navigate(R.id.transactionsFragment);
+                    navController.navigate(R.id.transactionsFragment, null, fastNavOptionsBuilder.build());
                 }
             });
 
             navAnalytics.setOnClickListener(v -> {
                 if (navController.getCurrentDestination() != null &&
                         navController.getCurrentDestination().getId() != R.id.analyticsFragment) {
-                    navController.navigate(R.id.analyticsFragment);
+                    navController.navigate(R.id.analyticsFragment, null, fastNavOptionsBuilder.build());
                 }
             });
 
             navProfile.setOnClickListener(v -> {
                 if (navController.getCurrentDestination() != null &&
                         navController.getCurrentDestination().getId() != R.id.profileFragment) {
-                    navController.navigate(R.id.profileFragment);
+                    navController.navigate(R.id.profileFragment, null, fastNavOptionsBuilder.build());
                 }
             });
 

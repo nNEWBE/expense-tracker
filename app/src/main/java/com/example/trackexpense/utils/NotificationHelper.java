@@ -49,7 +49,7 @@ public class NotificationHelper {
         String message = String.format("%s%,.2f added to %s", currencySymbol, amount, category);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setSmallIcon(R.drawable.ic_notification_wallet)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -66,7 +66,7 @@ public class NotificationHelper {
 
     public void showTransactionDeletedNotification(String category, String currencySymbol, double amount) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_delete)
+                .setSmallIcon(R.drawable.ic_notification_wallet)
                 .setContentTitle("Transaction Deleted 🗑️")
                 .setContentText(String.format("%s%,.2f from %s removed", currencySymbol, amount, category))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -96,7 +96,7 @@ public class NotificationHelper {
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setSmallIcon(R.drawable.ic_notification_wallet)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

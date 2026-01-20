@@ -142,9 +142,18 @@
     <style name="ThemeOverlay_App_DatePicker" parent="ThemeOverlay.Material3.MaterialCalendar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorOnPrimary">@android:color/white</item>
-        <item name="colorSurface">@color/white</item>
+        <item name="colorSurface">@android:color/white</item>
         <item name="colorOnSurface">@color/on_background_light</item>
         <item name="colorOutline">@color/primary</item>
+        <!-- Force white background explicitly -->
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:colorBackground">@android:color/white</item>
+        <!-- M3 Surface Tones override to remove lavender tint -->
+        <item name="colorSurfaceContainer">@android:color/white</item>
+        <item name="colorSurfaceContainerHigh">@android:color/white</item>
+        <item name="colorSurfaceContainerHighest">@android:color/white</item>
+        <item name="colorSurfaceContainerLow">@android:color/white</item>
+        <item name="colorSurfaceContainerLowest">@android:color/white</item>
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.MediumComponent</item>
     </style>
 

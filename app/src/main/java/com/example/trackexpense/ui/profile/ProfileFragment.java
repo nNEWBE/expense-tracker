@@ -65,7 +65,8 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         preferenceManager = new PreferenceManager(requireContext());
-        expenseViewModel = new ViewModelProvider(this).get(ExpenseViewModel.class);
+        // Use activity-scoped ViewModel for shared data caching
+        expenseViewModel = new ViewModelProvider(requireActivity()).get(ExpenseViewModel.class);
         adminService = AdminService.getInstance();
 
         // Check if data is already available (cached)

@@ -91,7 +91,8 @@ public class AddExpenseFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(ExpenseViewModel.class);
+        // Use activity-scoped ViewModel for shared data caching
+        viewModel = new ViewModelProvider(requireActivity()).get(ExpenseViewModel.class);
         preferenceManager = new PreferenceManager(requireContext());
         notificationHelper = new NotificationHelper(requireContext());
 

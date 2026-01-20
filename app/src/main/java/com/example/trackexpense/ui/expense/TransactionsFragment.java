@@ -21,6 +21,14 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.GridLayoutManager;
+import com.example.trackexpense.utils.CategoryHelper;
+import com.example.trackexpense.data.model.Category;
+import com.example.trackexpense.data.remote.FirestoreService;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import com.example.trackexpense.R;
 import com.example.trackexpense.data.local.Expense;
@@ -34,6 +42,10 @@ import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
+import androidx.core.graphics.ColorUtils;
+import androidx.core.content.ContextCompat;
+import java.util.Map;
+import java.util.HashMap;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -60,6 +72,7 @@ public class TransactionsFragment extends Fragment {
     private MaterialButton btnLoadMore;
     private ProgressBar progressLoadMore;
     private List<Expense> allExpenses = new ArrayList<>();
+    private Map<String, Category> categoryMap = new HashMap<>();
     private List<Expense> filteredExpenses = new ArrayList<>();
     private List<Expense> pinnedExpenses = new ArrayList<>();
     private String currentTypeFilter = "ALL"; // ALL, INCOME, EXPENSE
@@ -82,7 +95,8 @@ public class TransactionsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        viewModel = new ViewModelProvider(this).get(ExpenseViewModel.class);
+        // Use activity-scoped ViewModel for shared data caching across fragments
+        viewModel = new ViewModelProvider(requireActivity()).get(ExpenseViewModel.class);
         preferenceManager = new PreferenceManager(requireContext());
         notificationHelper = new NotificationHelper(requireContext());
 
@@ -130,7 +144,7 @@ public class TransactionsFragment extends Fragment {
 
         skeletonView.animate()
                 .alpha(0f)
-                .setDuration(400)
+                .setDuration(150)
                 .setListener(new android.animation.AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(android.animation.Animator animation) {
@@ -179,6 +193,12 @@ public class TransactionsFragment extends Fragment {
         // Main transactions adapter
         adapter = new ExpenseAdapter();
         adapter.setCurrencySymbol(preferenceManager.getCurrencySymbol());
+
+        // RecyclerView performance optimizations
+        // Note: NOT using setHasFixedSize(true) because items can expand
+        rvTransactions.setItemViewCacheSize(20);
+        rvTransactions.setDrawingCacheEnabled(true);
+        rvTransactions.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
         rvTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvTransactions.setAdapter(adapter);
 
@@ -195,6 +215,9 @@ public class TransactionsFragment extends Fragment {
         pinnedAdapter = new ExpenseAdapter();
         pinnedAdapter.setCurrencySymbol(preferenceManager.getCurrencySymbol());
         if (rvPinnedTransactions != null) {
+            // Note: NOT using setHasFixedSize(true) because items can expand
+            rvPinnedTransactions.setItemViewCacheSize(10);
+            rvPinnedTransactions.setNestedScrollingEnabled(false);
             rvPinnedTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
             rvPinnedTransactions.setAdapter(pinnedAdapter);
 
@@ -322,6 +345,15 @@ public class TransactionsFragment extends Fragment {
         for (int i = childCount - 1; i > 0; i--) {
             categoryChipsContainer.removeViewAt(i);
         }
+
+        // Populate Category Map from Cache for accurate Icons/Colors
+        categoryMap.clear();
+        List<Category> expenses = loadCachedCategories("EXPENSE");
+        List<Category> incomes = loadCachedCategories("INCOME");
+        for (Category c : expenses)
+            categoryMap.put(c.getName(), c);
+        for (Category c : incomes)
+            categoryMap.put(c.getName(), c);
 
         // Get unique categories from allExpenses
         Set<String> uniqueCategories = new HashSet<>();
@@ -453,91 +485,26 @@ public class TransactionsFragment extends Fragment {
         }
     }
 
-    private int getCategoryColor(String category) {
-        switch (category.toLowerCase()) {
-            case "food":
-                return ContextCompat.getColor(requireContext(), R.color.category_food);
-            case "transport":
-                return ContextCompat.getColor(requireContext(), R.color.category_transport);
-            case "shopping":
-                return ContextCompat.getColor(requireContext(), R.color.category_shopping);
-            case "entertainment":
-                return ContextCompat.getColor(requireContext(), R.color.category_entertainment);
-            case "health":
-                return ContextCompat.getColor(requireContext(), R.color.category_health);
-            case "bills":
-                return ContextCompat.getColor(requireContext(), R.color.category_bills);
-            case "education":
-                return ContextCompat.getColor(requireContext(), R.color.category_education);
-            case "salary":
-                return ContextCompat.getColor(requireContext(), R.color.category_salary);
-            case "freelance":
-                return ContextCompat.getColor(requireContext(), R.color.category_freelance);
-            case "investment":
-                return ContextCompat.getColor(requireContext(), R.color.category_investment);
-            case "gift":
-                return ContextCompat.getColor(requireContext(), R.color.category_gift);
-            default:
-                return ContextCompat.getColor(requireContext(), R.color.category_other);
+    private int getCategoryColor(String categoryName) {
+        if (categoryMap.containsKey(categoryName)) {
+            return categoryMap.get(categoryName).getColorInt();
         }
+        return ContextCompat.getColor(requireContext(), CategoryHelper.getCategoryInfo(categoryName).colorRes);
     }
 
-    private int getCategoryBgColor(String category) {
-        switch (category.toLowerCase()) {
-            case "food":
-                return ContextCompat.getColor(requireContext(), R.color.category_food_bg);
-            case "transport":
-                return ContextCompat.getColor(requireContext(), R.color.category_transport_bg);
-            case "shopping":
-                return ContextCompat.getColor(requireContext(), R.color.category_shopping_bg);
-            case "entertainment":
-                return ContextCompat.getColor(requireContext(), R.color.category_entertainment_bg);
-            case "health":
-                return ContextCompat.getColor(requireContext(), R.color.category_health_bg);
-            case "bills":
-                return ContextCompat.getColor(requireContext(), R.color.category_bills_bg);
-            case "education":
-                return ContextCompat.getColor(requireContext(), R.color.category_education_bg);
-            case "salary":
-                return ContextCompat.getColor(requireContext(), R.color.category_salary_bg);
-            case "freelance":
-                return ContextCompat.getColor(requireContext(), R.color.category_freelance_bg);
-            case "investment":
-                return ContextCompat.getColor(requireContext(), R.color.category_investment_bg);
-            case "gift":
-                return ContextCompat.getColor(requireContext(), R.color.category_gift_bg);
-            default:
-                return ContextCompat.getColor(requireContext(), R.color.category_other_bg);
+    private int getCategoryBgColor(String categoryName) {
+        if (categoryMap.containsKey(categoryName)) {
+            int color = categoryMap.get(categoryName).getColorInt();
+            return ColorUtils.setAlphaComponent(color, 40); // 15% opacity
         }
+        return ContextCompat.getColor(requireContext(), CategoryHelper.getCategoryInfo(categoryName).bgColorRes);
     }
 
-    private int getCategoryIcon(String category) {
-        switch (category.toLowerCase()) {
-            case "food":
-                return R.drawable.ic_food;
-            case "transport":
-                return R.drawable.ic_transport;
-            case "shopping":
-                return R.drawable.ic_shopping;
-            case "entertainment":
-                return R.drawable.ic_entertainment;
-            case "health":
-                return R.drawable.ic_health;
-            case "bills":
-                return R.drawable.ic_bills;
-            case "education":
-                return R.drawable.ic_education;
-            case "salary":
-                return R.drawable.ic_salary;
-            case "freelance":
-                return R.drawable.ic_freelance;
-            case "investment":
-                return R.drawable.ic_investment;
-            case "gift":
-                return R.drawable.ic_gift;
-            default:
-                return R.drawable.ic_other;
+    private int getCategoryIcon(String categoryName) {
+        if (categoryMap.containsKey(categoryName)) {
+            return categoryMap.get(categoryName).getIconResource();
         }
+        return CategoryHelper.getCategoryInfo(categoryName).iconRes;
     }
 
     private void setupTypeFilters() {
@@ -621,51 +588,166 @@ public class TransactionsFragment extends Fragment {
 
     private void showEditDialog(Expense expense) {
         View dialogView = LayoutInflater.from(requireContext())
-                .inflate(R.layout.dialog_edit_expense, null);
+                .inflate(R.layout.dialog_form_transaction, null);
+
+        // Header views
+        TextView tvDialogTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        TextView tvDialogSubtitle = dialogView.findViewById(R.id.tvDialogSubtitle);
+        ImageView ivHeaderIcon = dialogView.findViewById(R.id.ivHeaderIcon);
 
         TextInputEditText etAmount = dialogView.findViewById(R.id.etAmount);
-        AutoCompleteTextView etCategory = dialogView.findViewById(R.id.etCategory);
+        RecyclerView rvCategories = dialogView.findViewById(R.id.rvCategories);
         TextInputEditText etNotes = dialogView.findViewById(R.id.etNotes);
         MaterialButtonToggleGroup toggleGroup = dialogView.findViewById(R.id.toggleButton);
         MaterialButton btnSave = dialogView.findViewById(R.id.btnSave);
         MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
 
+        // Set edit mode header
+        tvDialogTitle.setText("Edit Transaction");
+        tvDialogSubtitle.setText("Update your transaction details");
+        ivHeaderIcon.setImageResource(R.drawable.ic_edit);
+        btnSave.setText("Update");
+        btnSave.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.ic_check));
+
         // Populate fields
-        etAmount.setText(String.valueOf(expense.getAmount()));
+        // Handle integer vs double display
+        if (expense.getAmount() == (long) expense.getAmount()) {
+            etAmount.setText(String.format("%d", (long) expense.getAmount()));
+        } else {
+            etAmount.setText(String.valueOf(expense.getAmount()));
+        }
         etNotes.setText(expense.getNotes());
 
-        // Setup category dropdown
-        String[] categories = { "Food", "Transport", "Shopping", "Entertainment",
-                "Health", "Bills", "Education", "Salary", "Freelance", "Investment", "Other" };
-        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_dropdown_item_1line, categories);
-        etCategory.setAdapter(categoryAdapter);
-        etCategory.setText(expense.getCategory(), false);
+        // Setup Category Adapter (start with empty)
+        CategoryAdapter categoryAdapter = new CategoryAdapter(new String[] {});
+        rvCategories.setLayoutManager(new GridLayoutManager(requireContext(), 4)); // Span 4 for compact look
+        rvCategories.setAdapter(categoryAdapter);
+        rvCategories.setHasFixedSize(false);
+        rvCategories.setNestedScrollingEnabled(false);
+        // Add spacing item decoration if needed, or rely on padding
 
-        // Set type toggle
+        // State variables
+        final String[] currentType = { expense.getType() };
+        final String initialCategory = expense.getCategory();
+
+        // Loading Logic
+        Runnable updateCategories = () -> {
+            boolean isIncome = "INCOME".equals(currentType[0]);
+            String type = isIncome ? "INCOME" : "EXPENSE";
+
+            // 1. Try to load from Cache first
+            List<Category> cachedList = loadCachedCategories(type);
+            if (!cachedList.isEmpty()) {
+                categoryAdapter.setCategories(cachedList);
+                rvCategories.requestLayout();
+                if (expense.getType().equals(currentType[0])) {
+                    categoryAdapter.setSelectedCategory(initialCategory);
+                }
+            }
+
+            // 2. Fetch from Firestore
+            FirestoreService.getInstance().fetchCategoriesOnce(type, new FirestoreService.OnCategoriesLoadedListener() {
+                @Override
+                public void onSuccess(List<Category> remoteCategories) {
+                    if (!isAdded())
+                        return;
+
+                    if (remoteCategories != null && !remoteCategories.isEmpty()) {
+                        cacheCategoriesForType(remoteCategories, type);
+                        List<Category> sortedList = sortCategoriesWithOtherLast(remoteCategories);
+
+                        rvCategories.post(() -> {
+                            if (currentType[0].equals(type)) { // Check if type hasn't changed
+                                categoryAdapter.setCategories(sortedList);
+                                rvCategories.requestLayout();
+                                if (expense.getType().equals(currentType[0])) {
+                                    categoryAdapter.setSelectedCategory(initialCategory);
+                                } else {
+                                    categoryAdapter.setSelectedCategory(null);
+                                }
+                            }
+                        });
+                    } else if (cachedList.isEmpty()) {
+                        // Fallback to legacy
+                        rvCategories.post(() -> {
+                            String[] defaults = isIncome ? CategoryHelper.INCOME_CATEGORIES
+                                    : CategoryHelper.EXPENSE_CATEGORIES;
+                            categoryAdapter.setCategories(defaults);
+                            if (expense.getType().equals(currentType[0])) {
+                                categoryAdapter.setSelectedCategory(initialCategory);
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    if (cachedList.isEmpty() && isAdded()) {
+                        rvCategories.post(() -> {
+                            String[] defaults = isIncome ? CategoryHelper.INCOME_CATEGORIES
+                                    : CategoryHelper.EXPENSE_CATEGORIES;
+                            categoryAdapter.setCategories(defaults);
+                            if (expense.getType().equals(currentType[0])) {
+                                categoryAdapter.setSelectedCategory(initialCategory);
+                            }
+                        });
+                    }
+                }
+            });
+        };
+
+        // Set initial toggle
         if ("INCOME".equals(expense.getType())) {
             toggleGroup.check(R.id.btnIncome);
         } else {
             toggleGroup.check(R.id.btnExpense);
         }
 
+        // Initial Load
+        updateCategories.run();
+
+        // Type Toggle Listener
+        toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) {
+                String newType = (checkedId == R.id.btnIncome) ? "INCOME" : "EXPENSE";
+                if (!newType.equals(currentType[0])) {
+                    currentType[0] = newType;
+                    updateCategories.run();
+                }
+            }
+        });
+
+        // Create dialog with transparent background for rounded corners
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
+                .setBackground(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
                 .create();
 
         btnCancel.setOnClickListener(v -> dialog.dismiss());
 
         btnSave.setOnClickListener(v -> {
-            String amountStr = etAmount.getText().toString();
+            String amountStr = etAmount.getText() != null ? etAmount.getText().toString() : "";
             if (amountStr.isEmpty()) {
                 etAmount.setError("Required");
                 return;
             }
 
-            expense.setAmount(Double.parseDouble(amountStr));
-            expense.setCategory(etCategory.getText().toString());
-            expense.setNotes(etNotes.getText().toString());
-            expense.setType(toggleGroup.getCheckedButtonId() == R.id.btnIncome ? "INCOME" : "EXPENSE");
+            String selectedCategory = categoryAdapter.getSelectedCategory();
+            if (selectedCategory == null) {
+                BeautifulNotification.showError(requireActivity(), "Please select a category");
+                return;
+            }
+
+            try {
+                expense.setAmount(Double.parseDouble(amountStr));
+            } catch (NumberFormatException e) {
+                etAmount.setError("Invalid amount");
+                return;
+            }
+
+            expense.setCategory(selectedCategory);
+            expense.setNotes(etNotes.getText() != null ? etNotes.getText().toString() : "");
+            expense.setType(currentType[0]);
 
             viewModel.update(expense);
             dialog.dismiss();
@@ -677,20 +759,69 @@ public class TransactionsFragment extends Fragment {
     }
 
     private void confirmDelete(Expense expense) {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Delete Transaction")
-                .setMessage("Are you sure you want to delete this transaction?")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    viewModel.delete(expense);
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_delete_transaction, null);
 
-                    String symbol = preferenceManager.getCurrencySymbol();
-                    notificationHelper.showTransactionDeletedNotification(
-                            expense.getCategory(), symbol, expense.getAmount());
+        // Setup dialog views
+        TextView tvCategory = dialogView.findViewById(R.id.tvCategory);
+        TextView tvDate = dialogView.findViewById(R.id.tvDate);
+        TextView tvAmount = dialogView.findViewById(R.id.tvAmount);
+        ImageView ivCategoryIcon = dialogView.findViewById(R.id.ivCategoryIcon);
+        View iconBg = dialogView.findViewById(R.id.iconBg);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);
+        com.google.android.material.button.MaterialButton btnDelete = dialogView.findViewById(R.id.btnDelete);
 
-                    BeautifulNotification.showSuccess(requireActivity(), "Transaction deleted successfully!");
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        // Set transaction details
+        tvCategory.setText(expense.getCategory());
+
+        // Format date
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
+        tvDate.setText(sdf.format(new java.util.Date(expense.getDate())));
+
+        // Set amount with proper formatting
+        String symbol = preferenceManager.getCurrencySymbol();
+        if ("INCOME".equals(expense.getType())) {
+            tvAmount.setText(String.format("+%s%,.0f", symbol, expense.getAmount()));
+            tvAmount.setTextColor(ContextCompat.getColor(requireContext(), R.color.income_green));
+        } else {
+            tvAmount.setText(String.format("-%s%,.0f", symbol, expense.getAmount()));
+            tvAmount.setTextColor(ContextCompat.getColor(requireContext(), R.color.expense_red));
+        }
+
+        // Set category icon
+        com.example.trackexpense.utils.CategoryHelper.CategoryInfo categoryInfo = com.example.trackexpense.utils.CategoryHelper
+                .getCategoryInfo(expense.getCategory());
+        ivCategoryIcon.setImageResource(categoryInfo.iconRes);
+        int categoryColor = ContextCompat.getColor(requireContext(), categoryInfo.colorRes);
+        ivCategoryIcon.setColorFilter(categoryColor);
+
+        // Set icon background
+        android.graphics.drawable.GradientDrawable bgShape = new android.graphics.drawable.GradientDrawable();
+        bgShape.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        int lowOpacityColor = androidx.core.graphics.ColorUtils.setAlphaComponent(categoryColor, 38);
+        bgShape.setColor(lowOpacityColor);
+        iconBg.setBackground(bgShape);
+
+        // Create dialog
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(dialogView)
+                .setBackground(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+                .create();
+
+        // Button click listeners
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnDelete.setOnClickListener(v -> {
+            viewModel.delete(expense);
+            dialog.dismiss();
+
+            notificationHelper.showTransactionDeletedNotification(
+                    expense.getCategory(), symbol, expense.getAmount());
+
+            BeautifulNotification.showSuccess(requireActivity(), "Transaction deleted successfully!");
+        });
+
+        dialog.show();
     }
 
     private void setupSearch() {
@@ -718,15 +849,12 @@ public class TransactionsFragment extends Fragment {
             allExpenses = expenses;
             currentPage = 1;
 
-            // Setup category chips from actual data
-            setupCategoryChipsFromData();
+            // Setup category chips from actual data (deferred to avoid blocking)
+            requireView().post(() -> setupCategoryChipsFromData());
 
             if (isFirstLoad && skeletonView != null) {
-                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                    hideSkeletonLoading(() -> {
-                        filterExpenses();
-                    });
-                }, 500);
+                // Hide skeleton immediately when data arrives - no artificial delay
+                hideSkeletonLoading(() -> filterExpenses());
             } else {
                 filterExpenses();
             }
@@ -768,9 +896,15 @@ public class TransactionsFragment extends Fragment {
                 cal.set(Calendar.HOUR_OF_DAY, 0);
                 cal.set(Calendar.MINUTE, 0);
                 cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
                 long startOfDay = cal.getTimeInMillis();
+
+                Calendar endCal = (Calendar) cal.clone();
+                endCal.add(Calendar.DAY_OF_YEAR, 1);
+                long endOfDay = endCal.getTimeInMillis();
+
                 filteredExpenses = filteredExpenses.stream()
-                        .filter(e -> e.getDate() >= startOfDay)
+                        .filter(e -> e.getDate() >= startOfDay && e.getDate() < endOfDay)
                         .collect(Collectors.toList());
             } else if ("WEEK".equals(currentDateFilter)) {
                 cal.add(Calendar.DAY_OF_YEAR, -7);
@@ -857,5 +991,60 @@ public class TransactionsFragment extends Fragment {
             tvEmpty.setVisibility(View.GONE); // Using emptyState instead
         }
         rvTransactions.setVisibility(filteredExpenses.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private List<Category> loadCachedCategories(String type) {
+        String cachedData = "INCOME".equals(type)
+                ? preferenceManager.getCachedIncomeCategories()
+                : preferenceManager.getCachedExpenseCategories();
+
+        List<Category> categories = new ArrayList<>();
+        if (cachedData == null || cachedData.isEmpty()) {
+            return categories;
+        }
+
+        try {
+            String[] items = cachedData.split(";");
+            for (int i = 0; i < items.length; i++) {
+                String[] parts = items[i].split("\\|");
+                if (parts.length >= 3) {
+                    Category cat = new Category(parts[0], type, parts[1], parts[2], i, true);
+                    categories.add(cat);
+                }
+            }
+        } catch (Exception e) {
+        }
+        return sortCategoriesWithOtherLast(categories);
+    }
+
+    private void cacheCategoriesForType(List<Category> categories, String type) {
+        if (categories == null || categories.isEmpty())
+            return;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < categories.size(); i++) {
+            Category cat = categories.get(i);
+            sb.append(cat.getName()).append("|")
+                    .append(cat.getIconName() != null ? cat.getIconName() : "ic_other").append("|")
+                    .append(cat.getColorHex() != null ? cat.getColorHex() : "#64748B");
+            if (i < categories.size() - 1)
+                sb.append(";");
+        }
+        if ("EXPENSE".equals(type))
+            preferenceManager.cacheExpenseCategories(sb.toString());
+        else
+            preferenceManager.cacheIncomeCategories(sb.toString());
+    }
+
+    private List<Category> sortCategoriesWithOtherLast(List<Category> categories) {
+        if (categories == null)
+            return new ArrayList<>();
+        Collections.sort(categories, (c1, c2) -> {
+            if ("Other".equalsIgnoreCase(c1.getName()))
+                return 1;
+            if ("Other".equalsIgnoreCase(c2.getName()))
+                return -1;
+            return Integer.compare(c1.getOrder(), c2.getOrder());
+        });
+        return categories;
     }
 }

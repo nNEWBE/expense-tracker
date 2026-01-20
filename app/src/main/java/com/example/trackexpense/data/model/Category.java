@@ -185,6 +185,16 @@ public class Category {
             case "insurance":
             case "rental_income":
                 return R.drawable.ic_bills;
+            case "school":
+                return R.drawable.ic_school;
+            case "book":
+                return R.drawable.ic_book;
+            case "location":
+                return R.drawable.ic_location;
+            case "document":
+                return R.drawable.ic_document;
+            case "grid":
+                return R.drawable.ic_grid;
             case "other":
                 return R.drawable.ic_other;
             default:
@@ -238,6 +248,14 @@ public class Category {
             case "insurance":
             case "rental_income":
                 return R.color.category_bills;
+            case "document":
+                return R.color.category_bills;
+            case "school":
+            case "book":
+                return R.color.category_education;
+            case "location":
+                return R.color.category_travel;
+            case "grid":
             default:
                 return R.color.category_other;
         }
@@ -288,6 +306,14 @@ public class Category {
             case "insurance":
             case "rental_income":
                 return R.color.category_bills_bg;
+            case "document":
+                return R.color.category_bills_bg;
+            case "school":
+            case "book":
+                return R.color.category_education_bg;
+            case "location":
+                return R.color.category_travel_bg;
+            case "grid":
             default:
                 return R.color.category_other_bg;
         }

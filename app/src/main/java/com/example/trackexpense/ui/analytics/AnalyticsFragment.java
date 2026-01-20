@@ -52,6 +52,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.example.trackexpense.data.model.Category;
 
 public class AnalyticsFragment extends Fragment {
 
@@ -60,6 +61,7 @@ public class AnalyticsFragment extends Fragment {
     private PieChart pieChart;
     private BarChart barChart;
     private LineChart lineChart;
+    private Map<String, Category> categoryMap = new HashMap<>();
 
     // New views
     private TextView tvTotalIncome, tvTotalExpense, tvBalance;
@@ -97,8 +99,43 @@ public class AnalyticsFragment extends Fragment {
         }
 
         initViews(view);
+        populateCategoryMap();
         setupClickListeners();
         observeData();
+    }
+
+    private void populateCategoryMap() {
+        categoryMap.clear();
+        List<Category> expenses = loadCachedCategories("EXPENSE");
+        List<Category> incomes = loadCachedCategories("INCOME");
+        for (Category c : expenses)
+            categoryMap.put(c.getName(), c);
+        for (Category c : incomes)
+            categoryMap.put(c.getName(), c);
+    }
+
+    private List<Category> loadCachedCategories(String type) {
+        String cachedData = "INCOME".equals(type)
+                ? preferenceManager.getCachedIncomeCategories()
+                : preferenceManager.getCachedExpenseCategories();
+
+        List<Category> categories = new ArrayList<>();
+        if (cachedData == null || cachedData.isEmpty()) {
+            return categories;
+        }
+
+        try {
+            String[] items = cachedData.split(";");
+            for (int i = 0; i < items.length; i++) {
+                String[] parts = items[i].split("\\|");
+                if (parts.length >= 3) {
+                    Category cat = new Category(parts[0], type, parts[1], parts[2], i, true);
+                    categories.add(cat);
+                }
+            }
+        } catch (Exception e) {
+        }
+        return categories;
     }
 
     /**
@@ -341,8 +378,18 @@ public class AnalyticsFragment extends Fragment {
                 iconContainerSize);
         iconContainer.setLayoutParams(iconContainerParams);
 
-        CategoryHelper.CategoryInfo info = CategoryHelper.getCategoryInfo(category);
-        int categoryColor = ContextCompat.getColor(requireContext(), info.colorRes);
+        int categoryColor;
+        int iconRes;
+
+        if (categoryMap.containsKey(category)) {
+            Category cat = categoryMap.get(category);
+            categoryColor = cat.getColorInt();
+            iconRes = cat.getIconResource();
+        } else {
+            CategoryHelper.CategoryInfo info = CategoryHelper.getCategoryInfo(category);
+            categoryColor = ContextCompat.getColor(requireContext(), info.colorRes);
+            iconRes = info.iconRes;
+        }
 
         // Icon background
         View iconBg = new View(requireContext());
@@ -361,7 +408,7 @@ public class AnalyticsFragment extends Fragment {
         FrameLayout.LayoutParams iconParams = new FrameLayout.LayoutParams(iconSize, iconSize);
         iconParams.gravity = Gravity.CENTER;
         icon.setLayoutParams(iconParams);
-        icon.setImageResource(info.iconRes);
+        icon.setImageResource(iconRes);
         icon.setColorFilter(ContextCompat.getColor(requireContext(), android.R.color.white));
         iconContainer.addView(icon);
 
@@ -411,7 +458,7 @@ public class AnalyticsFragment extends Fragment {
         progressBar.setLayoutParams(progressParams);
         progressBar.setMax(100);
         progressBar.setProgress(0); // Start at 0 for animation
-        progressBar.setProgressDrawable(createProgressDrawable(info.colorRes));
+        progressBar.setProgressDrawable(createProgressDrawable(categoryColor));
 
         itemLayout.addView(topRow);
         itemLayout.addView(progressBar);
@@ -427,17 +474,17 @@ public class AnalyticsFragment extends Fragment {
         progressAnimator.start();
     }
 
-    private android.graphics.drawable.Drawable createProgressDrawable(int colorRes) {
+    private android.graphics.drawable.Drawable createProgressDrawable(int color) {
         android.graphics.drawable.LayerDrawable layerDrawable = new android.graphics.drawable.LayerDrawable(
                 new android.graphics.drawable.Drawable[] {
                         createRoundedDrawable(Color.parseColor("#F3F4F6")),
-                        createRoundedDrawable(ContextCompat.getColor(requireContext(), colorRes))
+                        createRoundedDrawable(color)
                 });
         layerDrawable.setId(0, android.R.id.background);
         layerDrawable.setId(1, android.R.id.progress);
 
         android.graphics.drawable.ClipDrawable clip = new android.graphics.drawable.ClipDrawable(
-                createRoundedDrawable(ContextCompat.getColor(requireContext(), colorRes)),
+                createRoundedDrawable(color),
                 Gravity.START, android.graphics.drawable.ClipDrawable.HORIZONTAL);
 
         android.graphics.drawable.LayerDrawable result = new android.graphics.drawable.LayerDrawable(
@@ -482,11 +529,15 @@ public class AnalyticsFragment extends Fragment {
         }
 
         List<PieEntry> pieEntries = new ArrayList<>();
+        List<Integer> colors = new ArrayList<>();
+
         if (totalIncome > 0) {
             pieEntries.add(new PieEntry((float) totalIncome, "Income"));
+            colors.add(ContextCompat.getColor(requireContext(), R.color.income_green));
         }
         if (totalExpense > 0) {
             pieEntries.add(new PieEntry((float) totalExpense, "Expense"));
+            colors.add(ContextCompat.getColor(requireContext(), R.color.expense_red));
         }
 
         if (pieEntries.isEmpty()) {
@@ -495,11 +546,6 @@ public class AnalyticsFragment extends Fragment {
             pieChart.invalidate();
             return;
         }
-
-        int[] colors = {
-                ContextCompat.getColor(requireContext(), R.color.income_green),
-                ContextCompat.getColor(requireContext(), R.color.expense_red)
-        };
 
         PieDataSet dataSet = new PieDataSet(pieEntries, "");
         dataSet.setColors(colors);

@@ -140,6 +140,22 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         return null;
     }
 
+    public void setSelectedCategory(String categoryName) {
+        if (categoryName == null)
+            return;
+
+        for (int i = 0; i < categories.size(); i++) {
+            if (categoryName.equals(categories.get(i).getName())) {
+                int oldPosition = selectedPosition;
+                selectedPosition = i;
+                if (oldPosition != -1)
+                    notifyItemChanged(oldPosition);
+                notifyItemChanged(selectedPosition);
+                break;
+            }
+        }
+    }
+
     public Category getSelectedCategoryObject() {
         if (selectedPosition >= 0 && selectedPosition < categories.size()) {
             return categories.get(selectedPosition);
@@ -212,10 +228,11 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
 
             // Selection state
             if (isSelected) {
-                cardView.setStrokeColor(ContextCompat.getColor(itemView.getContext(), R.color.primary));
+                cardView.setStrokeColor(categoryColor);
                 cardView.setStrokeWidth(4);
-                cardView.setCardBackgroundColor(
-                        ContextCompat.getColor(itemView.getContext(), R.color.category_entertainment_bg));
+                // Use a very light tint of the category color for background
+                int veryLowOpacityColor = androidx.core.graphics.ColorUtils.setAlphaComponent(categoryColor, 20);
+                cardView.setCardBackgroundColor(veryLowOpacityColor);
             } else {
                 cardView.setStrokeColor(ContextCompat.getColor(itemView.getContext(), android.R.color.transparent));
                 cardView.setStrokeWidth(0);

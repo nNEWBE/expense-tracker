@@ -110,7 +110,8 @@ public class DashboardFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        expenseViewModel = new ViewModelProvider(this).get(ExpenseViewModel.class);
+        // Use activity-scoped ViewModel for shared data caching across fragments
+        expenseViewModel = new ViewModelProvider(requireActivity()).get(ExpenseViewModel.class);
         preferenceManager = new PreferenceManager(requireContext());
 
         // Check if data is already available (cached)
@@ -164,7 +165,7 @@ public class DashboardFragment extends Fragment {
 
         skeletonView.animate()
                 .alpha(0f)
-                .setDuration(400)
+                .setDuration(150)
                 .setListener(new android.animation.AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(android.animation.Animator animation) {
@@ -253,20 +254,24 @@ public class DashboardFragment extends Fragment {
         // Initialize notification repository
         notificationRepository = NotificationRepository.getInstance();
 
-        // Check if user is admin
-        checkAdminStatus();
-
-        // Setup notification panel
-        setupNotificationPanel(view);
-
-        // Setup swipe gesture on card container
+        // Setup swipe gesture on card container (critical for UI)
         setupCardSwipeGesture();
 
-        // Load notification counts immediately
-        loadAllNotificationCounts();
+        // Setup notification panel (critical for UI)
+        setupNotificationPanel(view);
 
-        // Setup real-time listener for notification updates
-        setupNotificationListener();
+        // DEFER non-critical operations to after view is rendered for instant
+        // navigation
+        view.post(() -> {
+            // Check if user is admin (background operation)
+            checkAdminStatus();
+
+            // Load notification counts (background operation)
+            loadAllNotificationCounts();
+
+            // Setup real-time listener for notification updates (background operation)
+            setupNotificationListener();
+        });
     }
 
     private com.google.firebase.firestore.ListenerRegistration notificationListenerRegistration;
@@ -451,35 +456,27 @@ public class DashboardFragment extends Fragment {
 
         // Initial state - invisible and slightly scaled down
         cardBalance.setAlpha(0f);
-        cardBalance.setScaleX(0.8f);
-        cardBalance.setScaleY(0.8f);
-        cardBalance.setRotationY(-90f);
+        cardBalance.setScaleX(0.9f);
+        cardBalance.setScaleY(0.9f);
 
-        // Entrance animation with 3D flip
+        // Fast entrance animation - no 3D flip for speed
         android.animation.AnimatorSet animatorSet = new android.animation.AnimatorSet();
 
         // Fade in
         android.animation.ObjectAnimator fadeIn = android.animation.ObjectAnimator.ofFloat(cardBalance, "alpha", 0f,
                 1f);
-        fadeIn.setDuration(400);
+        fadeIn.setDuration(150);
 
         // Scale up
-        android.animation.ObjectAnimator scaleX = android.animation.ObjectAnimator.ofFloat(cardBalance, "scaleX", 0.8f,
+        android.animation.ObjectAnimator scaleX = android.animation.ObjectAnimator.ofFloat(cardBalance, "scaleX", 0.9f,
                 1f);
-        android.animation.ObjectAnimator scaleY = android.animation.ObjectAnimator.ofFloat(cardBalance, "scaleY", 0.8f,
+        android.animation.ObjectAnimator scaleY = android.animation.ObjectAnimator.ofFloat(cardBalance, "scaleY", 0.9f,
                 1f);
-        scaleX.setDuration(600);
-        scaleY.setDuration(600);
+        scaleX.setDuration(200);
+        scaleY.setDuration(200);
 
-        // Flip rotation with overshoot for bounce effect
-        android.animation.ObjectAnimator flipIn = android.animation.ObjectAnimator.ofFloat(cardBalance, "rotationY",
-                -90f, 0f);
-        flipIn.setDuration(800);
-        flipIn.setInterpolator(new android.view.animation.OvershootInterpolator(0.8f));
-
-        // Play all together
-        animatorSet.playTogether(fadeIn, scaleX, scaleY, flipIn);
-        animatorSet.setStartDelay(300);
+        // Play all together - no delay
+        animatorSet.playTogether(fadeIn, scaleX, scaleY);
         animatorSet.start();
     }
 
@@ -559,6 +556,12 @@ public class DashboardFragment extends Fragment {
         expenseAdapter = new ExpenseAdapter();
         expenseAdapter.setCurrencySymbol(preferenceManager.getCurrencySymbol());
         expenseAdapter.setExpandableEnabled(false); // Disable expanding in dashboard
+
+        // RecyclerView performance optimizations
+        rvRecentTransactions.setHasFixedSize(true);
+        rvRecentTransactions.setItemViewCacheSize(20);
+        rvRecentTransactions.setDrawingCacheEnabled(true);
+        rvRecentTransactions.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
         rvRecentTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvRecentTransactions.setAdapter(expenseAdapter);
     }
@@ -592,13 +595,12 @@ public class DashboardFragment extends Fragment {
                 allExpenses = expenses;
 
                 if (isFirstLoad && skeletonView != null) {
-                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                        hideSkeletonLoading(() -> {
-                            updateSummary(expenses);
-                            updateRecentTransactions();
-                            animateBalanceCard();
-                        });
-                    }, 500);
+                    // Hide skeleton immediately when data arrives - no artificial delay
+                    hideSkeletonLoading(() -> {
+                        updateSummary(expenses);
+                        updateRecentTransactions();
+                        animateBalanceCard();
+                    });
                 } else {
                     updateSummary(expenses);
                     updateRecentTransactions();
@@ -649,7 +651,7 @@ public class DashboardFragment extends Fragment {
             return;
 
         android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofFloat((float) start, (float) end);
-        animator.setDuration(1500);
+        animator.setDuration(500);
         animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
 
         animator.addUpdateListener(animation -> {
@@ -688,7 +690,7 @@ public class DashboardFragment extends Fragment {
             return;
 
         android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofInt(start, end);
-        animator.setDuration(1200);
+        animator.setDuration(400);
         animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
 
         animator.addUpdateListener(animation -> {
