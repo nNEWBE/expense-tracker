@@ -782,17 +782,43 @@ public class DashboardFragment extends Fragment {
     private void setupPanels(View view) {
         setupNotificationPanelForAlerts(view);
 
-        // Hide category requests button and panel for guest users
+        // Initially hide category requests button for all users
+        // It will be shown later only for admins after async check
+        if (btnCategoryRequests != null) {
+            btnCategoryRequests.setVisibility(View.GONE);
+        }
+        if (categoryRequestsOverlay != null) {
+            categoryRequestsOverlay.setVisibility(View.GONE);
+        }
+
+        // Guest users: Don't setup category panel at all
         if (preferenceManager.isGuestMode()) {
-            if (btnCategoryRequests != null) {
-                btnCategoryRequests.setVisibility(View.GONE);
-            }
-            if (categoryRequestsOverlay != null) {
-                categoryRequestsOverlay.setVisibility(View.GONE);
-            }
-            // Don't setup category panel for guests
-        } else {
-            setupCategoryRequestsPanel(view);
+            return;
+        }
+
+        // For logged-in users: Check if admin and setup panel accordingly
+        FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("users").document(user.getUid()).get()
+                    .addOnSuccessListener(userDoc -> {
+                        if (!isAdded())
+                            return;
+
+                        Boolean adminField = userDoc.getBoolean("isAdmin");
+                        isUserAdmin = adminField != null && adminField;
+
+                        if (isUserAdmin) {
+                            // Admin user: Show category requests button and setup panel
+                            requireActivity().runOnUiThread(() -> {
+                                if (btnCategoryRequests != null) {
+                                    btnCategoryRequests.setVisibility(View.VISIBLE);
+                                }
+                                setupCategoryRequestsPanel(view);
+                            });
+                        }
+                        // Non-admin users: Keep button hidden (already hidden above)
+                    });
         }
     }
 
