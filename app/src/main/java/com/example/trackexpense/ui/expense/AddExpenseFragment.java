@@ -946,7 +946,7 @@ public class AddExpenseFragment extends Fragment {
             if (!preferenceManager.canGuestAddTransaction()) {
                 int remaining = preferenceManager.getGuestRemainingTransactions();
                 BeautifulNotification.showWarning(requireActivity(),
-                        "Daily limit reached! Guest users can only add 5 transactions per day. Please log in for unlimited transactions.");
+                        "Daily limit reached! Guest users can only add 5 transactions per day. Please log in to add more.");
                 return;
             }
             // Increment count and save
@@ -969,6 +969,10 @@ public class AddExpenseFragment extends Fragment {
 
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(userDoc -> {
+                    // Check if user is admin
+                    String role = userDoc.getString("role");
+                    boolean isAdmin = "admin".equalsIgnoreCase(role);
+
                     String todayDate = new java.text.SimpleDateFormat("yyyy-MM-dd",
                             java.util.Locale.getDefault()).format(new java.util.Date());
                     int todayCount = 0;
@@ -980,10 +984,14 @@ public class AddExpenseFragment extends Fragment {
                         todayCount = storedCount.intValue();
                     }
 
-                    if (todayCount >= 50) {
-                        runOnUiThread(() -> BeautifulNotification.showWarning(requireActivity(),
-                                "Daily limit reached (50 transactions/day). Try again tomorrow."));
-                        return;
+                    // Admin logic: Unlimited transactions (skip limit check)
+                    if (!isAdmin) {
+                        // Normal user logic: Limit to 20 transactions per day
+                        if (todayCount >= 20) {
+                            runOnUiThread(() -> BeautifulNotification.showWarning(requireActivity(),
+                                    "Daily limit reached (20 transactions/day). Only Admins have unlimited access."));
+                            return;
+                        }
                     }
 
                     final int newCount = todayCount + 1;
