@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:text="Help &amp; FAQ"
-            android:textColor="@color/on_background_light"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -90,7 +90,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:text="Tap the + button to add expenses or income"
-                    android:textColor="@color/on_background_light"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="13sp" />
             </LinearLayout>
 
@@ -113,7 +113,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:text="Swipe left on transactions to delete"
-                    android:textColor="@color/on_background_light"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="13sp" />
             </LinearLayout>
 
@@ -136,7 +136,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:text="Set budget goals to track spending"
-                    android:textColor="@color/on_background_light"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="13sp" />
             </LinearLayout>
 
@@ -159,7 +159,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:text="Enable notifications for daily reminders"
-                    android:textColor="@color/on_background_light"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="13sp" />
             </LinearLayout>
 
@@ -182,7 +182,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:text="Export your data regularly for backup"
-                    android:textColor="@color/on_background_light"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="13sp" />
             </LinearLayout>
 

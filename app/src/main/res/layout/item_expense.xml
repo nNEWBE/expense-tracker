@@ -8,16 +8,16 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardBackgroundColor="@color/white"
+    app:cardBackgroundColor="?attr/colorSurface"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
-    app:strokeColor="@color/black_03_alpha"
+    app:strokeColor="?attr/colorOutlineVariant"
     app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="?attr/colorSurface"
         android:orientation="vertical">
 
         <!-- Main Transaction Row -->
@@ -63,7 +63,7 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="Food"
-                    android:textColor="@color/on_background_light"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -167,7 +167,7 @@
                     android:background="@drawable/bg_notes_container"
                     android:padding="12dp"
                     android:text="Transaction notes..."
-                    android:textColor="@color/on_background_light"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="13sp" />
 
             </LinearLayout>

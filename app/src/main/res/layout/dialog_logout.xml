@@ -44,7 +44,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="Sign Out?"
-            android:textColor="@color/on_background_light"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="24sp"
             android:textStyle="bold" />
 

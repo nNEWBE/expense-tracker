@@ -30,7 +30,7 @@
         android:layout_marginTop="20dp"
         android:gravity="center"
         android:text="Sync Guest Data?"
-        android:textColor="@color/on_background_light"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="20sp"
         android:textStyle="bold" />
 

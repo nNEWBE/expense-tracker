@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_light"
+    android:background="?android:attr/colorBackground"
     tools:context=".ui.expense.TransactionsFragment">
 
     <androidx.core.widget.NestedScrollView
@@ -157,7 +157,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginTop="-16dp"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:strokeWidth="0dp">
@@ -166,7 +166,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:background="@color/white"
+                    android:background="?attr/colorSurface"
                     android:padding="16dp">
 
                     <!-- Date Filter Label -->
@@ -706,7 +706,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="No transactions yet"
-                    android:textColor="@color/on_background_light"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -717,7 +717,7 @@
                     android:alpha="0.7"
                     android:text="Add your first transaction using the + button"
                     android:textAlignment="center"
-                    android:textColor="@color/on_background_light"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp" />
 
             </LinearLayout>

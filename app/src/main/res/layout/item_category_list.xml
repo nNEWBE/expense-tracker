@@ -35,7 +35,7 @@
         android:layout_marginStart="14dp"
         android:layout_weight="1"
         android:text="Category"
-        android:textColor="@color/on_background_light"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="15sp"
         android:textStyle="bold" />
 

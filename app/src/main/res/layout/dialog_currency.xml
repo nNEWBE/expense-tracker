@@ -44,7 +44,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:text="Select Currency"
-            android:textColor="@color/on_background_light"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -82,7 +82,7 @@
                 android:layout_height="wrap_content"
                 android:padding="12dp"
                 android:text="USD ($) - US Dollar"
-                android:textColor="@color/on_background_light"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="15sp" />
 
             <!-- BDT -->
@@ -92,7 +92,7 @@
                 android:layout_height="wrap_content"
                 android:padding="12dp"
                 android:text="BDT (৳) - Bangladeshi Taka"
-                android:textColor="@color/on_background_light"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="15sp" />
 
             <!-- INR -->
@@ -102,7 +102,7 @@
                 android:layout_height="wrap_content"
                 android:padding="12dp"
                 android:text="INR (₹) - Indian Rupee"
-                android:textColor="@color/on_background_light"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="15sp" />
 
             <!-- EUR -->
@@ -112,7 +112,7 @@
                 android:layout_height="wrap_content"
                 android:padding="12dp"
                 android:text="EUR (€) - Euro"
-                android:textColor="@color/on_background_light"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="15sp" />
 
             <!-- GBP -->
@@ -122,7 +122,7 @@
                 android:layout_height="wrap_content"
                 android:padding="12dp"
                 android:text="GBP (£) - British Pound"
-                android:textColor="@color/on_background_light"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="15sp" />
 
         </RadioGroup>

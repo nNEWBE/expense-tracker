@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_light"
+    android:background="?android:attr/colorBackground"
     tools:context=".ui.expense.AddExpenseFragment">
 
     <ScrollView
@@ -242,7 +242,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginTop="-50dp"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="4dp"
                 app:strokeWidth="0dp">
@@ -254,7 +254,7 @@
                     android:orientation="vertical"
                     android:paddingHorizontal="24dp"
                     android:paddingTop="28dp"
-                    android:background="@color/white"
+                    android:background="?attr/colorSurface"
                     android:paddingBottom="24dp">
 
                     <!-- Amount Label with Icon -->
@@ -437,7 +437,7 @@
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
                         android:text="Select Category"
-                        android:textColor="@color/on_background_light"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
@@ -486,7 +486,7 @@
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
                         android:text="Transaction Details"
-                        android:textColor="@color/on_background_light"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
@@ -515,7 +515,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    app:cardBackgroundColor="@color/white"
+                    app:cardBackgroundColor="?attr/colorSurface"
                     app:cardCornerRadius="20dp"
                     app:cardElevation="0dp"
                     app:strokeWidth="0dp">
@@ -524,7 +524,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:background="@color/white"
+                        android:background="?attr/colorSurface"
                         android:padding="20dp">
 
                         <!-- Date Row -->
@@ -572,7 +572,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="4dp"
                                     android:text="Today"
-                                    android:textColor="@color/on_background_light"
+                                    android:textColor="?attr/colorOnSurface"
                                     android:textSize="16sp"
                                     android:textStyle="bold" />
 
@@ -648,7 +648,7 @@
                                     android:hint="Add a description"
                                     android:inputType="textMultiLine"
                                     android:minLines="1"
-                                    android:textColor="@color/on_background_light"
+                                    android:textColor="?attr/colorOnSurface"
                                     android:textColorHint="@color/nav_active_color"
                                     android:textSize="16sp"
                                     android:textStyle="bold"/>

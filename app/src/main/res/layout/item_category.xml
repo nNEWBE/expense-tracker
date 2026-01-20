@@ -48,7 +48,7 @@
             android:gravity="center"
             android:maxLines="1"
             android:paddingHorizontal="4dp"
-            android:textColor="@color/on_background_light"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="11sp"
             tools:text="Food" />
     </LinearLayout>

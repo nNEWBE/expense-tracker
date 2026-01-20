@@ -46,7 +46,7 @@
         android:layout_gravity="center"
         android:layout_marginTop="20dp"
         android:text="Budget Warning!"
-        android:textColor="@color/on_background_light"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="24sp"
         android:textStyle="bold" />
 

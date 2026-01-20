@@ -42,7 +42,7 @@
         android:layout_gravity="center"
         android:layout_marginTop="20dp"
         android:text="Set Your Budget"
-        android:textColor="@color/on_background_light"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="24sp"
         android:textStyle="bold" />
 
