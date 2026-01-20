@@ -47,6 +47,39 @@ public class PreferenceManager {
         }
     }
 
+    /**
+     * Format amount based on current currency.
+     * BDT: No decimals (whole numbers)
+     * Other currencies: 2 decimal places for precision
+     */
+    public String formatAmount(double amount) {
+        String currency = getCurrency();
+        String symbol = getCurrencySymbol();
+
+        if ("BDT".equals(currency)) {
+            // BDT: No decimals
+            return symbol + String.format("%,.0f", amount);
+        } else {
+            // Other currencies: Show 2 decimal places
+            return symbol + String.format("%,.2f", amount);
+        }
+    }
+
+    /**
+     * Format amount without currency symbol.
+     * BDT: No decimals
+     * Other currencies: 2 decimal places
+     */
+    public String formatAmountValue(double amount) {
+        String currency = getCurrency();
+
+        if ("BDT".equals(currency)) {
+            return String.format("%,.0f", amount);
+        } else {
+            return String.format("%,.2f", amount);
+        }
+    }
+
     // Budget
     public void setMonthlyBudget(double budget) {
         sharedPreferences.edit().putFloat(KEY_MONTHLY_BUDGET, (float) budget).apply();

@@ -778,13 +778,16 @@ public class TransactionsFragment extends Fragment {
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
         tvDate.setText(sdf.format(new java.util.Date(expense.getDate())));
 
-        // Set amount with proper formatting
+        // Set amount with proper formatting (currency-aware decimals)
         String symbol = preferenceManager.getCurrencySymbol();
-        if ("INCOME".equals(expense.getType())) {
-            tvAmount.setText(String.format("+%s%,.0f", symbol, expense.getAmount()));
+        String currency = preferenceManager.getCurrency();
+        boolean isIncome = "INCOME".equals(expense.getType());
+        String formattedAmount = com.example.trackexpense.utils.CurrencyFormatter.formatWithSign(
+                expense.getAmount(), currency, symbol, isIncome);
+        tvAmount.setText(formattedAmount);
+        if (isIncome) {
             tvAmount.setTextColor(ContextCompat.getColor(requireContext(), R.color.income_green));
         } else {
-            tvAmount.setText(String.format("-%s%,.0f", symbol, expense.getAmount()));
             tvAmount.setTextColor(ContextCompat.getColor(requireContext(), R.color.expense_red));
         }
 

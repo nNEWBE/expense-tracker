@@ -250,12 +250,15 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
             bgShape.setColor(lowOpacityColor);
             iconBg.setBackground(bgShape);
 
-            // Set amount with color based on type (no decimals)
-            if ("INCOME".equals(expense.getType())) {
-                tvAmount.setText(String.format("+%s%,.0f", currencySymbol, expense.getAmount()));
+            // Set amount with color based on type (currency-aware decimals)
+            String currency = preferenceManager != null ? preferenceManager.getCurrency() : "BDT";
+            boolean isIncome = "INCOME".equals(expense.getType());
+            String formattedAmount = com.example.trackexpense.utils.CurrencyFormatter.formatWithSign(
+                    expense.getAmount(), currency, currencySymbol, isIncome);
+            tvAmount.setText(formattedAmount);
+            if (isIncome) {
                 tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.income_green));
             } else {
-                tvAmount.setText(String.format("-%s%,.0f", currencySymbol, expense.getAmount()));
                 tvAmount.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.expense_red));
             }
 

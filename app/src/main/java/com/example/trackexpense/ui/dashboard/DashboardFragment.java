@@ -656,6 +656,7 @@ public class DashboardFragment extends Fragment {
         if (textView == null)
             return;
 
+        String currency = preferenceManager.getCurrency();
         android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofFloat((float) start, (float) end);
         animator.setDuration(500);
         animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
@@ -663,7 +664,7 @@ public class DashboardFragment extends Fragment {
         animator.addUpdateListener(animation -> {
             if (textView != null && isAdded()) {
                 float value = (float) animation.getAnimatedValue();
-                textView.setText(String.format("%s%,.0f", symbol, value));
+                textView.setText(com.example.trackexpense.utils.CurrencyFormatter.format(value, currency, symbol));
             }
         });
 
