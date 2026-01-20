@@ -1,0 +1,134 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/HP/.gradle/wrapper/dists/gradle-8.13-bin/5xuhj0ry160q40clulazy9h7d/gradle-8.13/lib/native-platform-0.22-milestone-28.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+
+> Configure project :app
+WARNING: The option setting 'android.overridePathCheck=true' is experimental.
+The current default is 'false'.
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateSafeArgsDebug UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+
+> Task :app:compileDebugJavaWithJavac
+C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:930: error: cannot find symbol
+                    if (tvAlertsBadge != null)
+                        ^
+  symbol:   variable tvAlertsBadge
+  location: class DashboardFragment
+C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:931: error: cannot find symbol
+                        tvAlertsBadge.setVisibility(View.GONE);
+                        ^
+  symbol:   variable tvAlertsBadge
+  location: class DashboardFragment
+C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:957: error: cannot find symbol
+                if (tvAlertsBadge != null)
+                    ^
+  symbol:   variable tvAlertsBadge
+  location: class DashboardFragment
+C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:958: error: cannot find symbol
+                    tvAlertsBadge.setVisibility(View.GONE);
+                    ^
+  symbol:   variable tvAlertsBadge
+  location: class DashboardFragment
+C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:1009: error: cannot find symbol
+            if (tvNotificationSubtitle != null)
+                ^
+  symbol:   variable tvNotificationSubtitle
+  location: class DashboardFragment
+C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:1010: error: cannot find symbol
+                tvNotificationSubtitle.setText("Stay updated with your activities");
+                ^
+  symbol:   variable tvNotificationSubtitle
+  location: class DashboardFragment
+C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:1027: error: cannot find symbol
+            if (tvNotificationSubtitle != null)
+                ^
+  symbol:   variable tvNotificationSubtitle
+  location: class DashboardFragment
+C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:1028: error: cannot find symbol
+                tvNotificationSubtitle.setText("Manage category addition requests");
+                ^
+  symbol:   variable tvNotificationSubtitle
+  location: class DashboardFragment
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+8 errors
+
+> Task :app:compileDebugJavaWithJavac FAILED
+
+[Incubating] Problems report is available at: file:///C:/Users/HP/AndroidStudioProjects/TrackExpense/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler output below.
+  C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:930: error: cannot find symbol
+                      if (tvAlertsBadge != null)
+                          ^
+    symbol:   variable tvAlertsBadge
+    location: class DashboardFragment
+  C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:931: error: cannot find symbol
+                          tvAlertsBadge.setVisibility(View.GONE);
+                          ^
+    symbol:   variable tvAlertsBadge
+    location: class DashboardFragment
+  C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:957: error: cannot find symbol
+                  if (tvAlertsBadge != null)
+                      ^
+    symbol:   variable tvAlertsBadge
+    location: class DashboardFragment
+  C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:958: error: cannot find symbol
+                      tvAlertsBadge.setVisibility(View.GONE);
+                      ^
+    symbol:   variable tvAlertsBadge
+    location: class DashboardFragment
+  C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:1009: error: cannot find symbol
+              if (tvNotificationSubtitle != null)
+                  ^
+    symbol:   variable tvNotificationSubtitle
+    location: class DashboardFragment
+  C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:1010: error: cannot find symbol
+                  tvNotificationSubtitle.setText("Stay updated with your activities");
+                  ^
+    symbol:   variable tvNotificationSubtitle
+    location: class DashboardFragment
+  C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:1027: error: cannot find symbol
+              if (tvNotificationSubtitle != null)
+                  ^
+    symbol:   variable tvNotificationSubtitle
+    location: class DashboardFragment
+  C:\Users\HP\AndroidStudioProjects\TrackExpense\app\src\main\java\com\example\trackexpense\ui\dashboard\DashboardFragment.java:1028: error: cannot find symbol
+                  tvNotificationSubtitle.setText("Manage category addition requests");
+                  ^
+    symbol:   variable tvNotificationSubtitle
+    location: class DashboardFragment
+  Note: Some input files use or override a deprecated API.
+  Note: Recompile with -Xlint:deprecation for details.
+  8 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+BUILD FAILED in 9s
+17 actionable tasks: 1 executed, 16 up-to-date

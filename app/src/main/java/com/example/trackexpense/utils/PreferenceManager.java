@@ -443,4 +443,59 @@ public class PreferenceManager {
 
         sharedPreferences.edit().putString(KEY_GUEST_NOTIFICATIONS, sb.toString()).apply();
     }
+
+    // ========== Guest Daily Transaction Limit ==========
+    private static final String KEY_GUEST_TRANSACTION_DATE = "guest_transaction_date";
+    private static final String KEY_GUEST_TRANSACTION_COUNT = "guest_transaction_count";
+    private static final int GUEST_DAILY_TRANSACTION_LIMIT = 5;
+
+    /**
+     * Get the number of transactions guest has made today.
+     */
+    public int getGuestDailyTransactionCount() {
+        String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                .format(new java.util.Date());
+        String lastDate = sharedPreferences.getString(KEY_GUEST_TRANSACTION_DATE, "");
+
+        if (!today.equals(lastDate)) {
+            // New day, reset count
+            return 0;
+        }
+        return sharedPreferences.getInt(KEY_GUEST_TRANSACTION_COUNT, 0);
+    }
+
+    /**
+     * Increment guest transaction count for today.
+     */
+    public void incrementGuestTransactionCount() {
+        String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                .format(new java.util.Date());
+        String lastDate = sharedPreferences.getString(KEY_GUEST_TRANSACTION_DATE, "");
+
+        int count;
+        if (today.equals(lastDate)) {
+            count = sharedPreferences.getInt(KEY_GUEST_TRANSACTION_COUNT, 0) + 1;
+        } else {
+            count = 1;
+        }
+
+        sharedPreferences.edit()
+                .putString(KEY_GUEST_TRANSACTION_DATE, today)
+                .putInt(KEY_GUEST_TRANSACTION_COUNT, count)
+                .apply();
+    }
+
+    /**
+     * Check if guest can add more transactions today.
+     */
+    public boolean canGuestAddTransaction() {
+        return getGuestDailyTransactionCount() < GUEST_DAILY_TRANSACTION_LIMIT;
+    }
+
+    /**
+     * Get remaining transactions for guest today.
+     */
+    public int getGuestRemainingTransactions() {
+        return Math.max(0, GUEST_DAILY_TRANSACTION_LIMIT - getGuestDailyTransactionCount());
+    }
 }

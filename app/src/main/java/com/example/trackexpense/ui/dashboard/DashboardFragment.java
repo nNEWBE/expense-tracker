@@ -57,7 +57,7 @@ public class DashboardFragment extends Fragment {
     // Charts removed
     private RecyclerView rvRecentTransactions;
     private ExpenseAdapter expenseAdapter;
-    private MaterialCardView btnMenu, btnNotification, cardBalance, cardBudget;
+    private MaterialCardView btnMenu, btnNotification, btnCategoryRequests, cardBalance, cardBudget;
     private MaterialCardView btnFilterAll, btnFilterIncome, btnFilterExpense;
     private View cardContainer;
 
@@ -69,28 +69,31 @@ public class DashboardFragment extends Fragment {
     private View emptyNotifications;
     private RecyclerView rvNotifications;
     private AppNotificationAdapter appNotificationAdapter;
-    private TextView tvNotificationBadge, tvNotificationCount;
+    private TextView tvNotificationBadge, tvNotificationCount, tvPanelTitle, tvNotificationSubtitle;
     private List<AppNotification> notificationsList = new ArrayList<>();
     private NotificationRepository notificationRepository;
 
-    // Notification tabs
-    private MaterialCardView tabAlerts, tabRequests;
-    private TextView tvAlertsBadge, tvRequestsBadge;
-    private TextView tvTabAlerts, tvTabRequests;
-    private android.widget.ImageView icTabAlerts, icTabRequests;
-    private boolean isAlertsTabActive = true;
-
-    // Category requests
+    // Category Request Panel
+    private View categoryRequestsOverlay, categoryRequestsDimBackground, categoryRequestsPanel;
+    private View emptyCategoryRequests;
+    private RecyclerView rvCategoryRequests;
+    private AppNotificationAdapter categoryRequestsAdapter;
+    private TextView tvCategoryRequestsBadge, tvCategoryRequestCount, tvCategoryPanelTitle, tvCategoryPanelSubtitle;
     private List<AppNotification> categoryRequestsList = new ArrayList<>();
+
+    // State
     private boolean isUserAdmin = false;
-    private boolean isAdminStatusLoaded = false; // Cache admin status to avoid repeated checks
+    private boolean isNotificationPanelOpen = false;
+    private boolean isCategoryPanelOpen = false;
+
+    // Admin status cache
+    private boolean isAdminStatusLoaded = false;
     private long adminStatusCacheTime = 0;
     private static final long ADMIN_STATUS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
     // Handler for notification animation
     private android.os.Handler notificationHandler;
     private Runnable notificationAnimationRunnable;
-    private boolean isNotificationPanelOpen = false;
 
     private boolean isShowingBalance = true;
 
@@ -219,6 +222,7 @@ public class DashboardFragment extends Fragment {
         rvRecentTransactions = view.findViewById(R.id.rvRecentTransactions);
         btnMenu = view.findViewById(R.id.btnMenu);
         btnNotification = view.findViewById(R.id.btnNotification);
+        btnCategoryRequests = view.findViewById(R.id.btnCategoryRequests);
         cardBalance = view.findViewById(R.id.cardBalance);
         cardBudget = view.findViewById(R.id.cardBudget);
 
@@ -240,16 +244,21 @@ public class DashboardFragment extends Fragment {
         emptyNotifications = view.findViewById(R.id.emptyNotifications);
         tvNotificationBadge = view.findViewById(R.id.tvNotificationBadge);
         tvNotificationCount = view.findViewById(R.id.tvNotificationCount);
+        tvPanelTitle = view.findViewById(R.id.tvPanelTitle);
+        tvNotificationSubtitle = view.findViewById(R.id.tvNotificationSubtitle);
 
-        // Notification tabs
-        tabAlerts = view.findViewById(R.id.tabAlerts);
-        tabRequests = view.findViewById(R.id.tabRequests);
-        tvAlertsBadge = view.findViewById(R.id.tvAlertsBadge);
-        tvRequestsBadge = view.findViewById(R.id.tvRequestsBadge);
-        tvTabAlerts = view.findViewById(R.id.tvTabAlerts);
-        tvTabRequests = view.findViewById(R.id.tvTabRequests);
-        icTabAlerts = view.findViewById(R.id.icTabAlerts);
-        icTabRequests = view.findViewById(R.id.icTabRequests);
+        // Category Request Panel Views
+        categoryRequestsOverlay = view.findViewById(R.id.categoryRequestsOverlay);
+        categoryRequestsDimBackground = view.findViewById(R.id.categoryRequestsDimBackground);
+        categoryRequestsPanel = view.findViewById(R.id.categoryRequestsPanel);
+        rvCategoryRequests = view.findViewById(R.id.rvCategoryRequests);
+        emptyCategoryRequests = view.findViewById(R.id.emptyCategoryRequests);
+        tvCategoryRequestsBadge = view.findViewById(R.id.tvCategoryRequestsBadge);
+        tvCategoryRequestCount = view.findViewById(R.id.tvCategoryRequestCount);
+        tvCategoryPanelTitle = view.findViewById(R.id.tvCategoryPanelTitle);
+        tvCategoryPanelSubtitle = view.findViewById(R.id.tvCategoryPanelSubtitle);
+
+        // Notification tabs removed
 
         // Initialize notification repository
         notificationRepository = NotificationRepository.getInstance();
@@ -257,8 +266,8 @@ public class DashboardFragment extends Fragment {
         // Setup swipe gesture on card container (critical for UI)
         setupCardSwipeGesture();
 
-        // Setup notification panel (critical for UI)
-        setupNotificationPanel(view);
+        // Setup notification and category panels
+        setupPanels(view);
 
         // DEFER non-critical operations to after view is rendered for instant
         // navigation
@@ -316,8 +325,8 @@ public class DashboardFragment extends Fragment {
                         // Always update our local list with merged data
                         notificationsList = new ArrayList<>(notifications);
 
-                        // If panel is open and showing alerts, update the adapter
-                        if (isNotificationPanelOpen && isAlertsTabActive) {
+                        // If panel show alerts, update adapter
+                        if (isNotificationPanelOpen) {
                             if (appNotificationAdapter != null) {
                                 appNotificationAdapter.setNotifications(notificationsList);
                             }
@@ -372,24 +381,16 @@ public class DashboardFragment extends Fragment {
             loadCategoryRequestsCount(user.getUid(), requestsCount -> {
                 if (isAdded()) {
                     requireActivity().runOnUiThread(() -> {
-                        int totalCount = alertsCount + requestsCount;
-                        updateBadgeDisplay(totalCount);
+                        updateBadgeDisplay(alertsCount);
 
-                        // Update tab badges
-                        if (tvAlertsBadge != null) {
-                            if (alertsCount > 0) {
-                                tvAlertsBadge.setVisibility(View.VISIBLE);
-                                tvAlertsBadge.setText(alertsCount > 99 ? "99+" : String.valueOf(alertsCount));
-                            } else {
-                                tvAlertsBadge.setVisibility(View.GONE);
-                            }
-                        }
-                        if (tvRequestsBadge != null) {
+                        // Update badges
+                        if (tvCategoryRequestsBadge != null) {
                             if (requestsCount > 0) {
-                                tvRequestsBadge.setVisibility(View.VISIBLE);
-                                tvRequestsBadge.setText(requestsCount > 99 ? "99+" : String.valueOf(requestsCount));
+                                tvCategoryRequestsBadge.setVisibility(View.VISIBLE);
+                                tvCategoryRequestsBadge
+                                        .setText(requestsCount > 99 ? "99+" : String.valueOf(requestsCount));
                             } else {
-                                tvRequestsBadge.setVisibility(View.GONE);
+                                tvCategoryRequestsBadge.setVisibility(View.GONE);
                             }
                         }
                     });
@@ -434,6 +435,11 @@ public class DashboardFragment extends Fragment {
 
     private void updateBadgeDisplay(int count) {
         if (tvNotificationBadge != null && isAdded()) {
+            // Hide badge for guest users since they can't access notifications
+            if (preferenceManager.isGuestMode()) {
+                tvNotificationBadge.setVisibility(View.GONE);
+                return;
+            }
             if (count > 0) {
                 tvNotificationBadge.setVisibility(View.VISIBLE);
                 tvNotificationBadge.setText(count > 99 ? "99+" : String.valueOf(count));
@@ -773,87 +779,54 @@ public class DashboardFragment extends Fragment {
 
     // ===================== NOTIFICATION PANEL METHODS =====================
 
-    private void setupNotificationPanel(View view) {
-        // Setup RecyclerView for notifications
-        appNotificationAdapter = new AppNotificationAdapter();
-        String symbol = preferenceManager.getCurrencySymbol();
-        appNotificationAdapter.setCurrencySymbol(symbol);
+    private void setupPanels(View view) {
+        setupNotificationPanelForAlerts(view);
 
+        // Hide category requests button and panel for guest users
+        if (preferenceManager.isGuestMode()) {
+            if (btnCategoryRequests != null) {
+                btnCategoryRequests.setVisibility(View.GONE);
+            }
+            if (categoryRequestsOverlay != null) {
+                categoryRequestsOverlay.setVisibility(View.GONE);
+            }
+            // Don't setup category panel for guests
+        } else {
+            setupCategoryRequestsPanel(view);
+        }
+    }
+
+    private void setupNotificationPanelForAlerts(View view) {
+        appNotificationAdapter = new AppNotificationAdapter();
+        appNotificationAdapter.setCurrencySymbol(preferenceManager.getCurrencySymbol());
         rvNotifications.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvNotifications.setAdapter(appNotificationAdapter);
 
-        // Setup action listener for notifications
         appNotificationAdapter
                 .setOnNotificationActionListener(new AppNotificationAdapter.OnNotificationActionListener() {
                     @Override
                     public void onDelete(AppNotification notification, int position) {
-                        String type = notification.getType();
-
-                        // Check if this is a category request notification
-                        if ("CATEGORY_REQUEST".equals(type) || "CATEGORY_REQUEST_STATUS".equals(type)) {
-                            // Delete from category_requests collection
-                            String requestId = notification.getId();
-                            if (requestId != null) {
-                                com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                                        .collection("category_requests")
-                                        .document(requestId)
-                                        .delete()
-                                        .addOnSuccessListener(v -> {
-                                            if (isAdded()) {
-                                                categoryRequestsList.remove(position);
-                                                if (!isAlertsTabActive) {
-                                                    appNotificationAdapter.removeNotification(position);
-                                                    if (tvNotificationCount != null) {
-                                                        int count = categoryRequestsList.size();
-                                                        tvNotificationCount.setText(
-                                                                count + (count == 1 ? " request" : " requests"));
-                                                    }
-                                                }
-                                                checkEmptyState();
-                                                loadAllNotificationCounts();
-                                            }
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            if (isAdded()) {
-                                                android.widget.Toast.makeText(requireContext(),
-                                                        "Failed to delete request",
-                                                        android.widget.Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
-                            }
-                            return;
-                        }
-
-                        // Regular notification delete
                         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
                         if (currentUser != null) {
-                            // Delete from Firebase permanently
                             notificationRepository.deleteNotification(notification.getId(),
                                     new NotificationRepository.OnCompleteListener() {
                                         @Override
                                         public void onSuccess() {
                                             notificationsList.remove(notification);
-                                            if (isAlertsTabActive) {
-                                                appNotificationAdapter.removeNotification(position);
-                                                updateNotificationCount();
-                                            }
+                                            appNotificationAdapter.removeNotification(position);
+                                            updateNotificationCount();
                                             checkEmptyState();
                                             loadAllNotificationCounts();
                                         }
 
                                         @Override
                                         public void onError(String error) {
-                                            // Show error toast
-                                            if (isAdded()) {
-                                                android.widget.Toast.makeText(requireContext(),
-                                                        "Failed to delete notification",
-                                                        android.widget.Toast.LENGTH_SHORT)
-                                                        .show();
-                                            }
+                                            if (isAdded())
+                                                android.widget.Toast.makeText(requireContext(), "Failed to delete",
+                                                        android.widget.Toast.LENGTH_SHORT).show();
                                         }
                                     });
                         } else {
-                            // Guest: Delete locally
                             preferenceManager.deleteGuestNotification(notification.getId());
                             appNotificationAdapter.removeNotification(position);
                             updateNotificationCount();
@@ -864,93 +837,46 @@ public class DashboardFragment extends Fragment {
 
                     @Override
                     public void onClick(AppNotification notification) {
-                        // Check if this is a category request notification
-                        String type = notification.getType();
-                        if ("CATEGORY_REQUEST".equals(type) || "CATEGORY_REQUEST_STATUS".equals(type)) {
-                            // Parse extra data: userName|categoryType|reason|status
-                            String extraData = notification.getExtraData();
-                            String userName = "";
-                            String categoryType = "";
-                            String reason = "";
-                            String status = "";
-
-                            if (extraData != null && !extraData.isEmpty()) {
-                                String[] parts = extraData.split("\\|", -1);
-                                if (parts.length >= 4) {
-                                    userName = parts[0];
-                                    categoryType = parts[1];
-                                    reason = parts[2];
-                                    status = parts[3];
-                                }
-                            }
-
-                            // Get category name from title
-                            String categoryName = notification.getTitle();
-
-                            showCategoryRequestReviewDialog(
-                                    notification.getId(),
-                                    categoryName,
-                                    categoryType,
-                                    userName,
-                                    reason,
-                                    status);
-                            return;
-                        }
-
-                        // Mark as read IMMEDIATELY and update UI for instant feedback
                         if (!notification.isRead()) {
-                            notification.setRead(true); // Update local object immediately
-                            appNotificationAdapter.notifyDataSetChanged(); // Update UI now
-
+                            notification.setRead(true);
+                            appNotificationAdapter.notifyDataSetChanged();
                             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
                             if (currentUser != null) {
                                 notificationRepository.markAsRead(notification.getId(), null);
                             } else {
                                 preferenceManager.markGuestNotificationRead(notification.getId());
                             }
-                            loadAllNotificationCounts(); // Update badge
+                            loadAllNotificationCounts();
                         }
-
-                        // Show notification details dialog
                         showNotificationDetailsDialog(notification);
                     }
                 });
 
-        // Close button
-        view.findViewById(R.id.btnCloseNotifications).setOnClickListener(v -> hideNotificationPanel());
+        View closeBtn = notificationOverlay.findViewById(R.id.btnCloseNotificationsCard);
+        if (closeBtn != null)
+            closeBtn.setOnClickListener(v -> hidePanels());
+        notificationDimBackground.setOnClickListener(v -> hidePanels());
+        btnNotification.setOnClickListener(v -> {
+            // Guest users cannot access notifications - show login toast
+            if (preferenceManager.isGuestMode()) {
+                com.example.trackexpense.utils.BeautifulNotification.showInfo(requireActivity(),
+                        "Please log in to access Notifications feature.");
+                return;
+            }
+            showNotificationPanel();
+        });
 
-        // NOTE: Do NOT close panel when clicking dim background - only close via back
-        // button or close button
-        // notificationDimBackground.setOnClickListener(v -> hideNotificationPanel());
-        // // REMOVED
-
-        // Make panel consume clicks so they don't pass through to dim background
-        if (notificationPanel != null) {
-            notificationPanel.setClickable(true);
-            notificationPanel.setFocusable(true);
-        }
-
-        // Mark all read button
         View markAllReadBtn = view.findViewById(R.id.tvMarkAllRead);
         if (markAllReadBtn != null) {
             markAllReadBtn.setOnClickListener(v -> {
                 FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-                if (currentUser != null && notificationRepository != null) {
-                    // Update all local notifications to read immediately
-                    for (AppNotification notification : notificationsList) {
+                if (currentUser != null) {
+                    for (AppNotification notification : notificationsList)
                         notification.setRead(true);
-                    }
                     appNotificationAdapter.notifyDataSetChanged();
-
-                    // Update badge immediately
                     updateBadgeDisplay(0);
-                    if (tvAlertsBadge != null)
-                        tvAlertsBadge.setVisibility(View.GONE);
-
-                    // Sync to Firebase in background
                     notificationRepository.markAllAsRead(null);
                 } else {
-                    // Guest: Mark all local as read
                     for (AppNotification notification : notificationsList) {
                         notification.setRead(true);
                         preferenceManager.markGuestNotificationRead(notification.getId());
@@ -961,121 +887,125 @@ public class DashboardFragment extends Fragment {
             });
         }
 
-        // Clear all button - delete all
-        view.findViewById(R.id.btnClearAll).setOnClickListener(v -> {
-            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (currentUser != null) {
-                // IMMEDIATELY clear UI for instant feedback
-                notificationsList.clear();
-                appNotificationAdapter.setNotifications(notificationsList);
-                updateNotificationCount();
-                checkEmptyState();
-                updateBadgeDisplay(0); // Immediately update badge
-                if (tvAlertsBadge != null)
-                    tvAlertsBadge.setVisibility(View.GONE);
-
-                // Delete from Firebase in background
-                notificationRepository.deleteAllNotifications(new NotificationRepository.OnCompleteListener() {
-                    @Override
-                    public void onSuccess() {
-                        // Already updated UI, just log
-                        android.util.Log.d("DashboardFragment", "All notifications deleted from Firebase");
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        if (isAdded()) {
-                            android.widget.Toast.makeText(requireContext(), "Failed to sync deletion",
-                                    android.widget.Toast.LENGTH_SHORT).show();
+        View clearAllBtn = view.findViewById(R.id.btnClearAll);
+        if (clearAllBtn != null) {
+            clearAllBtn.setOnClickListener(v -> {
+                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                if (currentUser != null) {
+                    notificationsList.clear();
+                    appNotificationAdapter.setNotifications(notificationsList);
+                    updateNotificationCount();
+                    checkEmptyState();
+                    updateBadgeDisplay(0);
+                    notificationRepository.deleteAllNotifications(new NotificationRepository.OnCompleteListener() {
+                        @Override
+                        public void onSuccess() {
                         }
-                    }
-                });
-            } else {
-                // Guest: Clear local notifications
-                preferenceManager.clearGuestNotifications();
-                notificationsList.clear();
-                appNotificationAdapter.setNotifications(notificationsList);
-                updateNotificationCount();
-                checkEmptyState();
-                updateBadgeDisplay(0);
-            }
-        });
 
-        // Notification button click
-        btnNotification.setOnClickListener(v -> showNotificationPanel());
-
-        // Setup tab click listeners
-        if (tabAlerts != null) {
-            tabAlerts.setOnClickListener(v -> switchToTab(true));
-        }
-        if (tabRequests != null) {
-            tabRequests.setOnClickListener(v -> switchToTab(false));
+                        @Override
+                        public void onError(String error) {
+                        }
+                    });
+                } else {
+                    preferenceManager.clearGuestNotifications();
+                    notificationsList.clear();
+                    appNotificationAdapter.setNotifications(notificationsList);
+                    updateNotificationCount();
+                    checkEmptyState();
+                    updateBadgeDisplay(0);
+                }
+            });
         }
 
-        // Load notifications from Firebase
         loadNotificationsFromFirebase();
     }
 
-    private void switchToTab(boolean alertsTab) {
-        isAlertsTabActive = alertsTab;
+    private void setupCategoryRequestsPanel(View view) {
+        categoryRequestsAdapter = new AppNotificationAdapter();
+        rvCategoryRequests.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvCategoryRequests.setAdapter(categoryRequestsAdapter);
 
-        int primaryColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.primary);
-        int whiteAlpha = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.white_70_alpha);
+        categoryRequestsAdapter
+                .setOnNotificationActionListener(new AppNotificationAdapter.OnNotificationActionListener() {
+                    @Override
+                    public void onDelete(AppNotification notification, int position) {
+                        String requestId = notification.getId();
+                        if (requestId != null) {
+                            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                    .collection("category_requests")
+                                    .document(requestId)
+                                    .delete()
+                                    .addOnSuccessListener(v -> {
+                                        if (isAdded()) {
+                                            categoryRequestsList.remove(position);
+                                            categoryRequestsAdapter.removeNotification(position);
+                                            int count = categoryRequestsList.size();
+                                            if (tvCategoryRequestCount != null) {
+                                                tvCategoryRequestCount
+                                                        .setText(count + (count == 1 ? " request" : " requests"));
+                                            }
+                                            checkCategoryEmptyState();
+                                            loadAllNotificationCounts();
+                                        }
+                                    });
+                        }
+                    }
 
-        if (alertsTab) {
-            // Alerts tab active
-            if (tabAlerts != null) {
-                tabAlerts.setCardBackgroundColor(android.graphics.Color.WHITE);
-                tabAlerts.setCardElevation(dpToPx(2));
-            }
-            if (tabRequests != null) {
-                tabRequests.setCardBackgroundColor(android.graphics.Color.TRANSPARENT);
-                tabRequests.setCardElevation(0);
-            }
-            if (tvTabAlerts != null)
-                tvTabAlerts.setTextColor(primaryColor);
-            if (tvTabRequests != null)
-                tvTabRequests.setTextColor(whiteAlpha);
-            if (icTabAlerts != null)
-                icTabAlerts.setColorFilter(primaryColor);
-            if (icTabRequests != null)
-                icTabRequests.setColorFilter(whiteAlpha);
+                    @Override
+                    public void onClick(AppNotification notification) {
+                        String extraData = notification.getExtraData();
+                        String userName = "";
+                        String categoryType = "";
+                        String reason = "";
+                        String status = "";
 
-            // Show alerts notifications - use existing list to preserve read status
-            if (appNotificationAdapter != null) {
-                appNotificationAdapter.setNotifications(notificationsList);
-            }
-            updateNotificationCount();
-        } else {
-            // Requests tab active
-            if (tabAlerts != null) {
-                tabAlerts.setCardBackgroundColor(android.graphics.Color.TRANSPARENT);
-                tabAlerts.setCardElevation(0);
-            }
-            if (tabRequests != null) {
-                tabRequests.setCardBackgroundColor(android.graphics.Color.WHITE);
-                tabRequests.setCardElevation(dpToPx(2));
-            }
-            if (tvTabAlerts != null)
-                tvTabAlerts.setTextColor(whiteAlpha);
-            if (tvTabRequests != null)
-                tvTabRequests.setTextColor(primaryColor);
-            if (icTabAlerts != null)
-                icTabAlerts.setColorFilter(whiteAlpha);
-            if (icTabRequests != null)
-                icTabRequests.setColorFilter(primaryColor);
+                        if (extraData != null && !extraData.isEmpty()) {
+                            String[] parts = extraData.split("\\|", -1);
+                            if (parts.length >= 4) {
+                                userName = parts[0];
+                                categoryType = parts[1];
+                                reason = parts[2];
+                                status = parts[3];
+                            }
+                        }
+                        showCategoryRequestReviewDialog(notification.getId(), notification.getTitle(), categoryType,
+                                userName,
+                                reason, status);
+                    }
+                });
 
-            // Show category requests
-            if (appNotificationAdapter != null) {
-                appNotificationAdapter.setNotifications(categoryRequestsList);
-            }
-            if (tvNotificationCount != null) {
-                int count = categoryRequestsList.size();
-                tvNotificationCount.setText(count + (count == 1 ? " request" : " requests"));
-            }
+        View closeBtn = categoryRequestsOverlay.findViewById(R.id.btnCloseCategoryRequestCard);
+        if (closeBtn != null)
+            closeBtn.setOnClickListener(v -> hidePanels());
+        categoryRequestsDimBackground.setOnClickListener(v -> hidePanels());
+
+        if (btnCategoryRequests != null) {
+            btnCategoryRequests.setOnClickListener(v -> {
+                // Guest users cannot access category requests - show login toast
+                if (preferenceManager.isGuestMode()) {
+                    com.example.trackexpense.utils.BeautifulNotification.showInfo(requireActivity(),
+                            "Please log in to access Category Requests feature.");
+                    return;
+                }
+                showCategoryRequestsPanel();
+            });
         }
+    }
 
-        checkEmptyState();
+    private void hidePanels() {
+        if (isNotificationPanelOpen) {
+            isNotificationPanelOpen = false;
+            notificationOverlay.animate().alpha(0f).setDuration(200)
+                    .withEndAction(() -> notificationOverlay.setVisibility(View.GONE)).start();
+            notificationPanel.animate().translationX(notificationPanel.getWidth() + 100).setDuration(200).start();
+        }
+        if (isCategoryPanelOpen) {
+            isCategoryPanelOpen = false;
+            categoryRequestsOverlay.animate().alpha(0f).setDuration(200)
+                    .withEndAction(() -> categoryRequestsOverlay.setVisibility(View.GONE)).start();
+            categoryRequestsPanel.animate().translationX(categoryRequestsPanel.getWidth() + 100).setDuration(200)
+                    .start();
+        }
     }
 
     private void showCategoryRequestReviewDialog(String requestId, String categoryName,
@@ -1218,32 +1148,63 @@ public class DashboardFragment extends Fragment {
     }
 
     private void showNotificationPanel() {
-        // Prevent double-opening
-        if (isNotificationPanelOpen)
+        if (isNotificationPanelOpen || isCategoryPanelOpen)
             return;
         isNotificationPanelOpen = true;
 
-        // Cancel any pending animation callbacks
-        cancelNotificationAnimation();
+        notificationOverlay.setVisibility(View.VISIBLE);
+        notificationOverlay.setAlpha(0f);
+        notificationOverlay.animate().alpha(1f).setDuration(300).start();
 
-        // Show overlay
-        if (notificationOverlay != null) {
-            notificationOverlay.setVisibility(View.VISIBLE);
-            notificationOverlay.setAlpha(1f);
-        }
+        notificationPanel.setTranslationX(1000);
+        notificationPanel.animate().translationX(0).setDuration(300)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
 
-        // Set panel to starting position and animate
-        if (notificationPanel != null) {
-            notificationPanel.setTranslationX(notificationPanel.getWidth() > 0 ? notificationPanel.getWidth() : 1000);
-            notificationPanel.animate()
-                    .translationX(0)
-                    .setDuration(300)
-                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
-                    .start();
-        }
+        appNotificationAdapter.setNotifications(notificationsList);
+        updateNotificationCount();
+        checkEmptyState();
 
-        // Always refresh notifications from Firebase when panel opens
         refreshNotificationsFromFirebase();
+    }
+
+    private void showCategoryRequestsPanel() {
+        if (isNotificationPanelOpen || isCategoryPanelOpen)
+            return;
+        isCategoryPanelOpen = true;
+
+        categoryRequestsOverlay.setVisibility(View.VISIBLE);
+        categoryRequestsOverlay.setAlpha(0f);
+        categoryRequestsOverlay.animate().alpha(1f).setDuration(300).start();
+
+        categoryRequestsPanel.setTranslationX(1000);
+        categoryRequestsPanel.animate().translationX(0).setDuration(300)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+
+        categoryRequestsAdapter.setNotifications(categoryRequestsList);
+        int count = categoryRequestsList.size();
+        if (tvCategoryRequestCount != null) {
+            tvCategoryRequestCount.setText(count + (count == 1 ? " request" : " requests"));
+        }
+        checkCategoryEmptyState();
+
+        // Refresh requests
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null)
+            loadCategoryRequestsAsNotifications(user.getUid());
+    }
+
+    private void checkCategoryEmptyState() {
+        if (categoryRequestsList.isEmpty()) {
+            if (emptyCategoryRequests != null)
+                emptyCategoryRequests.setVisibility(View.VISIBLE);
+            if (rvCategoryRequests != null)
+                rvCategoryRequests.setVisibility(View.GONE);
+        } else {
+            if (emptyCategoryRequests != null)
+                emptyCategoryRequests.setVisibility(View.GONE);
+            if (rvCategoryRequests != null)
+                rvCategoryRequests.setVisibility(View.VISIBLE);
+        }
     }
 
     /**
@@ -1430,11 +1391,11 @@ public class DashboardFragment extends Fragment {
         if (currentUser != null && notificationRepository != null) {
             String userId = currentUser.getUid();
 
-            // STEP 1: Show cached notifications IMMEDIATELY for instant feedback
+            // STEP 1: Show cached notifications IMMEDIATELY
             List<AppNotification> cachedData = notificationRepository.getCachedNotificationsSync();
             if (cachedData != null && !cachedData.isEmpty()) {
                 notificationsList = new ArrayList<>(cachedData);
-                if (isAlertsTabActive && appNotificationAdapter != null) {
+                if (isNotificationPanelOpen && appNotificationAdapter != null) {
                     appNotificationAdapter.setNotifications(notificationsList);
                     updateNotificationCount();
                 }
@@ -1452,7 +1413,7 @@ public class DashboardFragment extends Fragment {
                 }
             };
 
-            // Load 1: Get notifications (uses cache for instant display)
+            // Load 1: Get notifications
             notificationRepository.getNotifications(new NotificationRepository.OnNotificationsLoadedListener() {
                 @Override
                 public void onLoaded(List<AppNotification> notifications) {
@@ -1475,7 +1436,7 @@ public class DashboardFragment extends Fragment {
                 }
             });
 
-            // Load 2: Get category requests (in parallel)
+            // Load 2: Get category requests
             loadCategoryRequestsAsNotificationsParallel(userId, () -> {
                 completedLoads[0]++;
                 if (isAdded()) {
@@ -1483,7 +1444,7 @@ public class DashboardFragment extends Fragment {
                 }
             });
         } else {
-            // Guest user: Load from local storage (already fast)
+            // Guest user
             loadGuestNotifications();
         }
     }
@@ -1817,17 +1778,18 @@ public class DashboardFragment extends Fragment {
         loadAllNotificationCounts();
 
         if (isNotificationPanelOpen && appNotificationAdapter != null) {
-            if (isAlertsTabActive) {
-                appNotificationAdapter.setNotifications(notificationsList);
-                updateNotificationCount();
-            } else {
-                appNotificationAdapter.setNotifications(categoryRequestsList);
-                if (tvNotificationCount != null) {
-                    int count = categoryRequestsList.size();
-                    tvNotificationCount.setText(count + (count == 1 ? " request" : " requests"));
-                }
-            }
+            appNotificationAdapter.setNotifications(notificationsList);
+            updateNotificationCount();
             checkEmptyState();
+        }
+
+        if (isCategoryPanelOpen && categoryRequestsAdapter != null) {
+            categoryRequestsAdapter.setNotifications(categoryRequestsList);
+            int count = categoryRequestsList.size();
+            if (tvCategoryRequestCount != null) {
+                tvCategoryRequestCount.setText(count + (count == 1 ? " request" : " requests"));
+            }
+            checkCategoryEmptyState();
         }
     }
 

@@ -941,13 +941,21 @@ public class AddExpenseFragment extends Fragment {
     }
 
     private void performSave(Expense expense) {
-        // Check if guest mode - no limit for guests
+        // Check if guest mode - enforce 5 transactions/day limit
         if (preferenceManager.isGuestMode()) {
+            if (!preferenceManager.canGuestAddTransaction()) {
+                int remaining = preferenceManager.getGuestRemainingTransactions();
+                BeautifulNotification.showWarning(requireActivity(),
+                        "Daily limit reached! Guest users can only add 5 transactions per day. Please log in for unlimited transactions.");
+                return;
+            }
+            // Increment count and save
+            preferenceManager.incrementGuestTransactionCount();
             saveExpenseDirectly(expense);
             return;
         }
 
-        // Check daily transaction limit from Firestore
+        // Check daily transaction limit from Firestore for logged-in users
         com.google.firebase.auth.FirebaseUser currentUser = com.google.firebase.auth.FirebaseAuth.getInstance()
                 .getCurrentUser();
         if (currentUser == null) {
