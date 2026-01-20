@@ -25,6 +25,7 @@ import com.example.trackexpense.ui.auth.WelcomeActivity;
 import com.example.trackexpense.utils.ExportUtils;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.utils.BeautifulNotification;
+import com.example.trackexpense.utils.CurrencyConverter;
 import com.example.trackexpense.viewmodel.ExpenseViewModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -474,16 +475,142 @@ public class ProfileFragment extends Fragment {
             else if (selectedId == R.id.rbGBP)
                 selectedCurrency = "GBP";
 
-            preferenceManager.setCurrency(selectedCurrency);
-            loadUserData();
-            BeautifulNotification.showSuccess(requireActivity(), "Currency updated!");
+            // If same currency, just dismiss
+            if (selectedCurrency.equals(currentCurrency)) {
+                dialog.dismiss();
+                return;
+            }
+
+            final String newCurrency = selectedCurrency;
             dialog.dismiss();
+
+            // Show loading indicator
+            BeautifulNotification.showInfo(requireActivity(), "Fetching exchange rate...");
+
+            // Fetch exchange rate and convert
+            CurrencyConverter.getExchangeRate(currentCurrency, newCurrency,
+                    new CurrencyConverter.OnConversionRateListener() {
+                        @Override
+                        public void onSuccess(double rate) {
+                            showCurrencyConversionConfirmDialog(currentCurrency, newCurrency, rate);
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            BeautifulNotification.showError(requireActivity(),
+                                    "Failed to get exchange rate: " + error);
+                        }
+                    });
         });
 
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
         dialog.show();
+    }
+
+    /**
+     * Show confirmation dialog for currency conversion with exchange rate info.
+     */
+    private void showCurrencyConversionConfirmDialog(String fromCurrency, String toCurrency, double rate) {
+        String message = String.format(
+                "Convert all amounts from %s to %s?\n\n" +
+                        "Exchange Rate: 1 %s = %.4f %s\n\n" +
+                        "This will update:\n" +
+                        "• All your transactions\n" +
+                        "• Your monthly budget",
+                fromCurrency, toCurrency, fromCurrency, rate, toCurrency);
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Confirm Currency Conversion")
+                .setMessage(message)
+                .setPositiveButton("Convert", (d, which) -> {
+                    performCurrencyConversion(fromCurrency, toCurrency, rate);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Perform the actual currency conversion on all data.
+     */
+    private void performCurrencyConversion(String fromCurrency, String toCurrency, double rate) {
+        BeautifulNotification.showInfo(requireActivity(), "Converting amounts...");
+
+        // 1. Convert budget
+        double currentBudget = preferenceManager.getMonthlyBudget();
+        double newBudget = CurrencyConverter.convert(currentBudget, rate);
+        preferenceManager.setMonthlyBudget(newBudget);
+
+        // Also update guest budget if applicable
+        if (preferenceManager.isGuestMode()) {
+            double guestBudget = preferenceManager.getGuestMonthlyBudget();
+            preferenceManager.setGuestMonthlyBudget(CurrencyConverter.convert(guestBudget, rate));
+        }
+
+        // 2. Convert all transactions
+        expenseViewModel.getAllExpenses().observe(getViewLifecycleOwner(), expenses -> {
+            if (expenses != null && !expenses.isEmpty()) {
+                // Convert each expense amount
+                for (com.example.trackexpense.data.local.Expense expense : expenses) {
+                    double newAmount = CurrencyConverter.convert(expense.getAmount(), rate);
+                    expense.setAmount(newAmount);
+                    expenseViewModel.update(expense);
+                }
+            }
+
+            // 3. Update Firestore for logged-in users
+            com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
+                    .getCurrentUser();
+            if (user != null) {
+                updateFirestoreAmounts(user.getUid(), rate, newBudget);
+            }
+
+            // 4. Save new currency preference
+            preferenceManager.setCurrency(toCurrency);
+
+            // 5. Refresh UI
+            loadUserData();
+
+            BeautifulNotification.showSuccess(requireActivity(),
+                    "Currency converted to " + toCurrency + " successfully!");
+
+            // Remove observer to prevent re-conversion
+            expenseViewModel.getAllExpenses().removeObservers(getViewLifecycleOwner());
+            observeData(); // Re-attach normal observer
+        });
+    }
+
+    /**
+     * Update amounts in Firestore after currency conversion.
+     */
+    private void updateFirestoreAmounts(String userId, double rate, double newBudget) {
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
+                .getInstance();
+
+        // Update user's budget
+        java.util.Map<String, Object> budgetUpdate = new java.util.HashMap<>();
+        budgetUpdate.put("monthlyBudget", newBudget);
+        db.collection("users").document(userId).update(budgetUpdate);
+
+        // Update all expenses in Firestore
+        db.collection("users").document(userId).collection("expenses")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    com.google.firebase.firestore.WriteBatch batch = db.batch();
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : querySnapshot) {
+                        Double amount = doc.getDouble("amount");
+                        if (amount != null) {
+                            double newAmount = CurrencyConverter.convert(amount, rate);
+                            batch.update(doc.getReference(), "amount", newAmount);
+                        }
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(
+                                    aVoid -> android.util.Log.d("ProfileFragment", "Firestore amounts updated"))
+                            .addOnFailureListener(
+                                    e -> android.util.Log.e("ProfileFragment", "Failed to update Firestore", e));
+                });
     }
 
     private void showBudgetDialog() {
