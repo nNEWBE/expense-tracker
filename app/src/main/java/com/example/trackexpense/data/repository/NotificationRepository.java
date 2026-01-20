@@ -213,10 +213,9 @@ public class NotificationRepository {
             query = query.limit(limit);
         }
 
-        // Use cache first, then server for faster perceived loading
-        Source source = forceRefresh ? Source.SERVER : Source.DEFAULT;
-
-        query.get(source)
+        // ALWAYS fetch from SERVER to get fresh data and avoid stale cache issues
+        // This fixes the issue where deleted/read notifications reappear
+        query.get(Source.SERVER)
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<AppNotification> notifications = new ArrayList<>();
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
@@ -229,7 +228,7 @@ public class NotificationRepository {
                         }
                     }
 
-                    // Update cache
+                    // Update cache with fresh server data
                     cachedNotifications = new ArrayList<>(notifications);
                     cacheTimestamp = System.currentTimeMillis();
 
@@ -242,16 +241,15 @@ public class NotificationRepository {
                     cachedUnreadCount = unreadCount;
                     unreadCountCacheTimestamp = System.currentTimeMillis();
 
-                    Log.d(TAG, "Loaded " + notifications.size() + " notifications from " +
-                            (source == Source.SERVER ? "server" : "cache/server"));
+                    Log.d(TAG, "Loaded " + notifications.size() + " notifications from server");
                     if (listener != null)
                         listener.onLoaded(notifications);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error getting notifications", e);
+                    Log.e(TAG, "Error getting notifications from server", e);
                     // On failure, try to return cached data if available
                     if (cachedNotifications != null && !cachedNotifications.isEmpty()) {
-                        Log.d(TAG, "Returning stale cached data due to error");
+                        Log.d(TAG, "Returning cached data due to server error");
                         if (listener != null)
                             listener.onLoaded(new ArrayList<>(cachedNotifications));
                     } else if (listener != null) {
@@ -277,16 +275,30 @@ public class NotificationRepository {
             return;
         }
 
+        // IMMEDIATELY remove from cached list for instant UI update
+        if (cachedNotifications != null) {
+            for (int i = 0; i < cachedNotifications.size(); i++) {
+                if (notificationId.equals(cachedNotifications.get(i).getId())) {
+                    // Check if it was unread before removing
+                    if (!cachedNotifications.get(i).isRead() && cachedUnreadCount > 0) {
+                        cachedUnreadCount--;
+                    }
+                    cachedNotifications.remove(i);
+                    break;
+                }
+            }
+        }
+
         notificationsRef.document(notificationId)
                 .delete()
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Notification deleted: " + notificationId);
-                    invalidateCache(); // Invalidate cache after deletion
+                    Log.d(TAG, "Notification deleted from Firestore: " + notificationId);
                     if (listener != null)
                         listener.onSuccess();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error deleting notification", e);
+                    Log.e(TAG, "Error deleting notification from Firestore", e);
+                    // Still consider it deleted locally
                     if (listener != null)
                         listener.onError(e.getMessage());
                 });
@@ -458,9 +470,9 @@ public class NotificationRepository {
             return;
         }
 
-        // Optimized: Query only unread notifications instead of fetching all
+        // Fetch from SERVER to get accurate count
         notificationsRef.whereEqualTo("isRead", false)
-                .get(Source.DEFAULT) // Use cache first for speed
+                .get(Source.SERVER)
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     int unreadCount = queryDocumentSnapshots.size();
 
@@ -468,7 +480,7 @@ public class NotificationRepository {
                     cachedUnreadCount = unreadCount;
                     unreadCountCacheTimestamp = System.currentTimeMillis();
 
-                    Log.d(TAG, "Unread count: " + unreadCount);
+                    Log.d(TAG, "Unread count from server: " + unreadCount);
                     if (listener != null)
                         listener.onCount(unreadCount);
                 })
@@ -507,6 +519,7 @@ public class NotificationRepository {
     /**
      * Listen to real-time notification updates.
      * This enables instant badge updates when new notifications arrive.
+     * Only processes updates from the server to avoid stale cache issues.
      */
     public void listenToNotifications(OnNotificationsLoadedListener listener) {
         CollectionReference notificationsRef = getNotificationsCollection();
@@ -521,51 +534,61 @@ public class NotificationRepository {
             activeListener.remove();
         }
 
-        // Add new real-time listener
+        // Add new real-time listener with metadata changes to detect server vs cache
         activeListener = notificationsRef
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .limit(DEFAULT_NOTIFICATION_LIMIT)
-                .addSnapshotListener((queryDocumentSnapshots, e) -> {
-                    if (e != null) {
-                        Log.e(TAG, "Real-time listener error", e);
-                        if (listener != null)
-                            listener.onError(e.getMessage());
-                        return;
-                    }
+                .addSnapshotListener(com.google.firebase.firestore.MetadataChanges.INCLUDE,
+                        (queryDocumentSnapshots, e) -> {
+                            if (e != null) {
+                                Log.e(TAG, "Real-time listener error", e);
+                                if (listener != null)
+                                    listener.onError(e.getMessage());
+                                return;
+                            }
 
-                    if (queryDocumentSnapshots == null) {
-                        if (listener != null)
-                            listener.onLoaded(new ArrayList<>());
-                        return;
-                    }
+                            if (queryDocumentSnapshots == null) {
+                                if (listener != null)
+                                    listener.onLoaded(new ArrayList<>());
+                                return;
+                            }
 
-                    List<AppNotification> notifications = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                        AppNotification notification = doc.toObject(AppNotification.class);
-                        notification.setId(doc.getId());
-                        notifications.add(notification);
-                    }
+                            // Only process if data is from server (not from local cache)
+                            // This prevents stale cached data from overwriting local modifications
+                            boolean isFromCache = queryDocumentSnapshots.getMetadata().isFromCache();
+                            if (isFromCache) {
+                                Log.d(TAG, "Skipping cached real-time update to preserve local state");
+                                return;
+                            }
 
-                    // Update cache
-                    cachedNotifications = new ArrayList<>(notifications);
-                    cacheTimestamp = System.currentTimeMillis();
+                            List<AppNotification> notifications = new ArrayList<>();
+                            for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                                AppNotification notification = doc.toObject(AppNotification.class);
+                                notification.setId(doc.getId());
+                                notifications.add(notification);
+                            }
 
-                    // Update unread count cache
-                    int unreadCount = 0;
-                    for (AppNotification n : notifications) {
-                        if (!n.isRead())
-                            unreadCount++;
-                    }
-                    cachedUnreadCount = unreadCount;
-                    unreadCountCacheTimestamp = System.currentTimeMillis();
+                            // Update cache with server data
+                            cachedNotifications = new ArrayList<>(notifications);
+                            cacheTimestamp = System.currentTimeMillis();
 
-                    Log.d(TAG,
-                            "Real-time update: " + notifications.size() + " notifications, " + unreadCount + " unread");
+                            // Update unread count cache
+                            int unreadCount = 0;
+                            for (AppNotification n : notifications) {
+                                if (!n.isRead())
+                                    unreadCount++;
+                            }
+                            cachedUnreadCount = unreadCount;
+                            unreadCountCacheTimestamp = System.currentTimeMillis();
 
-                    if (listener != null) {
-                        listener.onLoaded(notifications);
-                    }
-                });
+                            Log.d(TAG,
+                                    "Real-time server update: " + notifications.size() + " notifications, "
+                                            + unreadCount + " unread");
+
+                            if (listener != null) {
+                                listener.onLoaded(notifications);
+                            }
+                        });
     }
 
     /**
