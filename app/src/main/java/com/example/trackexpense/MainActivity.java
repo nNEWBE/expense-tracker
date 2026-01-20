@@ -602,7 +602,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
 
                 // Currency Conversion
-                String userCurrency = preferenceManager.getCurrency();
+                String userCurrency = preferenceManager.getCurrency().toUpperCase();
                 java.util.Map<String, Double> ratesCache = new java.util.HashMap<>();
 
                 for (java.util.Map<String, Object> t : transactions) {
@@ -712,7 +712,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 // Optional: currency
                 String currency = obj.optString("currency", null);
                 if (currency != null)
-                    transaction.put("currency", currency);
+                    transaction.put("currency", currency.toUpperCase());
 
                 transactions.add(transaction);
             }
