@@ -796,6 +796,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Step 1: Check daily import count from user document in Firestore
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(userDoc -> {
+                    // Check if user is admin
+                    String role = userDoc.getString("role");
+                    boolean isAdmin = "admin".equalsIgnoreCase(role);
+
                     String todayDate = getTodayDateString();
                     int todayImportCount = 0;
 
@@ -808,12 +812,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         todayImportCount = storedCount.intValue();
                     }
 
-                    // Check daily limit
-                    int remainingLimit = 50 - todayImportCount;
-                    if (remainingLimit <= 0) {
-                        runOnUiThread(() -> BeautifulNotification.showWarning(this,
-                                "Daily import limit reached (50/day). Try again tomorrow."));
-                        return;
+                    // Check daily limit (Admin: unlimited, Normal user: 20/day)
+                    int remainingLimit;
+                    if (isAdmin) {
+                        remainingLimit = Integer.MAX_VALUE; // Unlimited for admin
+                    } else {
+                        remainingLimit = 20 - todayImportCount;
+                        if (remainingLimit <= 0) {
+                            runOnUiThread(() -> BeautifulNotification.showWarning(this,
+                                    "Daily import limit reached (20/day). Only Admins have unlimited access."));
+                            return;
+                        }
                     }
 
                     final int currentDayCount = todayImportCount;
