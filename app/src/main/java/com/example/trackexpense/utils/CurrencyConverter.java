@@ -40,41 +40,47 @@ public class CurrencyConverter {
     public static void getExchangeRate(String fromCurrency, String toCurrency, OnConversionRateListener listener) {
         executor.execute(() -> {
             try {
-                // Build API URL
-                String apiUrl = API_URL + fromCurrency;
-                URL url = new URL(apiUrl);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(10000);
-                connection.setReadTimeout(10000);
-
-                int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-                    reader.close();
-
-                    // Parse JSON response
-                    JSONObject jsonResponse = new JSONObject(response.toString());
-                    JSONObject rates = jsonResponse.getJSONObject("rates");
-                    double rate = rates.getDouble(toCurrency);
-
-                    Log.d(TAG, "Exchange rate from " + fromCurrency + " to " + toCurrency + ": " + rate);
-
-                    mainHandler.post(() -> listener.onSuccess(rate));
-                } else {
-                    mainHandler.post(() -> listener.onError("API returned code: " + responseCode));
-                }
-                connection.disconnect();
+                double rate = getExchangeRateSync(fromCurrency, toCurrency);
+                mainHandler.post(() -> listener.onSuccess(rate));
             } catch (Exception e) {
-                Log.e(TAG, "Error fetching exchange rate", e);
                 mainHandler.post(() -> listener.onError(e.getMessage()));
             }
         });
+    }
+
+    /**
+     * Synchronously fetch exchange rate. Must be called from background thread.
+     */
+    public static double getExchangeRateSync(String fromCurrency, String toCurrency) throws Exception {
+        String apiUrl = API_URL + fromCurrency;
+        URL url = new URL(apiUrl);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
+
+        int responseCode = connection.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+
+            // Parse JSON response
+            JSONObject jsonResponse = new JSONObject(response.toString());
+            JSONObject rates = jsonResponse.getJSONObject("rates");
+            double rate = rates.getDouble(toCurrency);
+
+            Log.d(TAG, "Exchange rate from " + fromCurrency + " to " + toCurrency + ": " + rate);
+            connection.disconnect();
+            return rate;
+        } else {
+            connection.disconnect();
+            throw new Exception("API returned code: " + responseCode);
+        }
     }
 
     /**

@@ -36,6 +36,7 @@ import com.example.trackexpense.data.local.AppDatabase;
 import com.example.trackexpense.utils.BeautifulNotification;
 import com.example.trackexpense.utils.PreferenceManager;
 import com.example.trackexpense.utils.ReminderWorker;
+import com.example.trackexpense.utils.CurrencyConverter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
@@ -600,6 +601,43 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     return;
                 }
 
+                // Currency Conversion
+                String userCurrency = preferenceManager.getCurrency();
+                java.util.Map<String, Double> ratesCache = new java.util.HashMap<>();
+
+                for (java.util.Map<String, Object> t : transactions) {
+                    if (t.containsKey("currency")) {
+                        String txnCurrency = (String) t.get("currency");
+                        if (txnCurrency != null && !txnCurrency.equalsIgnoreCase(userCurrency)) {
+                            // Need conversion
+                            double rate = 1.0;
+                            try {
+                                if (ratesCache.containsKey(txnCurrency)) {
+                                    rate = ratesCache.get(txnCurrency);
+                                } else {
+                                    rate = CurrencyConverter.getExchangeRateSync(txnCurrency, userCurrency);
+                                    ratesCache.put(txnCurrency, rate);
+                                }
+
+                                if (t.containsKey("amount")) {
+                                    Object amountObj = t.get("amount");
+                                    double amount = 0;
+                                    if (amountObj instanceof Number)
+                                        amount = ((Number) amountObj).doubleValue();
+                                    t.put("amount", amount * rate);
+                                }
+                                // Update currency tag
+                                t.put("currency", userCurrency);
+
+                            } catch (Exception e) {
+                                android.util.Log.e("Import", "Conversion failed for " + txnCurrency, e);
+                                // Continue with original amount but maybe correct currency?
+                                // Or leave as is. User wanted fix. If offline, this fails.
+                            }
+                        }
+                    }
+                }
+
                 if (preferenceManager.isGuestMode()) {
                     importTransactionsLocally(transactions);
                 } else if (currentUser != null) {
@@ -671,6 +709,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 long timestamp = parseDate(dateStr);
                 transaction.put("date", timestamp);
 
+                // Optional: currency
+                String currency = obj.optString("currency", null);
+                if (currency != null)
+                    transaction.put("currency", currency);
+
                 transactions.add(transaction);
             }
         } catch (org.json.JSONException e) {
@@ -690,7 +733,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // Parse header to find column indices
         String[] headers = lines[0].toLowerCase().split(",");
-        int amountIdx = -1, categoryIdx = -1, typeIdx = -1, notesIdx = -1, dateIdx = -1;
+        int amountIdx = -1, categoryIdx = -1, typeIdx = -1, notesIdx = -1, dateIdx = -1, currencyIdx = -1;
 
         for (int i = 0; i < headers.length; i++) {
             String h = headers[i].trim();
@@ -704,6 +747,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 notesIdx = i;
             else if (h.equals("date"))
                 dateIdx = i;
+            else if (h.equals("currency"))
+                currencyIdx = i;
         }
 
         if (amountIdx == -1)
@@ -747,6 +792,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 String dateStr = dateIdx >= 0 && dateIdx < values.length ? values[dateIdx].trim() : "";
                 long timestamp = parseDate(dateStr);
                 transaction.put("date", timestamp);
+
+                // Currency
+                if (currencyIdx >= 0 && currencyIdx < values.length) {
+                    String currency = values[currencyIdx].trim().toUpperCase();
+                    if (!currency.isEmpty())
+                        transaction.put("currency", currency);
+                }
 
                 transactions.add(transaction);
             } catch (NumberFormatException e) {
