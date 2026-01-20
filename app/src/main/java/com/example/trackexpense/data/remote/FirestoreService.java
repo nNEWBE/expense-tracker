@@ -608,4 +608,77 @@ public class FirestoreService {
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error checking categories", e));
     }
+    // ==================== CATEGORY REQUESTS ====================
+
+    public interface OnTaskCompleteListener {
+        void onSuccess(String id);
+
+        void onFailure(Exception e);
+    }
+
+    public interface OnCategoryRequestsLoadedListener {
+        void onSuccess(List<com.example.trackexpense.data.model.CategoryRequest> requests);
+
+        void onFailure(Exception e);
+    }
+
+    public void sendCategoryRequest(com.example.trackexpense.data.model.CategoryRequest request,
+            OnTaskCompleteListener listener) {
+        if (!isUserLoggedIn()) {
+            if (listener != null)
+                listener.onFailure(new Exception("User not logged in"));
+            return;
+        }
+
+        db.collection("category_requests")
+                .add(request)
+                .addOnSuccessListener(documentReference -> {
+                    String id = documentReference.getId();
+                    // Update ID in the document itself
+                    documentReference.update("id", id);
+                    if (listener != null)
+                        listener.onSuccess(id);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error sending category request", e);
+                    if (listener != null)
+                        listener.onFailure(e);
+                });
+    }
+
+    public void getCategoryRequests(String userId, OnCategoryRequestsLoadedListener listener) {
+        if (!isUserLoggedIn()) {
+            if (listener != null)
+                listener.onSuccess(new ArrayList<>());
+            return;
+        }
+
+        db.collection("category_requests")
+                .whereEqualTo("userId", userId)
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "Error fetching category requests", error);
+                        if (listener != null)
+                            listener.onFailure(error);
+                        return;
+                    }
+
+                    List<com.example.trackexpense.data.model.CategoryRequest> requests = new ArrayList<>();
+                    if (value != null) {
+                        for (QueryDocumentSnapshot doc : value) {
+                            com.example.trackexpense.data.model.CategoryRequest req = doc
+                                    .toObject(com.example.trackexpense.data.model.CategoryRequest.class);
+                            req.setId(doc.getId());
+                            requests.add(req);
+                        }
+                    }
+
+                    // Client-side sort if needed (or add composite index for orderBy("createdAt"))
+                    // Using simple sort to avoid index requirements for this task if possible
+                    requests.sort((o1, o2) -> Long.compare(o2.getCreatedAt(), o1.getCreatedAt()));
+
+                    if (listener != null)
+                        listener.onSuccess(requests);
+                });
+    }
 }

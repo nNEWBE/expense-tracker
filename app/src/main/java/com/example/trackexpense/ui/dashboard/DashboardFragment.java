@@ -257,6 +257,7 @@ public class DashboardFragment extends Fragment {
         tvCategoryRequestCount = view.findViewById(R.id.tvCategoryRequestCount);
         tvCategoryPanelTitle = view.findViewById(R.id.tvCategoryPanelTitle);
         tvCategoryPanelSubtitle = view.findViewById(R.id.tvCategoryPanelSubtitle);
+        // btnAddCategoryRequest is initialized in setupCategoryRequestsPanel
 
         // Notification tabs removed
 
@@ -809,16 +810,13 @@ public class DashboardFragment extends Fragment {
                         Boolean adminField = userDoc.getBoolean("isAdmin");
                         isUserAdmin = adminField != null && adminField;
 
-                        if (isUserAdmin) {
-                            // Admin user: Show category requests button and setup panel
-                            requireActivity().runOnUiThread(() -> {
-                                if (btnCategoryRequests != null) {
-                                    btnCategoryRequests.setVisibility(View.VISIBLE);
-                                }
-                                setupCategoryRequestsPanel(view);
-                            });
-                        }
-                        // Non-admin users: Keep button hidden (already hidden above)
+                        // Show category requests button for ALL logged in users (Admin or Regular)
+                        requireActivity().runOnUiThread(() -> {
+                            if (btnCategoryRequests != null) {
+                                btnCategoryRequests.setVisibility(View.VISIBLE);
+                            }
+                            setupCategoryRequestsPanel(view);
+                        });
                     });
         }
     }
@@ -1017,6 +1015,12 @@ public class DashboardFragment extends Fragment {
                 showCategoryRequestsPanel();
             });
         }
+
+        // Setup Create Request Button
+        View btnAddCategoryRequest = categoryRequestsOverlay.findViewById(R.id.btnAddCategoryRequest);
+        if (btnAddCategoryRequest != null) {
+            btnAddCategoryRequest.setOnClickListener(v -> showCreateCategoryRequestDialog());
+        }
     }
 
     private void hidePanels() {
@@ -1172,6 +1176,95 @@ public class DashboardFragment extends Fragment {
                                 android.widget.Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void showCreateCategoryRequestDialog() {
+        if (!isAdded())
+            return;
+
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(requireContext());
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_category_request, null);
+        // Note: Creating layout next.
+        // If layout doesn't exist, we'll create it.
+        // For now, let's assume we need to create it or build it dynamically if
+        // simpler.
+        // Actually, creating a layout 'dialog_category_request_form.xml' is better.
+        // But to avoid error if I forgot, I'll build it dynamically if I can...
+        // No, I should create the XML. I will create 'dialog_category_request_form.xml'
+        // after this tool call.
+        // So I will use that name.
+
+        builder.setView(dialogView);
+        android.app.AlertDialog dialog = builder.create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        // Bind Views (assuming standard IDs)
+        android.widget.EditText etCategoryName = dialogView.findViewById(R.id.etCategoryName);
+        android.widget.EditText etReason = dialogView.findViewById(R.id.etReason);
+        android.widget.RadioGroup rgType = dialogView.findViewById(R.id.rgCategoryType);
+        com.google.android.material.button.MaterialButton btnSubmit = dialogView.findViewById(R.id.btnSubmitRequest);
+        com.google.android.material.button.MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelRequest);
+
+        if (btnCancel != null)
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        if (btnSubmit != null) {
+            btnSubmit.setOnClickListener(v -> {
+                String name = etCategoryName.getText().toString().trim();
+                String reason = etReason.getText().toString().trim();
+                String type = "EXPENSE"; // Default
+                if (rgType.getCheckedRadioButtonId() == R.id.rbIncome) {
+                    type = "INCOME";
+                }
+
+                if (name.isEmpty()) {
+                    etCategoryName.setError("Required");
+                    return;
+                }
+
+                // Send Request
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                if (user != null) {
+                    com.example.trackexpense.data.model.CategoryRequest request = new com.example.trackexpense.data.model.CategoryRequest(
+                            user.getUid(),
+                            user.getDisplayName() != null ? user.getDisplayName() : "User",
+                            user.getEmail(),
+                            name,
+                            type,
+                            reason);
+
+                    com.example.trackexpense.data.remote.FirestoreService.getInstance()
+                            .sendCategoryRequest(request,
+                                    new com.example.trackexpense.data.remote.FirestoreService.OnTaskCompleteListener() {
+                                        @Override
+                                        public void onSuccess(String id) {
+                                            if (isAdded()) {
+                                                android.widget.Toast.makeText(requireContext(),
+                                                        "Request sent successfully!", android.widget.Toast.LENGTH_SHORT)
+                                                        .show();
+                                                dialog.dismiss();
+                                                loadCategoryRequestsAsNotifications(user.getUid());
+                                                loadAllNotificationCounts();
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onFailure(Exception e) {
+                                            if (isAdded()) {
+                                                android.widget.Toast.makeText(requireContext(),
+                                                        "Failed: " + e.getMessage(), android.widget.Toast.LENGTH_SHORT)
+                                                        .show();
+                                            }
+                                        }
+                                    });
+                }
+            });
+        }
+
+        dialog.show();
     }
 
     private void showNotificationPanel() {
@@ -1912,7 +2005,7 @@ public class DashboardFragment extends Fragment {
                         // Create notification from request
                         AppNotification requestNotification = new AppNotification(
                                 userId,
-                                "CATEGORY_REQUEST_STATUS",
+                                AppNotification.TYPE_CATEGORY_REQUEST,
                                 categoryName,
                                 statusText + " - " + (categoryType != null ? categoryType : "Unknown") + " category");
                         requestNotification.setId(requestId);

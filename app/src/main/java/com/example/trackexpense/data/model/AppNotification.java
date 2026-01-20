@@ -21,6 +21,7 @@ public class AppNotification {
     public static final String TYPE_TRANSACTION_DELETED = "TRANSACTION_DELETED";
     public static final String TYPE_BUDGET_EXCEEDED = "BUDGET_EXCEEDED";
     public static final String TYPE_BUDGET_WARNING = "BUDGET_WARNING";
+    public static final String TYPE_CATEGORY_REQUEST = "CATEGORY_REQUEST";
 
     @DocumentId
     private String id;
@@ -192,6 +193,8 @@ public class AppNotification {
             case TYPE_BUDGET_EXCEEDED:
             case TYPE_BUDGET_WARNING:
                 return com.example.trackexpense.R.drawable.ic_warning;
+            case TYPE_CATEGORY_REQUEST:
+                return com.example.trackexpense.R.drawable.ic_nav_categories;
             default:
                 return com.example.trackexpense.R.drawable.ic_nav_notifications;
         }
@@ -212,6 +215,8 @@ public class AppNotification {
                 return com.example.trackexpense.R.color.expense_red;
             case TYPE_BUDGET_WARNING:
                 return com.example.trackexpense.R.color.warning_yellow;
+            case TYPE_CATEGORY_REQUEST:
+                return com.example.trackexpense.R.color.info_blue;
             default:
                 return com.example.trackexpense.R.color.primary;
         }

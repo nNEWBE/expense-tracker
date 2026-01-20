@@ -6,6 +6,7 @@
     <color name="primary_dark">#102835</color>
     <color name="primary_light">#4FC3F7</color>
     <color name="on_primary">#FFFFFF</color>
+    <color name="primary_10_alpha">#1A2D5A6A</color>
     
     <!-- Gradient Colors -->
     <color name="gradient_start">#2D5A6A</color>
