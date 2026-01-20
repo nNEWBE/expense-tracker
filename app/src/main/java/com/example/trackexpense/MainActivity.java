@@ -365,19 +365,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int itemId = item.getItemId();
 
         if (itemId == R.id.nav_export) {
-            showExportDialog();
+            showExportDialog(); // This is the Backup feature now
         } else if (itemId == R.id.nav_import) {
             showImportDialog();
         } else if (itemId == R.id.nav_categories) {
             showCategoriesDialog();
-        } else if (itemId == R.id.nav_recurring) {
-            showRecurringDialog();
         } else if (itemId == R.id.nav_notifications) {
             showNotificationsDialog();
         } else if (itemId == R.id.nav_theme) {
             showThemeDialog();
-        } else if (itemId == R.id.nav_backup) {
-            showBackupDialog();
         } else if (itemId == R.id.nav_help) {
             showHelpDialog();
         } else if (itemId == R.id.nav_feedback) {
@@ -1297,6 +1293,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // Load current preferences
         switchDaily.setChecked(preferenceManager.isNotificationsEnabled());
+        switchBudget.setChecked(preferenceManager.isBudgetNotificationsEnabled());
+        switchWeekly.setChecked(preferenceManager.isWeeklyReportEnabled());
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
@@ -1306,8 +1304,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         btnSave.setOnClickListener(v -> {
             preferenceManager.setNotificationsEnabled(switchDaily.isChecked());
+            preferenceManager.setBudgetNotificationsEnabled(switchBudget.isChecked());
+            preferenceManager.setWeeklyReportEnabled(switchWeekly.isChecked());
+
             BeautifulNotification.showSuccess(this, "Notification settings saved!");
             dialog.dismiss();
+
+            // Re-schedule alarms if needed
+            if (switchDaily.isChecked()) {
+                scheduleDailyReminder();
+            } else {
+                WorkManager.getInstance(this).cancelUniqueWork("daily_expense_reminder");
+            }
         });
 
         if (dialog.getWindow() != null) {
@@ -1466,23 +1474,68 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     // ==================== RATE APP ====================
+    // ==================== RATE APP ====================
     private void rateApp() {
-        new MaterialAlertDialogBuilder(this, R.style.Theme_TrackExpense_Dialog)
-                .setTitle("⭐ Rate TrackExpense")
-                .setMessage(
-                        "Enjoying TrackExpense? Please take a moment to rate us on the Play Store. Your feedback helps us improve!")
-                .setPositiveButton("Rate Now", (dialog, which) -> {
-                    try {
-                        startActivity(new Intent(Intent.ACTION_VIEW,
-                                Uri.parse("market://details?id=" + getPackageName())));
-                    } catch (Exception e) {
-                        startActivity(new Intent(Intent.ACTION_VIEW,
-                                Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName())));
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_rate_app, null);
+
+        com.google.android.material.button.MaterialButton btnLater = dialogView.findViewById(R.id.btnLater);
+        com.google.android.material.button.MaterialButton btnSubmit = dialogView.findViewById(R.id.btnSubmit);
+        ImageView star1 = dialogView.findViewById(R.id.star1);
+        ImageView star2 = dialogView.findViewById(R.id.star2);
+        ImageView star3 = dialogView.findViewById(R.id.star3);
+        ImageView star4 = dialogView.findViewById(R.id.star4);
+        ImageView star5 = dialogView.findViewById(R.id.star5);
+
+        final int[] rating = { 0 };
+        ImageView[] stars = { star1, star2, star3, star4, star5 };
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+
+        // Star click listeners
+        for (int i = 0; i < stars.length; i++) {
+            final int starIndex = i;
+            stars[i].setOnClickListener(v -> {
+                rating[0] = starIndex + 1;
+                for (int j = 0; j < stars.length; j++) {
+                    if (j <= starIndex) {
+                        stars[j].setImageResource(R.drawable.ic_star_filled);
+                    } else {
+                        stars[j].setImageResource(R.drawable.ic_star_border);
                     }
-                })
-                .setNeutralButton("Later", null)
-                .setNegativeButton("No Thanks", null)
-                .show();
+                }
+            });
+        }
+
+        btnLater.setOnClickListener(v -> dialog.dismiss());
+
+        btnSubmit.setOnClickListener(v -> {
+            if (rating[0] == 0) {
+                BeautifulNotification.showWarning(this, "Please select a rating");
+                return;
+            }
+
+            if (rating[0] >= 4) {
+                // Good rating -> Store
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("market://details?id=" + getPackageName())));
+                } catch (Exception e) {
+                    startActivity(new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName())));
+                }
+            } else {
+                // Poor rating -> Feedback
+                BeautifulNotification.showInfo(this, "Thank you for your feedback!");
+            }
+            dialog.dismiss();
+        });
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        dialog.show();
     }
 
     private void scheduleDailyReminder() {

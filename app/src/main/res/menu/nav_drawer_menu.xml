@@ -6,7 +6,7 @@
             <item
                 android:id="@+id/nav_export"
                 android:icon="@drawable/ic_nav_export"
-                android:title="Export Data" />
+                android:title="Backup" />
                 
             <item
                 android:id="@+id/nav_import"
@@ -17,11 +17,6 @@
                 android:id="@+id/nav_categories"
                 android:icon="@drawable/ic_nav_categories"
                 android:title="Manage Categories" />
-                
-            <item
-                android:id="@+id/nav_recurring"
-                android:icon="@drawable/ic_nav_recurring"
-                android:title="Recurring Expenses" />
         </menu>
     </item>
     
@@ -36,11 +31,6 @@
                 android:id="@+id/nav_theme"
                 android:icon="@drawable/ic_nav_theme"
                 android:title="Theme" />
-                
-            <item
-                android:id="@+id/nav_backup"
-                android:icon="@drawable/ic_nav_backup"
-                android:title="Backup and Restore" />
         </menu>
     </item>
     

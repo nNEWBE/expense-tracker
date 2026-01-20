@@ -229,6 +229,25 @@ public class PreferenceManager {
         return sharedPreferences.getString(KEY_DAILY_REMINDER_TIME, "20:00");
     }
 
+    private static final String KEY_BUDGET_NOTIFICATIONS = "budget_notifications_enabled";
+    private static final String KEY_WEEKLY_REPORT = "weekly_report_enabled";
+
+    public void setBudgetNotificationsEnabled(boolean enabled) {
+        sharedPreferences.edit().putBoolean(KEY_BUDGET_NOTIFICATIONS, enabled).apply();
+    }
+
+    public boolean isBudgetNotificationsEnabled() {
+        return sharedPreferences.getBoolean(KEY_BUDGET_NOTIFICATIONS, true);
+    }
+
+    public void setWeeklyReportEnabled(boolean enabled) {
+        sharedPreferences.edit().putBoolean(KEY_WEEKLY_REPORT, enabled).apply();
+    }
+
+    public boolean isWeeklyReportEnabled() {
+        return sharedPreferences.getBoolean(KEY_WEEKLY_REPORT, true);
+    }
+
     // Last Backup
     private static final String KEY_LAST_BACKUP = "last_backup";
 
